@@ -1,4 +1,4 @@
-"""TESSERA wealth decision intelligence prototype."""
+"""TESSERA wealth decision intelligence."""
 
 from .engine import build_intelligence_payload
 

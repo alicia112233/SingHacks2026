@@ -1,10 +1,80 @@
 # TESSERA — Wealth Decision Intelligence
 
-TESSERA is a governance-first Relationship Manager copilot that detects where a client's stated intent, bank-held portfolio, future obligations, and policy constraints disagree. It uses the five dated portfolio snapshots as a timeline, grounds every 2026 event claim in `event_log.csv`, looks through structured products, rehearses transparent counterfactuals, and turns the result into a client conversation the RM can approve, edit, or reject.
+TESSERA is an internal advisory workspace that helps Relationship Managers decide which client situations need attention, prepare the supporting analysis and record the resulting decision.
 
-The core idea is simple: **the next best conversation often hides inside a contradiction, not a performance alert**.
+It is rules-first and evidence-bound. Portfolio records, client objectives, cash needs, mandate limits, credit facilities and approved market events are joined by effective date. The resulting review points remain traceable to their source records.
 
-## Run the demo
+## Business problem
+
+Traditional portfolio tools report valuations, performance and allocation. The Relationship Manager still has to determine whether the portfolio fits the client’s stated objectives, upcoming obligations and policy constraints.
+
+TESSERA adds an operational review layer:
+
+1. Rank client reviews by objective, liquidity, governance and time pressure.
+2. Show the facts behind the ranking.
+3. Test transparent portfolio sensitivities.
+4. Prepare reversible actions subject to suitability review.
+5. Record whether the RM approved, revised, dismissed or reopened each action.
+
+## Implemented product workflows
+
+### Daily review queue
+
+Every client and portfolio in the current source records is evaluated. Capacity bands separate immediate work from follow-up:
+
+- **Now** uses red for today’s limited review capacity.
+- **Next** uses amber for near-term preparation.
+- **Watch** uses teal for monitored cases.
+
+The numeric score and underlying reason remain visible. Every queue item opens a complete client review; there are no inactive client links.
+
+### Client review room
+
+Every client receives:
+
+- bank-held AUM and key portfolio metrics;
+- the client objective, current portfolio position and next constraint;
+- an interactive value history with YTD, 6M and 3M controls;
+- relevant events from the controlled register;
+- two current-position scenario sensitivities;
+- suitability-qualified actions and a conversation brief; and
+- an evidence passport linked to source files and dates.
+
+Chart labels use a consistent `Mon YYYY` format. The application-wide data date is derived from the latest holding snapshot, and each chart point can be selected with a mouse or keyboard to show its exact value and change from the previous observed snapshot.
+
+### Scenario Studio
+
+Scenario Studio is a dedicated route at `/scenario-studio`. It supports every client, not a preselected case only. The RM can:
+
+- switch clients;
+- compare documented downside and recovery cases;
+- scale each shock from 50% to 150%;
+- see factor-level and total portfolio effects update immediately; and
+- move directly into the corresponding client review.
+
+Scenarios are sensitivities, not forecasts. The screen explicitly identifies calculation scope and excluded second-order effects.
+
+### Action decisions and audit trail
+
+Actions can be edited, approved, dismissed or restored. Each event is posted to `/api/decisions` and appended to `runtime/decisions.json`. The effective state is reconstructed from the latest event for each recommendation, while the complete history remains available in the Evidence Ledger.
+
+The local JSON store is intentionally simple and durable across application restarts. In a bank environment, the same API contract should be backed by an append-only relational audit table or event store.
+
+## Application routes
+
+| Route | Purpose |
+| --- | --- |
+| `/` | Daily book review |
+| `/clients/{client_id}` | Copyable client review link |
+| `/scenario-studio?client={client_id}` | Scenario workspace |
+| `/evidence-ledger` | Controls, data fitness and decision history |
+| `/api/intelligence` | Current analytics payload; recalculated when a source file changes |
+| `/api/decisions` | Decision history and effective state |
+| `/health` | Service health |
+
+Unknown extensionless paths return the application shell so browser refreshes on client and studio routes do not fail. Missing static assets still return a genuine 404. Browser favicon requests return 204 rather than polluting service logs with a false error.
+
+## Run
 
 ```bash
 pip install -r requirements.txt
@@ -13,62 +83,6 @@ python app.py
 
 Open `http://127.0.0.1:8000`.
 
-The demo is intentionally dependency-light: Python, pandas, and a browser. The analytical API is recalculated from the source files on each request.
-
-## Suggested three-minute demo
-
-1. **Today** — show the capacity-aware decision queue across Priscilla's 20-client / 24-portfolio book.
-2. **Lau Chi Ming** — show how four wrappers form a 49.0% Hong Kong property exposure, then compare the reported HKD 25.56m facility headroom with the actual HKD 0.71m lending-value buffer to the 70% margin trigger.
-3. **Abdullah Al-Mansoori** — look through the FCN to reveal at least 42.1% shipping/energy exposure, despite the client's diversification objective, and rehearse the Strait-reopening case.
-4. **Cheung Kwok Wing** — reframe a 66.6% bond allocation around life horizon and spending, then open the evidence passport where USD 1.10m in the RM note conflicts with USD 1.28m in the structured cash-needs record.
-5. **Evidence ledger** — show that suitability, event authority, data lag, uncertainty, and RM approval are part of the product workflow rather than footnotes.
-
-## What is implemented
-
-- Full-book, client-level priority scoring across all 20 clients
-- Five-snapshot value paths with explicit “not performance” treatment
-- Cross-portfolio aggregation and structured-product look-through
-- Mandate band, concentration, sustainability-exclusion, facility, liquidity, and data-quality checks
-- Three deep decision rooms with evidence-backed narrative briefs
-- Scenario sensitivities with visible assumptions and no fabricated probabilities
-- Approve / edit interactions recorded in a local in-memory decision ledger
-- Evidence passports tied to file names, record IDs, instruments, and dates
-- Responsive-enough desktop UI designed for a 16:9 demo screen
-
-## Key findings surfaced by the prototype
-
-- **Lau Chi Ming:** 49.0% of the bank-held portfolio is tied to Hong Kong property across direct property, issuer equity, perpetual debt, and an accumulator. Facility LTV is 69.41% against a 70% trigger; the lending-value cushion to the trigger is only about HKD 0.71m.
-- **Abdullah Al-Mansoori:** at least 42.1% is tied to shipping and energy after looking through the FCN, before counting his Gulf logistics business. An illustrative Strait-reopening normalization shock produces a −6.3% portfolio sensitivity.
-- **Cheung Kwok Wing:** 66.6% is fixed income and 20.8% is one Treasury due 2045. His stated aversion to selling at a loss conflicts with lifetime spending needs; the annual draw also differs between the latest RM note and `planned_cash_needs.csv`.
-
-All figures use the synthetic challenge data as of 26 August 2026. Scenario shocks are transparent sensitivities, not forecasts or investment advice.
-
-## Architecture
-
-```text
-Bank data snapshots + RM notes
-            ↓
-As-of joins and data-quality gates
-            ↓
-Mandate / concentration / event-authority policy compiler
-            ↓
-Purpose-limited evidence bundle
-            ↓
-Deterministic narrative prototype (bank-hosted LLM in production)
-            ↓
-RM approve / edit / reject + audit ledger
-```
-
-The prototype does not send data to any external model. In production, the evidence bundle—not unrestricted client data—would be passed to a private, bank-hosted model with role-based access, encryption, retention controls, and full decision logging.
-
-## Code map
-
-- `app.py` — dependency-light local API and static-file server
-- `tessera/engine.py` — joins, checks, ranking, scenarios, evidence passports, and deterministic narrative compiler
-- `web/` — interactive RM workbench
-- `tests/test_engine.py` — analytical and governance regression tests
-- `data/` — original synthetic challenge data, unchanged
-
 ## Verify
 
 ```bash
@@ -76,11 +90,43 @@ python -m unittest discover -s tests -v
 node --check web/app.js
 ```
 
-## Prototype boundaries
+The test suite covers analytical controls, full-book profile availability, decision-ledger durability, application-route fallback, health and favicon handling.
 
-- Value paths include trades, withdrawals, and FX; they are deliberately not presented as investment performance.
-- Scenario shocks are illustrative and carry no probability.
-- Outside wealth and operating businesses are qualitative unless the dataset provides a value, so look-through percentages are described as floors.
-- The recommendation layer drafts options for an RM; it never places trades or presents itself as autonomous advice.
+## Architecture
 
-This project is an unofficial SingHacks 2026 concept built from synthetic data.
+```text
+Position, client, mandate, credit and event records
+                         ↓
+              Effective-date joins
+                         ↓
+       Data-quality and suitability controls
+                         ↓
+       Purpose-limited review evidence set
+                         ↓
+       Deterministic metrics and summaries
+                         ↓
+        Relationship Manager review action
+                         ↓
+           Append-only decision ledger
+```
+
+The application sends no client data to an external model. If a bank later adds a language service, it should receive only the approved evidence set through a private endpoint. It must remain downstream of suitability controls and upstream of RM approval.
+
+## Production integration path
+
+The current service is a deployable reference implementation. A controlled bank rollout would replace local adapters while retaining the workflow and API contracts:
+
+- **Identity and access:** SSO, role-based book access, maker-checker controls and session policy.
+- **Data:** read-only connectors to positions, mandates, CRM, credit and approved market-event systems; lineage IDs retained in every evidence record.
+- **Persistence:** PostgreSQL or an event store for immutable decisions, versioned recommendations and retention policy.
+- **Processing:** scheduled book scoring plus event-driven refresh when positions, facilities or client records change.
+- **Controls:** suitability rules as versioned policy, with effective dates and approval ownership.
+- **Security:** encryption in transit and at rest, field-level access controls, private networking and secrets management.
+- **Operations:** structured logs, metrics, alerts, health checks, backup, recovery and service-level objectives.
+- **Change management:** model/rule validation, regression packs, user acceptance, compliance sign-off and phased desk rollout.
+
+## Data scope and limitations
+
+The bundled records are controlled non-production data. Scenario results cover current bank-held positions and direct first-order shocks. They exclude unrecorded outside wealth, tax outcomes, liquidity costs and second-order market effects unless a source record explicitly supplies them.
+
+Portfolio value paths include market movement, trades, withdrawals and currency translation, so they are not labelled as investment performance. Conflicting records remain visible and lower confidence instead of being silently averaged.

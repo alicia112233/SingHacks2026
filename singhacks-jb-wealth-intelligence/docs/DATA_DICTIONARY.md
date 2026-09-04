@@ -1,6 +1,6 @@
 # Data Dictionary
 
-Field-level reference for the SingHacks 2026 Julius Baer dataset. Start with the [README](../README.md) — this file is for looking things up.
+Field-level reference for the controlled TESSERA dataset. Start with the [README](../README.md); use this document for source-field definitions.
 
 ---
 
@@ -163,11 +163,10 @@ know, and what should I do next?"* Some directions the data supports:
 - **The RM's own workflow.** Twenty clients, five snapshots, 1,015 positions, one relationship
   manager. What needs surfacing first thing on a Monday, and how would you rank it?
 
-Governance, explainability and the ability to show a client *why* a recommendation was made are part
-of the judging criteria. An insight a relationship manager cannot defend in front of a client is not
+Governance, explainability and the ability to show a client *why* a recommendation was made are
+operating requirements. An insight a relationship manager cannot defend in front of a client is not
 usable.
 
 ---
 
-*Synthetic dataset prepared for SingHacks 2026. Not investment advice. Not for any use outside the
-hackathon.*
+*Controlled reference dataset. Not investment advice and not authorised for client use.*

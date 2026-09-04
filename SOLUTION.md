@@ -1,13 +1,43 @@
-# TESSERA submission
+# TESSERA product solution
 
-**Short description:** TESSERA is a governance-first wealth decision-intelligence layer that detects where client intent, portfolio reality, future obligations, and policy constraints disagree. It replays five portfolio snapshots against an authoritative event log, looks through structured products, rehearses transparent counterfactuals, and turns the result into an evidence-backed client conversation that the Relationship Manager controls.
+TESSERA is an internal wealth-advisory workspace for Relationship Managers. It brings portfolio history, client objectives, future cash requirements, mandate controls, credit exposure and approved market events into one review process.
 
-## Deliverables
+The product is designed around a practical operating question: which client reviews need attention today, what evidence supports that priority, and what decision did the Relationship Manager make?
 
-- Working prototype: [`singhacks-jb-wealth-intelligence/singhacks-jb-wealth-intelligence/`](singhacks-jb-wealth-intelligence/singhacks-jb-wealth-intelligence/)
-- Product and technical documentation: [`README_SOLUTION.md`](singhacks-jb-wealth-intelligence/singhacks-jb-wealth-intelligence/README_SOLUTION.md)
-- Submission deck and supporting hand-in files: [`submission/`](submission/)
+## What the product delivers
 
-Run the app from the nested project directory with `python app.py`, then open `http://127.0.0.1:8000`.
+- A full-book review queue with distinct **Now**, **Next** and **Watch** priorities.
+- A review room for every client in the book, including portfolio history, controls, scenarios, evidence and conversation preparation.
+- An interactive portfolio-value chart with YTD, 6M and 3M time frames and month/year labels.
+- A dedicated Scenario Studio with client selection and adjustable, transparent stress assumptions.
+- Approve, edit, dismiss and restore workflows backed by a persistent decision ledger.
+- Direct, copyable routes for client reviews, Scenario Studio and the evidence ledger.
+- Traceable evidence and data-quality checks that remain visible to the accountable RM.
 
-The original challenge README and synthetic dataset are preserved unchanged.
+## Operating model
+
+```text
+Bank records and approved market events
+                  ↓
+       Effective-date data joins
+                  ↓
+   Data-quality and suitability checks
+                  ↓
+       Prioritised RM review queue
+                  ↓
+   Client review and scenario analysis
+                  ↓
+Approve / edit / dismiss + audit record
+```
+
+Calculations and review summaries are deterministic. An optional bank-hosted language service can refine approved wording later, but it is not allowed to select source facts, bypass suitability controls or place trades.
+
+## Run locally
+
+```bash
+cd singhacks-jb-wealth-intelligence
+pip install -r requirements.txt
+python app.py
+```
+
+Open `http://127.0.0.1:8000`. Product and implementation details are in [`README_SOLUTION.md`](singhacks-jb-wealth-intelligence/README_SOLUTION.md).

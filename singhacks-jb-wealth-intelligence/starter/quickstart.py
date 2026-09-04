@@ -1,12 +1,11 @@
-"""
-SingHacks 2026 - Julius Baer Wealth Intelligence
-Quickstart: loads every file and prints enough to get oriented.
+"""TESSERA controlled dataset inspection utility.
+
+Loads each source file and prints a concise orientation summary.
 
     pip install pandas
     python starter/quickstart.py
 
-This deliberately does not compute anything clever. It is here so you can see
-the shape of the data in 30 seconds and then go and think.
+This utility exposes the source data shape without applying application rules.
 """
 import json
 import os

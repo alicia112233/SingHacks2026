@@ -1,8 +1,13 @@
 const state = {
   data: null,
-  currentClient: "CL-0012",
+  decisions: { records: [], effective: {} },
+  currentView: "book",
+  currentClient: null,
   currentScenario: 0,
-  decisionLog: [],
+  studioClient: null,
+  studioScenario: 0,
+  studioScale: 100,
+  chartRange: "YTD",
 };
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -14,41 +19,92 @@ const esc = (value) => String(value ?? "")
   .replaceAll('"', "&quot;")
   .replaceAll("'", "&#039;");
 
-function titleCaseDate(iso) {
+function fullDate(iso) {
   return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", {
     day: "2-digit", month: "short", year: "numeric", timeZone: "UTC",
   }).toUpperCase();
 }
 
-function showToast(message) {
-  const toast = $("#toast");
-  toast.textContent = message;
-  toast.classList.add("show");
-  window.clearTimeout(showToast.timer);
-  showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 2300);
+function monthYear(iso) {
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", {
+    month: "short", year: "numeric", timeZone: "UTC",
+  });
 }
 
-function showView(name, clientId) {
+function recordedDate(iso) {
+  return new Date(iso).toLocaleString("en-GB", {
+    day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
+  });
+}
+
+function profiles() {
+  return state.data.client_profiles || state.data.featured_clients;
+}
+
+function showToast(message, tone = "default") {
+  const toast = $("#toast");
+  toast.textContent = message;
+  toast.dataset.tone = tone;
+  toast.classList.add("show");
+  window.clearTimeout(showToast.timer);
+  showToast.timer = window.setTimeout(() => toast.classList.remove("show"), 2800);
+}
+
+function routeFor(name, clientId) {
+  if (name === "client") return `/clients/${encodeURIComponent(clientId)}`;
+  if (name === "scenario") return `/scenario-studio?client=${encodeURIComponent(clientId || state.studioClient)}`;
+  if (name === "governance") return "/evidence-ledger";
+  return "/";
+}
+
+function initials(name) {
+  return String(name || "RM").split(/\s+/).filter(Boolean).slice(0, 2).map((part) => part[0]).join("").toUpperCase();
+}
+
+function showView(name, clientId, updateHistory = true) {
+  const availableViews = ["book", "client", "scenario", "governance"];
+  const nextView = availableViews.includes(name) ? name : "book";
   $$(".view").forEach((view) => { view.hidden = true; });
-  $$(".nav-item").forEach((item) => item.classList.remove("active"));
-  if (name === "book") {
-    $("#book-view").hidden = false;
-    $("#page-title").textContent = "Today’s decision brief";
-    $('.nav-item[data-view="book"]').classList.add("active");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  } else if (name === "client") {
-    state.currentClient = clientId || state.currentClient;
+  $$(".nav-item").forEach((item) => item.classList.toggle("active", item.dataset.view === nextView));
+
+  if (nextView === "client") {
+    state.currentClient = profiles()[clientId] ? clientId : state.currentClient;
     state.currentScenario = 0;
     renderClient(state.currentClient);
     $("#client-view").hidden = false;
-    $("#page-title").textContent = "Client decision room";
-    $('.nav-item[data-view="client"]').classList.add("active");
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  } else {
+    $("#page-title").textContent = "Client review";
+  } else if (nextView === "scenario") {
+    state.studioClient = profiles()[clientId] ? clientId : state.studioClient;
+    state.studioScenario = 0;
+    state.studioScale = 100;
+    renderScenarioStudio();
+    $("#scenario-view").hidden = false;
+    $("#page-title").textContent = "Scenario studio";
+  } else if (nextView === "governance") {
+    renderGovernance();
     $("#governance-view").hidden = false;
     $("#page-title").textContent = "Evidence & governance";
-    $('.nav-item[data-view="governance"]').classList.add("active");
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  } else {
+    $("#book-view").hidden = false;
+    $("#page-title").textContent = "Today’s review queue";
+  }
+
+  state.currentView = nextView;
+  if (updateHistory) history.pushState({ view: nextView, clientId }, "", routeFor(nextView, clientId));
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function applyRoute() {
+  const path = window.location.pathname;
+  const params = new URLSearchParams(window.location.search);
+  if (path.startsWith("/clients/")) {
+    showView("client", decodeURIComponent(path.split("/").filter(Boolean)[1] || ""), false);
+  } else if (path === "/scenario-studio") {
+    showView("scenario", params.get("client") || state.studioClient, false);
+  } else if (path === "/evidence-ledger") {
+    showView("governance", null, false);
+  } else {
+    showView("book", null, false);
   }
 }
 
@@ -56,6 +112,7 @@ function openModal(html) {
   $("#modal-content").innerHTML = html;
   $("#modal").hidden = false;
   document.body.style.overflow = "hidden";
+  window.setTimeout(() => $("#modal-content input, #modal-content textarea, #modal-content button")?.focus(), 0);
 }
 
 function closeModal() {
@@ -69,43 +126,43 @@ function renderBook() {
   $("#book-view").innerHTML = `
     <div class="hero-grid">
       <article class="hero-panel">
-        <span class="section-kicker">MORNING SIGNAL ROOM</span>
-        <h1>${book.conversations_now} client stories contain a decision gap worth opening now.</h1>
-        <p>TESSERA ranks contradictions—not volatility—so performance noise does not outrank a life goal, a liquidity deadline, or a governance constraint.</p>
+        <span class="section-kicker">DAILY BOOK REVIEW</span>
+        <h1>${book.conversations_now} client reviews require RM attention today.</h1>
+        <p>Priorities combine client objectives, liquidity timing, mandate limits, credit exposure and record quality. Every score can be traced to its source records.</p>
         <div class="hero-stats">
           <div><strong>${book.client_count}</strong><small>clients monitored</small></div>
           <div><strong>$${book.aum_usd_m}m</strong><small>book AUM</small></div>
-          <div><strong>${book.portfolio_count}</strong><small>portfolios joined</small></div>
-          <div><strong>${book.stale_valuations}</strong><small>lagged marks surfaced</small></div>
+          <div><strong>${book.portfolio_count}</strong><small>portfolios reviewed</small></div>
+          <div><strong>${book.stale_valuations}</strong><small>lagged marks flagged</small></div>
         </div>
       </article>
       <aside class="signal-panel">
-        <div class="signal-header"><span class="section-kicker">AUTHORITATIVE EVENT</span><span class="severity">${esc(signal.severity)}</span></div>
+        <div class="signal-header"><span class="section-kicker">LATEST MARKET EVENT</span><span class="severity">${esc(signal.severity)}</span></div>
         <h2>${esc(signal.description)}</h2>
-        <p><strong>Transmission:</strong> ${esc(signal.transmission)}</p>
-        <span class="source-line">${esc(signal.source)}</span>
+        <p><strong>Portfolio channel:</strong> ${esc(signal.transmission)}</p>
+        <span class="source-line">Controlled event register · ${fullDate(signal.date)}</span>
       </aside>
     </div>
 
     <div class="section-head">
-      <div><span class="section-kicker">DECISION QUEUE</span><h2>Call order is explainable, not mysterious.</h2></div>
-      <p>Score = goal tension + liquidity pressure + mandate / credit pressure + time. Open a deep decision room where available.</p>
+      <div><span class="section-kicker">REVIEW QUEUE</span><h2>Prioritised client follow-up</h2></div>
+      <p>Now items are intended for today’s capacity; Next items should be prepared after the immediate queue is cleared.</p>
     </div>
     <div class="queue">
-      <div class="queue-head"><span>Score</span><span>Client</span><span>Why now</span><span>Next RM move</span><span></span></div>
+      <div class="queue-head"><span>Score</span><span>Client</span><span>Reason for review</span><span>RM follow-up</span><span></span></div>
       ${queue.map((item) => `
-        <div class="queue-row">
+        <div class="queue-row priority-${item.priority.toLowerCase()}">
           <div class="score-ring" style="--score:${item.score}"><b>${item.score}</b></div>
           <div class="client-cell"><strong>${esc(item.client_name)}</strong><span>${esc(item.client_id)} · ${esc(item.booking_centre)} · $${item.aum_usd_m}m</span></div>
           <div class="cell-copy"><strong>${esc(item.tension)}</strong><span>${esc(item.evidence)}${item.ltv ? ` · ${esc(item.ltv)}` : ""}</span></div>
-          <div class="cell-copy"><span class="priority-chip">${esc(item.priority)}</span><span>${esc(item.next_step)}</span></div>
+          <div class="cell-copy"><span class="priority-chip ${item.priority.toLowerCase()}">${esc(item.priority)}</span><span>${esc(item.next_step)}</span></div>
           <button class="open-client" data-open-client="${esc(item.client_id)}" aria-label="Open ${esc(item.client_name)}">↗</button>
         </div>`).join("")}
     </div>
 
     <div class="section-head">
-      <div><span class="section-kicker">DEEP DEMO</span><h2>Three clients, three kinds of contradiction.</h2></div>
-      <p>Each room moves from what happened → what could happen → what the RM should consider saying or doing next.</p>
+      <div><span class="section-kicker">PRIORITY CASES</span><h2>Reviews needing deeper preparation</h2></div>
+      <p>Each case brings portfolio history, scenario sensitivities, suitability controls and an accountable decision record into one workflow.</p>
     </div>
     <div class="featured-grid">
       ${Object.values(featured).map((client) => `
@@ -115,189 +172,351 @@ function renderBook() {
           <p>${esc(client.tension.portfolio_does)} ${esc(client.tension.future_demands)}</p>
           <b>↗</b>
         </button>`).join("")}
-    </div>
-  `;
-}
-
-function pathChart(points) {
-  const w = 700, h = 130, padX = 28, padY = 24;
-  const values = points.map((p) => p.aum_usd_m);
-  const min = Math.min(...values), max = Math.max(...values);
-  const spread = Math.max(max - min, max * 0.04);
-  const coords = points.map((p, i) => ({
-    x: padX + (i * (w - padX * 2) / (points.length - 1)),
-    y: padY + ((max - p.aum_usd_m) / spread) * (h - padY * 2),
-    ...p,
-  }));
-  const line = coords.map((p, i) => `${i ? "L" : "M"}${p.x},${p.y}`).join(" ");
-  const area = `${line} L${coords.at(-1).x},${h} L${coords[0].x},${h} Z`;
-  return `
-    <div class="path-chart">
-      <svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Portfolio value path">
-        <defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#2d5c56" stop-opacity=".18"/><stop offset="1" stop-color="#2d5c56" stop-opacity="0"/></linearGradient></defs>
-        <path d="${area}" fill="url(#area)"/><path d="${line}" fill="none" stroke="#2d5c56" stroke-width="2.5"/>
-        ${coords.map((p) => `<circle cx="${p.x}" cy="${p.y}" r="5" fill="#f4f0e7" stroke="#b78f50" stroke-width="3"/><text x="${p.x}" y="${p.y - 14}" text-anchor="middle" fill="#17201e" font-size="10" font-weight="700">$${p.aum_usd_m.toFixed(1)}m</text>`).join("")}
-      </svg>
-      <div class="path-labels">${points.map((p) => `<span>${titleCaseDate(p.date).replace(" 2026", "").replace(" 2025", "")}</span>`).join("")}</div>
     </div>`;
 }
 
-function scenarioHTML(client, index) {
-  const scenario = client.scenarios[index];
-  const impact = scenario.portfolio_impact_pct;
-  const positive = impact > 0;
-  const maxImpact = Math.max(0.01, ...scenario.factors.map((f) => Math.abs(f.impact_usd_m ?? f.shock_pct ?? 0)));
+function rangePoints(points, range) {
+  if (range === "3M") return points.slice(-2);
+  if (range === "6M") return points.slice(-4);
+  return points;
+}
+
+function pathChart(client, range = state.chartRange) {
+  const points = rangePoints(client.snapshot_path, range);
+  const w = 700, h = 150, padX = 48, padTop = 24, padBottom = 30;
+  const values = points.map((point) => point.aum_usd_m);
+  const min = Math.min(...values), max = Math.max(...values);
+  const spread = Math.max(max - min, max * 0.04);
+  const graphHeight = h - padTop - padBottom;
+  const coords = points.map((point, index) => ({
+    x: padX + (index * (w - padX * 2) / Math.max(points.length - 1, 1)),
+    y: padTop + ((max - point.aum_usd_m) / spread) * graphHeight,
+    change: index ? point.aum_usd_m - points[index - 1].aum_usd_m : 0,
+    ...point,
+  }));
+  const line = coords.map((point, index) => `${index ? "L" : "M"}${point.x},${point.y}`).join(" ");
+  const area = `${line} L${coords.at(-1).x},${h - padBottom + 5} L${coords[0].x},${h - padBottom + 5} Z`;
+  const latest = coords.at(-1);
+  const gradientId = `area-${client.client_id}`;
   return `
+    <div class="chart-toolbar" aria-label="Chart time frame">
+      <span>Time frame</span>
+      <div class="segmented-control">${["YTD", "6M", "3M"].map((value) => `<button class="${value === range ? "active" : ""}" data-chart-range="${value}" aria-pressed="${value === range}">${value}</button>`).join("")}</div>
+    </div>
+    <div class="path-chart">
+      <svg viewBox="0 0 ${w} ${h}" role="img" aria-label="Portfolio value history for ${esc(client.name)}">
+        <defs><linearGradient id="${gradientId}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#2d5c56" stop-opacity=".2"/><stop offset="1" stop-color="#2d5c56" stop-opacity="0"/></linearGradient></defs>
+        <line x1="${padX}" y1="${padTop}" x2="${w - padX}" y2="${padTop}" class="chart-grid"/>
+        <line x1="${padX}" y1="${h - padBottom}" x2="${w - padX}" y2="${h - padBottom}" class="chart-grid"/>
+        <path d="${area}" fill="url(#${gradientId})"/><path d="${line}" class="chart-line"/>
+        ${coords.map((point, index) => `<g class="chart-point ${index === coords.length - 1 ? "selected" : ""}" tabindex="0" role="button" data-chart-point data-date="${esc(point.date)}" data-value="${point.aum_usd_m}" data-change="${point.change.toFixed(2)}" aria-label="${monthYear(point.date)}, portfolio value $${point.aum_usd_m.toFixed(2)} million"><circle class="chart-hit" cx="${point.x}" cy="${point.y}" r="14"/><circle class="chart-dot" cx="${point.x}" cy="${point.y}" r="5"/><text x="${point.x}" y="${point.y - 14}" text-anchor="middle">$${point.aum_usd_m.toFixed(1)}m</text></g>`).join("")}
+      </svg>
+      <div class="path-labels" style="--points:${points.length}">${points.map((point) => `<span>${monthYear(point.date)}</span>`).join("")}</div>
+    </div>
+    <div class="chart-readout" aria-live="polite"><strong>${monthYear(latest.date)} · $${latest.aum_usd_m.toFixed(2)}m</strong><span>${latest.change === 0 ? "Starting snapshot" : `${latest.change > 0 ? "+" : ""}$${latest.change.toFixed(2)}m from previous snapshot`}</span></div>`;
+}
+
+function scaled(value, scale) {
+  return value == null ? null : Math.round(value * scale) / 100;
+}
+
+function scenarioHTML(client, index, scale = 100, adjustable = false) {
+  const scenario = client.scenarios[index];
+  const impact = scaled(scenario.portfolio_impact_pct, scale);
+  const impactUsd = scaled(scenario.portfolio_impact_usd_m, scale);
+  const positive = impact > 0;
+  const measures = scenario.factors.map((factor) => scaled(factor.impact_usd_m ?? factor.shock_pct, scale));
+  const maxImpact = Math.max(0.01, ...measures.map((value) => Math.abs(value || 0)));
+  return `
+    ${adjustable ? `<div class="scenario-scale"><div><strong>Assumption scale</strong><span>Apply ${scale}% of the documented shock</span></div><input type="range" min="50" max="150" step="25" value="${scale}" data-scenario-scale aria-label="Assumption scale"/><output>${scale}%</output></div>` : ""}
     <div class="scenario-lead">
       <div><h4>${esc(scenario.name)}</h4><p>${esc(scenario.description)}</p></div>
-      <div class="impact-number ${positive ? "positive" : ""}"><strong>${impact > 0 ? "+" : ""}${impact}%</strong><small>${scenario.portfolio_impact_usd_m == null ? "LENDING VALUE TO TRIGGER" : `${scenario.portfolio_impact_usd_m > 0 ? "+" : ""}$${scenario.portfolio_impact_usd_m}m ILLUSTRATIVE`}</small></div>
+      <div class="impact-number ${positive ? "positive" : ""}"><strong>${impact > 0 ? "+" : ""}${impact.toFixed(1)}%</strong><small>${impactUsd == null ? "LENDING VALUE TO TRIGGER" : `${impactUsd > 0 ? "+" : ""}$${impactUsd.toFixed(2)}m PORTFOLIO IMPACT`}</small></div>
     </div>
     <div class="factor-bars">
-      ${scenario.factors.map((factor) => {
-        const measure = factor.impact_usd_m ?? factor.shock_pct;
-        const width = Math.max(8, Math.abs(measure) / maxImpact * 100);
-        return `<div class="factor-row"><span>${esc(factor.factor)}</span><div class="bar-track"><div class="bar-fill ${measure > 0 ? "positive" : ""}" style="width:${width}%"></div></div><b>${factor.impact_usd_m == null ? `${factor.shock_pct}%` : `${factor.impact_usd_m > 0 ? "+" : ""}$${factor.impact_usd_m}m`}</b></div>`;
+      ${scenario.factors.map((factor, factorIndex) => {
+        const measure = measures[factorIndex];
+        const width = Math.max(8, Math.abs(measure || 0) / maxImpact * 100);
+        const shock = scaled(factor.shock_pct, scale);
+        return `<div class="factor-row"><span>${esc(factor.factor)}</span><div class="bar-track"><div class="bar-fill ${measure > 0 ? "positive" : ""}" style="width:${width}%"></div></div><b>${factor.impact_usd_m == null ? `${shock.toFixed(1)}%` : `${measure > 0 ? "+" : ""}$${measure.toFixed(2)}m`}</b></div>`;
       }).join("")}
     </div>`;
 }
 
+function decisionFor(clientId, index) {
+  return state.decisions.effective[`${clientId}:${index}`] || null;
+}
+
+function recommendationHTML(client, recommendation, index) {
+  const decision = decisionFor(client.client_id, index);
+  const detail = decision?.action === "edited" && decision.note ? decision.note : recommendation.detail;
+  const status = decision?.action || "pending";
+  return `<article class="recommendation" data-recommendation="${index}">
+    <header><h4>${index + 1}. ${esc(recommendation.title)}</h4>${status !== "pending" ? `<span class="decision-status ${status}">${esc(status)}</span>` : ""}</header>
+    <p>${esc(detail)}</p>
+    <footer><span class="suitability">${esc(recommendation.suitability)}</span><div class="recommendation-actions">
+      <button class="action-button" data-decision="edit" data-index="${index}">Edit</button>
+      ${status === "approved" ? `<button class="action-button" data-decision="pending" data-index="${index}">Reopen</button>` : `<button class="action-button approve" data-decision="approved" data-index="${index}">Approve</button>`}
+      <button class="action-button dismiss" data-decision="dismissed" data-index="${index}">Dismiss</button>
+    </div></footer>
+  </article>`;
+}
+
+function recommendationsHTML(client) {
+  const active = [], dismissed = [];
+  client.recommendations.forEach((recommendation, index) => {
+    const entry = { recommendation, index };
+    if (decisionFor(client.client_id, index)?.action === "dismissed") dismissed.push(entry);
+    else active.push(entry);
+  });
+  return `${active.length ? active.map(({ recommendation, index }) => recommendationHTML(client, recommendation, index)).join("") : `<div class="empty-state"><strong>No actions in the active list</strong><span>Restore a dismissed action below or return to the review queue.</span></div>`}
+    ${dismissed.length ? `<details class="dismissed-list"><summary>${dismissed.length} dismissed action${dismissed.length > 1 ? "s" : ""}</summary>${dismissed.map(({ recommendation, index }) => `<div class="dismissed-row"><div><strong>${esc(recommendation.title)}</strong><span>${esc(decisionFor(client.client_id, index)?.note || "Dismissed from the active review")}</span></div><button class="action-button" data-decision="pending" data-index="${index}">Restore</button></div>`).join("")}</details>` : ""}`;
+}
+
 function renderClient(clientId) {
-  const client = state.data.featured_clients[clientId];
-  if (!client) {
-    const card = state.data.book.priority_queue.find((item) => item.client_id === clientId);
-    showToast(`${card.client_name}: ranked evidence available; deep demo is configured for three featured clients.`);
-    return;
-  }
+  const client = profiles()[clientId];
+  if (!client) return;
   state.currentClient = clientId;
   $("#client-view").innerHTML = `
     <div class="client-hero">
-      <div>
-        <button class="back-link" data-back-book>← Back to decision queue</button>
-        <h1>${esc(client.name)}</h1>
-        <p>${esc(client.life_stage)} · ${esc(client.source_of_wealth)}</p>
-      </div>
-      <div>
-        <div class="profile-tags"><span>${esc(client.risk_profile)}</span><span>${esc(client.reporting_language)}</span><span>${esc(client.booking_centre)}</span></div>
-        <div class="client-aum"><strong>$${client.aum_usd_m}m</strong><small>CURRENT BANK-HELD AUM</small></div>
-      </div>
+      <div><button class="back-link" data-back-book>← Back to review queue</button><h1>${esc(client.name)}</h1><p>${esc(client.life_stage)} · ${esc(client.source_of_wealth)}</p></div>
+      <div><div class="profile-tags"><span>${esc(client.risk_profile)}</span><span>${esc(client.reporting_language)}</span><span>${esc(client.booking_centre)}</span></div><div class="client-aum"><strong>$${client.aum_usd_m}m</strong><small>CURRENT BANK-HELD AUM</small></div></div>
     </div>
-    <div class="metric-rail">${client.headline_metrics.map((m) => `<div><strong>${esc(m.value)}</strong><span>${esc(m.label)}</span></div>`).join("")}</div>
+    <div class="metric-rail">${client.headline_metrics.map((metric) => `<div><strong>${esc(metric.value)}</strong><span>${esc(metric.label)}</span></div>`).join("")}</div>
     <div class="tension-map">
-      <div class="tension-item"><small>CLIENT SAYS</small><p>${esc(client.tension.client_says)}</p></div>
-      <div class="tension-item"><small>PORTFOLIO DOES</small><p>${esc(client.tension.portfolio_does)}</p></div>
-      <div class="tension-item"><small>FUTURE DEMANDS</small><p>${esc(client.tension.future_demands)}</p></div>
+      <div class="tension-item"><small>CLIENT POSITION</small><p>${esc(client.tension.client_says)}</p></div>
+      <div class="tension-item"><small>PORTFOLIO POSITION</small><p>${esc(client.tension.portfolio_does)}</p></div>
+      <div class="tension-item"><small>UPCOMING CONSTRAINT</small><p>${esc(client.tension.future_demands)}</p></div>
     </div>
 
     <div class="analysis-grid">
       <section class="panel">
-        <div class="panel-title"><h3>What changed through time</h3><small>FIVE OBSERVED SNAPSHOTS · USD CONVERTED</small></div>
-        ${pathChart(client.snapshot_path)}
-        <p class="chart-note">* Value path is not performance: it includes market movement, trades, withdrawals and FX translation. Position deltas are used as investigation leads, not attribution claims.</p>
+        <div class="panel-title"><h3>Portfolio value history</h3><small>OBSERVED SNAPSHOTS · USD CONVERTED</small></div>
+        <div id="chart-panel-body">${pathChart(client)}</div>
+        <p class="chart-note">Value includes market movement, transactions, withdrawals and currency translation. Select a point for the exact snapshot value and period change.</p>
       </section>
       <aside class="panel">
-        <div class="panel-title"><h3>Controlled event trail</h3><small>EVENT_LOG.CSV ONLY</small></div>
-        <div class="events-list">${client.linked_events.slice(-3).map((event) => `<div class="event-item"><small>${titleCaseDate(event.date)} · ${esc(event.severity)}</small><p>${esc(event.description)}</p><span>${esc(event.transmission)}</span></div>`).join("")}</div>
+        <div class="panel-title"><h3>Relevant market events</h3><small>CONTROLLED EVENT REGISTER</small></div>
+        <div class="events-list">${client.linked_events.length ? client.linked_events.slice(-3).map((event) => `<div class="event-item"><small>${fullDate(event.date)} · ${esc(event.severity)}</small><p>${esc(event.description)}</p><span>${esc(event.transmission)}</span></div>`).join("") : `<div class="empty-state"><strong>No directly linked events</strong><span>The review is based on portfolio, mandate and client records.</span></div>`}</div>
       </aside>
     </div>
 
     <section class="panel scenario-panel">
-      <aside class="scenario-sidebar">
-        <span class="section-kicker">WHAT COULD HAPPEN</span>
-        <h3>Counterfactual studio</h3>
-        ${client.scenarios.map((scenario, index) => `<button class="scenario-selector ${index === state.currentScenario ? "active" : ""}" data-scenario="${index}">${esc(scenario.name)}</button>`).join("")}
-      </aside>
-      <div class="scenario-output" id="scenario-output">${scenarioHTML(client, state.currentScenario)}</div>
+      <aside class="scenario-sidebar"><span class="section-kicker">SCENARIO ANALYSIS</span><h3>Test the portfolio</h3>${client.scenarios.map((scenario, index) => `<button class="scenario-selector ${index === state.currentScenario ? "active" : ""}" data-client-scenario="${index}">${esc(scenario.name)}</button>`).join("")}<button class="scenario-studio-link" data-open-studio="${esc(client.client_id)}">Open full scenario studio →</button></aside>
+      <div class="scenario-output" id="client-scenario-output">${scenarioHTML(client, state.currentScenario)}</div>
     </section>
 
     <div class="decision-grid">
-      <section class="panel">
-        <div class="panel-title"><h3>Actions worth considering</h3><small>DRAFT · RM DECIDES</small></div>
-        ${client.recommendations.map((rec, index) => `<article class="recommendation"><h4>${index + 1}. ${esc(rec.title)}</h4><p>${esc(rec.detail)}</p><footer><span class="suitability">${esc(rec.suitability)}</span><div><button class="action-button" data-decision="Edit" data-index="${index}">Edit</button> <button class="action-button approve" data-decision="Approve" data-index="${index}">Approve</button></div></footer></article>`).join("")}
-      </section>
-      <aside class="panel conversation-card">
-        <div class="panel-title"><h3>Conversation brief</h3><small>${esc(client.confidence.level)}</small></div>
-        <div class="talk-line"><small>OPEN WITH</small><p>${esc(client.conversation.open)}</p></div>
-        <div class="talk-line"><small>SHOW</small><p>${esc(client.conversation.show)}</p></div>
-        <div class="talk-line"><small>ASK</small><p>${esc(client.conversation.ask)}</p></div>
-        <div class="talk-line"><small>AVOID</small><p>${esc(client.conversation.avoid)}</p></div>
-        <button class="evidence-button" data-evidence>Open evidence passport →</button>
-      </aside>
+      <section class="panel"><div class="panel-title"><h3>Actions worth considering</h3><small>RM REVIEW REQUIRED</small></div><div id="recommendations-list">${recommendationsHTML(client)}</div></section>
+      <aside class="panel conversation-card"><div class="panel-title"><h3>Conversation brief</h3><small>${esc(client.confidence.level)}</small></div><div class="talk-line"><small>OPEN WITH</small><p>${esc(client.conversation.open)}</p></div><div class="talk-line"><small>SHOW</small><p>${esc(client.conversation.show)}</p></div><div class="talk-line"><small>ASK</small><p>${esc(client.conversation.ask)}</p></div><div class="talk-line"><small>AVOID</small><p>${esc(client.conversation.avoid)}</p></div><button class="evidence-button" data-evidence>Open evidence passport →</button></aside>
     </div>`;
+}
+
+function renderScenarioStudio() {
+  const allProfiles = profiles();
+  const client = allProfiles[state.studioClient] || Object.values(allProfiles)[0];
+  state.studioClient = client.client_id;
+  state.studioScenario = Math.min(state.studioScenario, client.scenarios.length - 1);
+  $("#scenario-view").innerHTML = `
+    <section class="studio-hero">
+      <div><span class="section-kicker">PORTFOLIO SENSITIVITY</span><h1>Scenario studio</h1><p>Adjust documented market shocks and review their direct effect on current bank-held positions. Results are sensitivities, not forecasts.</p></div>
+      <label class="client-select"><span>Client</span><select data-studio-client>${Object.values(allProfiles).map((profile) => `<option value="${esc(profile.client_id)}" ${profile.client_id === client.client_id ? "selected" : ""}>${esc(profile.name)} · ${esc(profile.client_id)}</option>`).join("")}</select></label>
+    </section>
+    <div class="studio-grid">
+      <aside class="studio-cases"><span class="section-kicker">SCENARIOS</span>${client.scenarios.map((scenario, index) => `<button class="studio-case ${index === state.studioScenario ? "active" : ""}" data-studio-scenario="${index}"><strong>${esc(scenario.name)}</strong><span>${scenario.portfolio_impact_pct > 0 ? "+" : ""}${scenario.portfolio_impact_pct.toFixed(1)}% at 100%</span></button>`).join("")}<button class="small-button open-room" data-open-client="${esc(client.client_id)}">Open client review</button></aside>
+      <section class="panel studio-output"><div class="panel-title"><h3>${esc(client.name)}</h3><small>$${client.aum_usd_m}m CURRENT AUM</small></div><div id="studio-scenario-output">${scenarioHTML(client, state.studioScenario, state.studioScale, true)}</div><div class="scenario-footnote"><strong>Calculation scope</strong><span>Current positions only. Outside assets, tax, liquidity and second-order effects require separate review.</span></div></section>
+    </div>`;
+}
+
+function renderDecisionLedger() {
+  const records = [...state.decisions.records].reverse().slice(0, 12);
+  if (!records.length) return `<div class="empty-state ledger-empty"><strong>No decisions recorded</strong><span>Approvals, edits and dismissals from client reviews will appear here.</span></div>`;
+  return `<div class="ledger-list">${records.map((record) => `<article class="ledger-row"><span class="decision-status ${esc(record.action)}">${esc(record.action)}</span><div><strong>${esc(record.recommendation_title)}</strong><p>${esc(record.client_name)} · ${esc(record.actor)} · ${recordedDate(record.recorded_at)}</p>${record.note ? `<small>${esc(record.note)}</small>` : ""}</div></article>`).join("")}</div>`;
 }
 
 function renderGovernance() {
   const { governance, data_quality: quality } = state.data;
   const nodes = [
-    ["01", "Bank records", "Five snapshots, portfolios, facilities, needs and RM notes"],
-    ["02", "Temporal joins", "As-of-safe views; stale marks carried visibly"],
-    ["03", "Policy compiler", "Mandates, exclusions, concentration and event authority"],
-    ["04", "Evidence bundle", "Minimum rows needed for one defensible claim"],
-    ["05", "Private model", "Narrative and scenario explanation inside bank boundary"],
-    ["06", "RM decision", "Approve, edit, reject and rationale in the ledger"],
+    ["01", "Bank records", "Dated positions, portfolios, facilities, needs and RM notes"],
+    ["02", "Temporal joins", "As-of views preserve valuation dates and surface stale marks"],
+    ["03", "Policy checks", "Mandates, exclusions, concentration and event authority"],
+    ["04", "Evidence set", "Minimum records required for each review point"],
+    ["05", "Brief assembly", "Structured summary prepared inside the bank boundary"],
+    ["06", "RM decision", "Approve, edit, dismiss and rationale retained in the ledger"],
   ];
   $("#governance-view").innerHTML = `
-    <section class="governance-hero"><span class="section-kicker">TRUST BY CONSTRUCTION</span><h1>The model may write the sentence. It cannot choose its own facts.</h1><p>TESSERA compiles a purpose-limited evidence bundle before generation, treats the event log as authoritative, runs suitability checks first, and preserves the RM as the accountable decision-maker.</p></section>
-    <section class="architecture"><div class="panel-title"><h3>Deployable bank architecture</h3><small>ZERO PUBLIC-LLM DATA EGRESS</small></div><div class="architecture-flow">${nodes.map((n) => `<div class="architecture-node"><b>${n[0]}</b><strong>${n[1]}</strong><span>${n[2]}</span></div>`).join("")}</div></section>
-    <div class="governance-grid">
-      <section class="panel"><div class="panel-title"><h3>Five non-negotiables</h3><small>${esc(governance.recommendation_state)}</small></div><div class="principle-list">${governance.principles.map((p, i) => `<div class="principle-item"><b>${i + 1}</b><p>${esc(p)}</p></div>`).join("")}</div></section>
-      <section class="panel"><div class="panel-title"><h3>Data fitness before advice</h3><small>${esc(quality.overall)}</small></div><div class="quality-list">${quality.checks.map((q) => `<div class="quality-item"><div><strong>${esc(q.name)}</strong><span>${esc(q.evidence)}</span></div><b class="quality-status ${esc(q.status)}">${esc(q.status)}</b></div>`).join("")}</div></section>
-    </div>`;
+    <section class="governance-hero"><span class="section-kicker">CONTROLLED BY DESIGN</span><h1>Every review point has an owner, a source and a recorded outcome.</h1><p>TESSERA checks data quality and suitability before preparing a brief. Relationship Managers remain accountable for the action taken and the rationale behind it.</p></section>
+    <section class="architecture"><div class="panel-title"><h3>Operating architecture</h3><small>NO EXTERNAL CLIENT-DATA EGRESS</small></div><div class="architecture-flow">${nodes.map((node) => `<div class="architecture-node"><b>${node[0]}</b><strong>${node[1]}</strong><span>${node[2]}</span></div>`).join("")}</div></section>
+    <div class="governance-grid"><section class="panel"><div class="panel-title"><h3>Control framework</h3><small>${esc(governance.recommendation_state)}</small></div><div class="principle-list">${governance.principles.map((principle, index) => `<div class="principle-item"><b>${index + 1}</b><p>${esc(principle)}</p></div>`).join("")}</div></section><section class="panel"><div class="panel-title"><h3>Data fitness before advice</h3><small>${esc(quality.overall)}</small></div><div class="quality-list">${quality.checks.map((item) => `<div class="quality-item"><div><strong>${esc(item.name)}</strong><span>${esc(item.evidence)}</span></div><b class="quality-status ${esc(item.status)}">${esc(item.status)}</b></div>`).join("")}</div></section></div>
+    <section class="panel decision-ledger"><div class="panel-title"><h3>Decision ledger</h3><small>${state.decisions.records.length} RECORDED EVENT${state.decisions.records.length === 1 ? "" : "S"}</small></div>${renderDecisionLedger()}</section>`;
 }
 
 function showEvidence(client) {
-  openModal(`<span class="section-kicker">EVIDENCE PASSPORT</span><h2>${esc(client.name)}</h2><p>${esc(client.confidence.reason)} Every row below travels with the draft and remains inspectable during approval.</p>${client.evidence_passport.map((item) => `<div class="passport-row"><header><strong>${esc(item.claim)}</strong><b>${esc(item.status)}</b></header><p>${esc(item.source)}</p></div>`).join("")}`);
+  openModal(`<span class="section-kicker">EVIDENCE PASSPORT</span><h2>${esc(client.name)}</h2><p>${esc(client.confidence.reason)} Each review point remains linked to the record used to support it.</p>${client.evidence_passport.map((item) => `<div class="passport-row"><header><strong>${esc(item.claim)}</strong><b>${esc(item.status)}</b></header><p>${esc(item.source)}</p></div>`).join("")}`);
 }
 
 function showMethod() {
-  openModal(`<span class="section-kicker">GENERATION METHOD</span><h2>Evidence first. Language second.</h2><p>This prototype uses deterministic rules so the hackathon output is fully reproducible. In deployment, only the bounded evidence bundle would be sent to a bank-hosted model.</p><div class="method-steps"><div class="method-step"><b>01 · JOIN AS OF TIME</b><p>Five dated holding snapshots are never collapsed into one static portfolio.</p></div><div class="method-step"><b>02 · DETECT A DECISION GAP</b><p>Client goals, notes, holdings, look-through references, cash needs, mandates and facilities are compared.</p></div><div class="method-step"><b>03 · APPLY GOVERNANCE</b><p>Authoritative event sourcing, mandate checks, lag flags and confidence downgrades happen before narrative.</p></div><div class="method-step"><b>04 · GENERATE A DRAFT</b><p>The output is a conversation and reversible options, not an autonomous trade instruction.</p></div><div class="method-step"><b>05 · RECORD THE HUMAN DECISION</b><p>The RM approves, edits or rejects; the evidence and rationale remain attached.</p></div></div>`);
+  openModal(`<span class="section-kicker">METHODOLOGY & CONTROLS</span><h2>From records to an accountable decision</h2><p>Portfolio data is joined by effective date, checked against mandate rules, and reduced to the records required for the current client review.</p><div class="method-steps"><div class="method-step"><b>01 · JOIN BY EFFECTIVE DATE</b><p>Dated holding snapshots remain separate so historical context is preserved.</p></div><div class="method-step"><b>02 · IDENTIFY A REVIEW POINT</b><p>Client objectives, holdings, cash needs, mandates, facilities and RM notes are compared.</p></div><div class="method-step"><b>03 · APPLY CONTROLS</b><p>Mandate checks, approved event sources, valuation-lag flags and confidence rules run before the brief is shown.</p></div><div class="method-step"><b>04 · PREPARE OPTIONS</b><p>The system presents reversible actions and their suitability conditions; it does not place trades.</p></div><div class="method-step"><b>05 · RECORD THE DECISION</b><p>Approval, editing, dismissal and rationale are written to the audit ledger.</p></div></div>`);
+}
+
+function showEditRecommendation(client, index) {
+  const recommendation = client.recommendations[index];
+  const current = decisionFor(client.client_id, index);
+  const value = current?.note || recommendation.detail;
+  openModal(`<span class="section-kicker">EDIT ACTION</span><h2>${esc(recommendation.title)}</h2><p>Update the wording before approval. The original recommendation remains available in the evidence record.</p><form id="edit-action-form" data-index="${index}"><label class="form-field"><span>Revised action</span><textarea name="note" maxlength="1000" rows="7" required>${esc(value)}</textarea></label><div class="modal-actions"><button type="button" class="small-button" data-close-modal>Cancel</button><button type="submit" class="action-button approve">Save revision</button></div></form>`);
+}
+
+async function persistDecision(client, index, action, note = "") {
+  const response = await fetch("/api/decisions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ client_id: client.client_id, recommendation_index: index, action, note }),
+  });
+  const payload = await response.json();
+  if (!response.ok) throw new Error(payload.error || `Request failed (${response.status})`);
+  state.decisions = { records: payload.records, effective: payload.effective };
+  if (state.currentView === "client") renderClient(state.currentClient);
+  if (state.currentView === "governance") renderGovernance();
+}
+
+function showChartPoint(point) {
+  const chart = point.closest("#chart-panel-body");
+  if (!chart) return;
+  $$(".chart-point", chart).forEach((item) => item.classList.toggle("selected", item === point));
+  const change = Number(point.dataset.change);
+  $(".chart-readout", chart).innerHTML = `<strong>${monthYear(point.dataset.date)} · $${Number(point.dataset.value).toFixed(2)}m</strong><span>${change === 0 ? "Starting snapshot" : `${change > 0 ? "+" : ""}$${change.toFixed(2)}m from previous snapshot`}</span>`;
 }
 
 function bindEvents() {
-  document.addEventListener("click", (event) => {
+  document.addEventListener("click", async (event) => {
     const nav = event.target.closest("[data-view]");
     if (nav) showView(nav.dataset.view, nav.dataset.client);
     const open = event.target.closest("[data-open-client]");
     if (open) showView("client", open.dataset.openClient);
+    const studio = event.target.closest("[data-open-studio]");
+    if (studio) showView("scenario", studio.dataset.openStudio);
     if (event.target.closest("[data-back-book]")) showView("book");
-    const scenario = event.target.closest("[data-scenario]");
-    if (scenario) {
-      state.currentScenario = Number(scenario.dataset.scenario);
-      $$(".scenario-selector").forEach((button, index) => button.classList.toggle("active", index === state.currentScenario));
-      $("#scenario-output").innerHTML = scenarioHTML(state.data.featured_clients[state.currentClient], state.currentScenario);
+
+    const clientScenario = event.target.closest("[data-client-scenario]");
+    if (clientScenario) {
+      state.currentScenario = Number(clientScenario.dataset.clientScenario);
+      $$("[data-client-scenario]").forEach((button, index) => button.classList.toggle("active", index === state.currentScenario));
+      $("#client-scenario-output").innerHTML = scenarioHTML(profiles()[state.currentClient], state.currentScenario);
     }
-    const decision = event.target.closest("[data-decision]");
-    if (decision) {
-      const client = state.data.featured_clients[state.currentClient];
-      const record = { client: client.client_id, action: decision.dataset.decision, recommendation: Number(decision.dataset.index), at: new Date().toISOString() };
-      state.decisionLog.push(record);
-      showToast(`${record.action} recorded in the evidence ledger (demo state).`);
+
+    const studioScenario = event.target.closest("[data-studio-scenario]");
+    if (studioScenario) {
+      state.studioScenario = Number(studioScenario.dataset.studioScenario);
+      state.studioScale = 100;
+      renderScenarioStudio();
     }
-    if (event.target.closest("[data-evidence]")) showEvidence(state.data.featured_clients[state.currentClient]);
+
+    const range = event.target.closest("[data-chart-range]");
+    if (range) {
+      state.chartRange = range.dataset.chartRange;
+      $("#chart-panel-body").innerHTML = pathChart(profiles()[state.currentClient], state.chartRange);
+    }
+
+    const chartPoint = event.target.closest("[data-chart-point]");
+    if (chartPoint) showChartPoint(chartPoint);
+
+    const decisionButton = event.target.closest("[data-decision]");
+    if (decisionButton) {
+      const client = profiles()[state.currentClient];
+      const index = Number(decisionButton.dataset.index);
+      const action = decisionButton.dataset.decision;
+      if (action === "edit") {
+        showEditRecommendation(client, index);
+      } else {
+        decisionButton.disabled = true;
+        try {
+          await persistDecision(client, index, action, decisionFor(client.client_id, index)?.note || "");
+          showToast(action === "dismissed" ? "Action dismissed. It can be restored from this review." : action === "approved" ? "Action approved and written to the decision ledger." : "Action restored to the active review.");
+        } catch (error) {
+          decisionButton.disabled = false;
+          showToast(error.message, "error");
+        }
+      }
+    }
+
+    if (event.target.closest("[data-evidence]")) showEvidence(profiles()[state.currentClient]);
     if (event.target.closest("[data-close-modal]")) closeModal();
   });
+
+  document.addEventListener("change", (event) => {
+    if (event.target.matches("[data-studio-client]")) {
+      state.studioClient = event.target.value;
+      state.studioScenario = 0;
+      state.studioScale = 100;
+      history.replaceState({ view: "scenario", clientId: state.studioClient }, "", routeFor("scenario", state.studioClient));
+      renderScenarioStudio();
+    }
+  });
+
+  document.addEventListener("input", (event) => {
+    if (event.target.matches("[data-scenario-scale]")) {
+      state.studioScale = Number(event.target.value);
+      $("#studio-scenario-output").innerHTML = scenarioHTML(profiles()[state.studioClient], state.studioScenario, state.studioScale, true);
+    }
+  });
+
+  document.addEventListener("focusin", (event) => {
+    const chartPoint = event.target.closest("[data-chart-point]");
+    if (chartPoint) showChartPoint(chartPoint);
+  });
+
+  document.addEventListener("mouseover", (event) => {
+    const chartPoint = event.target.closest("[data-chart-point]");
+    if (chartPoint) showChartPoint(chartPoint);
+  });
+
+  document.addEventListener("submit", async (event) => {
+    if (!event.target.matches("#edit-action-form")) return;
+    event.preventDefault();
+    const form = event.target;
+    const submit = form.querySelector('[type="submit"]');
+    submit.disabled = true;
+    try {
+      await persistDecision(profiles()[state.currentClient], Number(form.dataset.index), "edited", new FormData(form).get("note"));
+      closeModal();
+      showToast("Revision saved to the decision ledger.");
+    } catch (error) {
+      submit.disabled = false;
+      showToast(error.message, "error");
+    }
+  });
+
   $("#method-button").addEventListener("click", showMethod);
   document.addEventListener("keydown", (event) => { if (event.key === "Escape") closeModal(); });
+  window.addEventListener("popstate", applyRoute);
 }
 
 async function init() {
   try {
-    const response = await fetch("/api/intelligence");
-    if (!response.ok) throw new Error(`API ${response.status}`);
-    state.data = await response.json();
-    $("#as-of").textContent = titleCaseDate(state.data.meta.as_of);
+    const [intelligenceResponse, decisionsResponse] = await Promise.all([
+      fetch("/api/intelligence"),
+      fetch("/api/decisions"),
+    ]);
+    if (!intelligenceResponse.ok) throw new Error(`Intelligence service returned ${intelligenceResponse.status}`);
+    if (!decisionsResponse.ok) throw new Error(`Decision ledger returned ${decisionsResponse.status}`);
+    state.data = await intelligenceResponse.json();
+    state.decisions = await decisionsResponse.json();
+    const focusClients = Object.keys(state.data.featured_clients);
+    state.currentClient = focusClients[0] || Object.keys(profiles())[0];
+    state.studioClient = focusClients.at(-1) || state.currentClient;
+    $("#as-of").textContent = fullDate(state.data.meta.as_of);
+    $("#rm-context").textContent = `${state.data.meta.rm} · ${state.data.meta.desk}`.toUpperCase();
+    $("#rm-avatar").textContent = initials(state.data.meta.rm);
+    $("#rm-avatar").setAttribute("aria-label", state.data.meta.rm);
     $("#now-count").textContent = state.data.book.conversations_now;
     renderBook();
     renderGovernance();
     bindEvents();
     $("#loading").remove();
     $("#app").hidden = false;
-    const params = new URLSearchParams(window.location.search);
-    const requestedClient = params.get("client");
-    const requestedView = params.get("view");
-    if (requestedClient) showView("client", requestedClient);
-    else if (requestedView === "governance") showView("governance");
+    applyRoute();
   } catch (error) {
-    $("#loading").innerHTML = `<p>Could not load the evidence bundle: ${esc(error.message)}</p>`;
+    $("#loading").innerHTML = `<p>Unable to load current portfolio records.</p><small>${esc(error.message)}</small><button class="ghost-button" onclick="window.location.reload()">Retry</button>`;
   }
 }
 
