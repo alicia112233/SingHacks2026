@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#17201e" />
+    <title>TESSERA — Wealth Decision Intelligence</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div id="loading" class="loading-screen">
+      <div class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+      <p>Compiling the evidence graph…</p>
+    </div>
+
+    <div id="app" class="app-shell" hidden>
+      <aside class="sidebar">
+        <div class="brand-block">
+          <div class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <div>
+            <strong>TESSERA</strong>
+            <span>wealth decision intelligence</span>
+          </div>
+        </div>
+
+        <nav aria-label="Primary">
+          <button class="nav-item active" data-view="book">
+            <span class="nav-glyph">⌁</span><span>Today</span><b id="now-count">0</b>
+          </button>
+          <button class="nav-item" data-view="client" data-client="CL-0012">
+            <span class="nav-glyph">◫</span><span>Client room</span>
+          </button>
+          <button class="nav-item" data-view="client" data-client="CL-0019">
+            <span class="nav-glyph">◒</span><span>Scenario studio</span>
+          </button>
+          <button class="nav-item" data-view="governance">
+            <span class="nav-glyph">⌘</span><span>Evidence ledger</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-spacer"></div>
+        <div class="trust-stamp">
+          <span class="status-dot"></span>
+          <div><strong>Evidence-bound</strong><small>RM approval required</small></div>
+        </div>
+        <p class="concept-note">Unofficial SingHacks 2026 concept<br />Synthetic data only</p>
+      </aside>
+
+      <main class="main-stage">
+        <header class="topbar">
+          <div>
+            <span class="eyebrow">PRISCILLA ONG · ASIA DESK</span>
+            <strong id="page-title">Today’s decision brief</strong>
+          </div>
+          <div class="top-actions">
+            <button class="ghost-button" id="method-button">How this was generated</button>
+            <div class="asof"><small>AS OF</small><span id="as-of">26 AUG 2026</span></div>
+            <div class="avatar">PO</div>
+          </div>
+        </header>
+
+        <section id="book-view" class="view"></section>
+        <section id="client-view" class="view" hidden></section>
+        <section id="governance-view" class="view" hidden></section>
+      </main>
+    </div>
+
+    <div id="modal" class="modal" hidden>
+      <button class="modal-scrim" data-close-modal aria-label="Close"></button>
+      <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <button class="modal-close" data-close-modal aria-label="Close">×</button>
+        <div id="modal-content"></div>
+      </section>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script src="/app.js" defer></script>
+  </body>
+</html>
