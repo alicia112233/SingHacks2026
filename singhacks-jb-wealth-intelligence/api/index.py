@@ -9,6 +9,7 @@ from pathlib import Path
 
 from flask import Flask, jsonify, request, send_from_directory
 
+from tessera.evaluation import evaluate_recommendation
 from tessera.services import (
     MAX_REQUEST_BYTES,
     IntelligenceService,
@@ -77,7 +78,10 @@ def post_decision():
     if not request.is_json:
         return jsonify(error="Content-Type must be application/json"), HTTPStatus.UNSUPPORTED_MEDIA_TYPE
     try:
-        record = create_decision_record(request.get_json(), INTELLIGENCE.get())
+        body = request.get_json(silent=True)
+        if body is None:
+            raise ValueError("Request body must be valid JSON")
+        record = create_decision_record(body, INTELLIGENCE.get())
         return jsonify(decision_store().append(record)), HTTPStatus.CREATED
     except (TypeError, ValueError) as error:
         return jsonify(error=str(error)), HTTPStatus.BAD_REQUEST
@@ -85,6 +89,30 @@ def post_decision():
         return jsonify(error=str(error)), HTTPStatus.SERVICE_UNAVAILABLE
     except Exception:
         return jsonify(error="The decision could not be recorded."), HTTPStatus.SERVICE_UNAVAILABLE
+
+
+@app.post("/api/evaluations")
+def post_evaluation():
+    if not request.is_json:
+        return jsonify(error="Content-Type must be application/json"), HTTPStatus.UNSUPPORTED_MEDIA_TYPE
+    try:
+        body = request.get_json(silent=True)
+        if body is None:
+            raise ValueError("Request body must be valid JSON")
+        if not isinstance(body, dict):
+            raise ValueError("Request body must be an object")
+        client_id = str(body.get("client_id", ""))
+        recommendation_index = int(body.get("recommendation_index", -1))
+        return jsonify(
+            evaluate_recommendation(
+                INTELLIGENCE.get(), client_id, recommendation_index
+            )
+        )
+    except (TypeError, ValueError) as error:
+        return jsonify(error=str(error)), HTTPStatus.BAD_REQUEST
+    except Exception:
+        app.logger.exception("Independent recommendation evaluation failed")
+        return jsonify(error="The independent evaluation could not be completed."), HTTPStatus.SERVICE_UNAVAILABLE
 
 
 @app.get("/health")

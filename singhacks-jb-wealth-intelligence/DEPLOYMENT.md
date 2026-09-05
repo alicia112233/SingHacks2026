@@ -38,6 +38,31 @@ ignored; `.env.example` contains only the variable shape.
 
 ## 3. Deploy
 
+### Optional independent model judges
+
+The multi-provider judge panel is off by default. To enable it, configure these
+Vercel environment variables:
+
+```text
+TESSERA_EXTERNAL_JUDGES_ENABLED=true
+TESSERA_JUDGE_MODELS=openai/gpt-5.4,anthropic/claude-sonnet-4.6,google/gemini-3.7-flash
+```
+
+`TESSERA_JUDGE_MODELS` accepts up to three comma-separated AI Gateway model
+IDs. You can replace Sonnet with `anthropic/claude-opus-4.6`, or configure both
+Claude models if same-vendor comparison is intentional.
+
+Use Vercel AI Gateway OIDC in the hosted function or add `AI_GATEWAY_API_KEY`.
+Create a static key on the Vercel AI Gateway API Keys page; this is a gateway
+key, not an OpenAI, Anthropic or Google provider key. For local `python app.py`
+runs, copy `.env.example` to `.env.local`; the local server loads that file at
+startup. Alternatively, `vercel env pull .env.local` supplies a short-lived
+`VERCEL_OIDC_TOKEN`.
+Review the configured models against the live AI Gateway model catalogue before
+deployment. The evaluator sends a purpose-limited packet without client name,
+client ID or raw RM notes. For real banking data, enable this only after privacy,
+model-risk and vendor approvals.
+
 From this directory:
 
 ```powershell
@@ -78,6 +103,11 @@ curl.exe https://your-domain.example/api/decisions
 The health response must report `decision_storage` as `configured`. In the UI,
 open a client, dismiss an action, refresh the page, restore it, and confirm both
 events appear in the Evidence Ledger.
+
+Open a recommendation confidence badge and run the model panel. Confirm that
+the deterministic score always acts as a ceiling, predictive probability is
+shown as unavailable until calibrated, and each configured provider returns an
+independent result.
 
 ## Production controls
 

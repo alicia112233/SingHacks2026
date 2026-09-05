@@ -87,7 +87,27 @@ class IntelligenceEngineTests(unittest.TestCase):
             for recommendation in profile["recommendations"]:
                 self.assertTrue(recommendation["reversible"])
                 self.assertTrue(recommendation["suitability"])
+                validation = recommendation["risk_validation"]
+                self.assertGreaterEqual(validation["score"], 0)
+                self.assertLessEqual(validation["score"], 84)
+                self.assertEqual(validation["human_validation"]["status"], "Required")
+                self.assertEqual(validation["model_validation"]["status"], "Provisional")
+                self.assertEqual(sum(item["max"] for item in validation["dimensions"]), 100)
+                rationale = recommendation["decision_rationale"]
+                self.assertTrue(rationale["summary"])
+                self.assertTrue(rationale["trigger"])
+                self.assertTrue(rationale["supporting_evidence"])
+                self.assertIn(recommendation["suitability"], rationale["rm_checks"])
             self.assertGreaterEqual(len(profile["evidence_passport"]), 4)
+
+    def test_confidence_caps_surface_known_evidence_limits(self):
+        cheung = self.payload["featured_clients"]["CL-0012"]
+        lau = self.payload["featured_clients"]["CL-0014"]
+        abdullah = self.payload["featured_clients"]["CL-0019"]
+        self.assertTrue(all(item["risk_validation"]["score"] == 59 for item in cheung["recommendations"]))
+        self.assertTrue(all(item["risk_validation"]["band"] == "Verify first" for item in cheung["recommendations"]))
+        self.assertTrue(all(item["risk_validation"]["score"] == 84 for item in lau["recommendations"]))
+        self.assertTrue(all(item["risk_validation"]["score"] == 79 for item in abdullah["recommendations"]))
 
     def test_capacity_band_contains_five_now_conversations(self):
         queue = self.payload["book"]["priority_queue"]

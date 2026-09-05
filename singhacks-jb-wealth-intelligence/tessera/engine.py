@@ -944,6 +944,287 @@ def _feature_profile(bundle: dict[str, Any], client_id: str) -> dict[str, Any]:
     return base
 
 
+def _recommendation_risk_validation(
+    bundle: dict[str, Any], profile: dict[str, Any], recommendation: dict[str, Any]
+) -> dict[str, Any]:
+    """Score whether an RM can safely rely on a generated recommendation.
+
+    The score measures evidence and control confidence, not expected investment
+    performance. The bundled scenarios are sensitivities rather than a calibrated
+    predictive model, so scores are capped until outcome labels and back-testing
+    are available.
+    """
+
+    client_id = profile["client_id"]
+    as_of = _as_of(bundle)
+    client = bundle["clients"][bundle["clients"].client_id == client_id].iloc[0]
+    current = bundle["holdings"][
+        (bundle["holdings"].client_id == client_id)
+        & (bundle["holdings"].snapshot_date == as_of)
+    ]
+    instruments = bundle["instruments"]
+    portfolios = bundle["portfolios"]
+
+    blockers: list[str] = []
+    if current.empty:
+        blockers.append("No current holding snapshot is available")
+    if not str(client.objectives).strip() or not str(client.risk_profile).strip():
+        blockers.append("Client objective or risk profile is missing")
+    if not str(recommendation.get("suitability", "")).strip():
+        blockers.append("No suitability condition is attached")
+    if recommendation.get("reversible") is not True:
+        blockers.append("The proposed action is not explicitly reversible")
+    if not current.empty:
+        orphan_instruments = ~current.instrument_id.isin(instruments.instrument_id)
+        orphan_portfolios = ~current.portfolio_id.isin(portfolios.portfolio_id)
+        if bool(orphan_instruments.any() or orphan_portfolios.any()):
+            blockers.append("Current positions fail reference-integrity checks")
+
+    grounding_fields = (
+        "evidence_passport",
+        "cash_needs",
+        "mandate_findings",
+        "ltv",
+        "scenarios",
+        "tension",
+        "headline_metrics",
+        "position_changes",
+        "linked_events",
+    )
+    grounding_context = json.dumps(
+        {field: profile.get(field) for field in grounding_fields}, default=str
+    )
+    number_pattern = r"(?<![A-Za-z])[-+]?\d+(?:\.\d+)?"
+    source_numbers = [float(value) for value in re.findall(number_pattern, grounding_context)]
+    recommendation_numbers = [
+        float(value)
+        for value in re.findall(number_pattern, str(recommendation.get("detail", "")))
+    ]
+    ungrounded_numbers = [
+        value
+        for value in recommendation_numbers
+        if not any(abs(value - source_value) < 0.005 for source_value in source_numbers)
+    ]
+    if ungrounded_numbers:
+        blockers.append("A numeric claim cannot be resolved to the recommendation evidence set")
+
+    status_weights = {
+        "Verified": 1.0,
+        "Authoritative": 1.0,
+        "Checked": 0.9,
+        "Structured": 0.85,
+        "RM record": 0.65,
+        "Review": 0.25,
+    }
+    passport = profile.get("evidence_passport", [])
+    evidence_ratio = (
+        sum(status_weights.get(item.get("status"), 0.4) for item in passport)
+        / len(passport)
+        if passport
+        else 0.0
+    )
+    evidence_score = round(25 * evidence_ratio)
+
+    suitability_text = str(recommendation.get("suitability", "")).lower()
+    suitability_score = 23 if "within" in suitability_text else 20
+
+    scenarios = profile.get("scenarios", [])
+    quantified_scenarios = sum(
+        1
+        for scenario in scenarios
+        if scenario.get("portfolio_impact_pct") is not None and scenario.get("factors")
+    )
+    predictive_score = min(14, 6 + quantified_scenarios * 4)
+
+    signal_count = sum(
+        (
+            bool(profile.get("cash_needs")),
+            bool(profile.get("mandate_findings")),
+            bool(profile.get("ltv")),
+            bool(profile.get("linked_events")),
+        )
+    )
+    signal_score = min(15, 8 + signal_count * 2)
+
+    stale = current[
+        pd.to_datetime(current.valuation_date) < pd.to_datetime(current.snapshot_date)
+    ]
+    if stale.empty:
+        freshness_score = 10
+        freshness_reason = "Current positions use the current snapshot date."
+    elif bool(stale.asset_class.isin(["Alternatives"]).all()):
+        freshness_score = 7
+        freshness_reason = (
+            f"{len(stale)} alternative position(s) carry an expected lagged mark."
+        )
+    else:
+        freshness_score = 4
+        freshness_reason = f"{len(stale)} current position(s) have stale valuation dates."
+
+    actionability_score = 0
+    actionability_score += 2 if recommendation.get("reversible") is True else 0
+    actionability_score += 2 if recommendation.get("suitability") else 0
+    actionability_score += 1 if recommendation.get("title") and recommendation.get("detail") else 0
+
+    dimensions = [
+        {
+            "name": "Evidence and lineage",
+            "score": evidence_score,
+            "max": 25,
+            "reason": (
+                f"{len(passport)} claim(s) are linked to controlled source records; "
+                f"{len(recommendation_numbers)} numeric claim(s) resolved."
+            ),
+        },
+        {
+            "name": "Suitability and policy",
+            "score": suitability_score,
+            "max": 25,
+            "reason": recommendation.get("suitability", "Suitability evidence missing"),
+        },
+        {
+            "name": "Analytical corroboration",
+            "score": predictive_score,
+            "max": 20,
+            "reason": (
+                f"{quantified_scenarios} quantified sensitivity case(s); "
+                "no calibrated outcome model is present."
+            ),
+        },
+        {
+            "name": "Signal relevance",
+            "score": signal_score,
+            "max": 15,
+            "reason": f"{signal_count} applicable client, product, policy or market signal group(s).",
+        },
+        {
+            "name": "Freshness and data quality",
+            "score": freshness_score,
+            "max": 10,
+            "reason": freshness_reason,
+        },
+        {
+            "name": "Actionability and reversibility",
+            "score": actionability_score,
+            "max": 5,
+            "reason": "Action has an owner-facing condition and remains reversible.",
+        },
+    ]
+    raw_score = sum(item["score"] for item in dimensions)
+    caps = [
+        {
+            "value": 84,
+            "reason": "Predictive model is not calibrated on recommendation outcomes.",
+        }
+    ]
+    if any(item.get("status") == "Review" for item in passport):
+        caps.append(
+            {"value": 59, "reason": "A source conflict or unquantified RM update must be verified."}
+        )
+    combined_text = " ".join(
+        (
+            str(profile.get("confidence", {}).get("level", "")),
+            str(profile.get("confidence", {}).get("reason", "")),
+            str(recommendation.get("detail", "")),
+            suitability_text,
+        )
+    ).lower()
+    if any(term in combined_text for term in ("outside", "external-wealth", "incomplete household")):
+        caps.append(
+            {"value": 79, "reason": "Relevant outside wealth is unrecorded or qualitative."}
+        )
+
+    applied_cap = min((cap["value"] for cap in caps), default=100)
+    score = 0 if blockers else min(raw_score, applied_cap)
+    if blockers or score < 50:
+        band = "Blocked"
+        disposition = "Do not publish; resolve hard-stop controls"
+        residual_risk = "Very high"
+    elif score < 70:
+        band = "Verify first"
+        disposition = "RM must verify flagged inputs before use"
+        residual_risk = "High"
+    elif score < 85:
+        band = "Review ready"
+        disposition = "Supported for RM review; approval remains mandatory"
+        residual_risk = "Moderate"
+    else:
+        band = "Strong support"
+        disposition = "RM may approve after final suitability review"
+        residual_risk = "Low"
+
+    return {
+        "score": score,
+        "raw_score": raw_score,
+        "band": band,
+        "disposition": disposition,
+        "residual_hallucination_risk": residual_risk,
+        "score_meaning": "Evidence and control confidence; not return probability.",
+        "model_validation": {
+            "status": "Provisional",
+            "reason": "Scenario sensitivities corroborate direction and materiality, but are not a calibrated predictive model.",
+        },
+        "human_validation": {
+            "status": "Required",
+            "owner": "Relationship Manager",
+            "decision": "Approve, edit or dismiss with rationale",
+        },
+        "dimensions": dimensions,
+        "caps": [cap for cap in caps if cap["value"] <= raw_score],
+        "blockers": blockers,
+    }
+
+
+def _recommendation_decision_rationale(
+    profile: dict[str, Any], recommendation: dict[str, Any]
+) -> dict[str, Any]:
+    """Expose an auditable explanation, not private model chain-of-thought."""
+
+    title = str(recommendation.get("title", "")).lower()
+    tensions = profile.get("tension", {})
+    if any(
+        word in title
+        for word in ("fund", "liabil", "reserve", "liquid", "ring-fence", "facility")
+    ):
+        trigger = tensions.get("future_demands")
+    elif any(
+        word in title
+        for word in ("exception", "position", "risk", "exposure", "wrapper", "duration")
+    ):
+        trigger = tensions.get("portfolio_does")
+    else:
+        trigger = tensions.get("client_says")
+
+    evidence = [
+        {
+            "claim": item.get("claim"),
+            "source": item.get("source"),
+            "status": item.get("status"),
+        }
+        for item in profile.get("evidence_passport", [])[:4]
+    ]
+    validation = recommendation.get("risk_validation", {})
+    checks = list(validation.get("blockers", []))
+    suitability = str(recommendation.get("suitability", "")).strip()
+    if suitability:
+        checks.insert(0, suitability)
+
+    return {
+        "summary": (
+            "This action turns the identified review point into a reversible RM step. "
+            f"{recommendation.get('detail', '')}"
+        ),
+        "trigger": trigger
+        or "A current client, portfolio or constraint record requires RM review.",
+        "supporting_evidence": evidence,
+        "rm_checks": checks,
+        "method": (
+            "Generated from deterministic client, portfolio, mandate and evidence rules. "
+            "It explains the recommendation inputs; it is not hidden model reasoning."
+        ),
+    }
+
+
 def _data_quality(bundle: dict[str, Any]) -> dict[str, Any]:
     holdings = bundle["holdings"]
     portfolios = bundle["portfolios"]
@@ -1041,6 +1322,14 @@ def build_intelligence_payload(data_dir: str | Path) -> dict[str, Any]:
         client_id: _feature_profile(bundle, client_id)
         for client_id in clients.client_id.tolist()
     }
+    for profile in client_profiles.values():
+        for recommendation in profile["recommendations"]:
+            recommendation["risk_validation"] = _recommendation_risk_validation(
+                bundle, profile, recommendation
+            )
+            recommendation["decision_rationale"] = _recommendation_decision_rationale(
+                profile, recommendation
+            )
     focus_client_ids = ["CL-0012", "CL-0014", "CL-0019"]
 
     return {
@@ -1074,6 +1363,31 @@ def build_intelligence_payload(data_dir: str | Path) -> dict[str, Any]:
         },
         "governance": {
             "recommendation_state": "Draft — RM approval required",
+            "confidence_rubric": {
+                "version": "1.0",
+                "meaning": "Evidence and control confidence, not probability of investment success.",
+                "bands": [
+                    {"range": "85-100", "label": "Strong support", "action": "Final RM suitability review"},
+                    {"range": "70-84", "label": "Review ready", "action": "RM review and approval required"},
+                    {"range": "50-69", "label": "Verify first", "action": "Resolve flagged inputs before use"},
+                    {"range": "0-49", "label": "Blocked", "action": "Do not publish"},
+                ],
+                "weights": [
+                    {"name": "Evidence and lineage", "weight": 25},
+                    {"name": "Suitability and policy", "weight": 25},
+                    {"name": "Analytical corroboration", "weight": 20},
+                    {"name": "Signal relevance", "weight": 15},
+                    {"name": "Freshness and data quality", "weight": 10},
+                    {"name": "Actionability and reversibility", "weight": 5},
+                ],
+                "hard_stops": [
+                    "Missing current positions, client objective or risk profile",
+                    "Broken instrument or portfolio reference integrity",
+                    "Missing suitability condition",
+                    "Action is not explicitly reversible",
+                ],
+                "calibration": "Provisional: confidence is capped at 84 until a predictive model is back-tested on recommendation outcomes.",
+            },
             "principles": [
                 "Authoritative events only: market-event claims come from the controlled event register.",
                 "Suitability checks first: mandates and exclusions run before a client brief is prepared.",

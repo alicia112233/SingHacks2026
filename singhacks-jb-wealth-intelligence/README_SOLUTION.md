@@ -40,6 +40,12 @@ Every client receives:
 - suitability-qualified actions and a conversation brief; and
 - an evidence passport linked to source files and dates.
 
+Each proposed action also carries a recommendation confidence score. The score
+measures evidence and control support rather than expected return, is capped
+while analytical validation is sensitivity-only, and never replaces RM
+approval. See [`docs/RECOMMENDATION_RISK_RUBRIC.md`](docs/RECOMMENDATION_RISK_RUBRIC.md)
+for weights, hard stops, confidence caps and the production model contract.
+
 Chart labels use a consistent `Mon YYYY` format. The application-wide data date is derived from the latest holding snapshot, and each chart point can be selected with a mouse or keyboard to show its exact value and change from the previous observed snapshot.
 
 ### Scenario Studio
@@ -70,6 +76,7 @@ The local server persists these events to `runtime/decisions.json`. Vercel deplo
 | `/evidence-ledger` | Controls, data fitness and decision history |
 | `/api/intelligence` | Current analytics payload; recalculated when a source file changes |
 | `/api/decisions` | Decision history and effective state |
+| `/api/evaluations` | On-demand deterministic, predictive-readiness and independent-judge panel |
 | `/health` | Service health |
 
 Unknown extensionless paths return the application shell so browser refreshes on client and studio routes do not fail. Missing static assets still return a genuine 404. Browser favicon requests return 204 rather than polluting service logs with a false error.
@@ -113,7 +120,7 @@ Position, client, mandate, credit and event records
            Append-only decision ledger
 ```
 
-The application sends no client data to an external model. If a bank later adds a language service, it should receive only the approved evidence set through a private endpoint. It must remain downstream of suitability controls and upstream of RM approval.
+External model judges are disabled by default. When explicitly enabled, they receive a purpose-limited evidence packet without client name, client ID or raw RM notes. Their scores cannot override a deterministic hard stop or raise the deterministic score, and RM approval remains mandatory. A bank rollout should use approved private endpoints and its data-processing controls.
 
 ## Production integration path
 

@@ -217,7 +217,11 @@ def create_decision_record(
     action = str(body.get("action", "")).lower()
     note = str(body.get("note", "")).strip()
 
-    client = intelligence["featured_clients"].get(client_id)
+    # Decisions can be made from every review room, not only the three clients
+    # selected for the dashboard's featured section.
+    client = intelligence.get("client_profiles", {}).get(client_id)
+    if client is None:
+        client = intelligence.get("featured_clients", {}).get(client_id)
     if client is None:
         raise ValueError("Unknown client")
     if recommendation_index < 0 or recommendation_index >= len(client["recommendations"]):
@@ -226,8 +230,17 @@ def create_decision_record(
         raise ValueError("Unsupported decision")
     if len(note) > 1_000:
         raise ValueError("Note must be 1,000 characters or fewer")
+    if action == "approved" and len(note) < 10:
+        raise ValueError("State the action taken before approving (at least 10 characters)")
 
     recommendation = client["recommendations"][recommendation_index]
+    validation = recommendation.get("risk_validation", {})
+    if action == "approved" and (
+        validation.get("blockers") or int(validation.get("score", 100)) < 50
+    ):
+        raise ValueError(
+            "Blocked recommendations cannot be approved; resolve the hard-stop controls first"
+        )
     return {
         "id": str(uuid.uuid4()),
         "recommendation_id": f"{client_id}:{recommendation_index}",

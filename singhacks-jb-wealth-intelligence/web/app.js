@@ -116,16 +116,24 @@ function applyRoute() {
   }
 }
 
-function openModal(html) {
+function openModal(html, variant = "default") {
+  state.modalReturnFocus = document.activeElement;
   $("#modal-content").innerHTML = html;
+  $("#modal").dataset.variant = variant;
+  const title = $("#modal-content h2");
+  if (title) title.id = "modal-title";
   $("#modal").hidden = false;
   document.body.style.overflow = "hidden";
-  window.setTimeout(() => $("#modal-content input, #modal-content textarea, #modal-content button")?.focus(), 0);
+  window.setTimeout(() => ($("#modal-content input, #modal-content textarea") || $(".modal-close"))?.focus(), 0);
 }
 
 function closeModal() {
+  if ($("#modal").hidden) return;
   $("#modal").hidden = true;
+  delete $("#modal").dataset.variant;
   document.body.style.overflow = "";
+  state.modalReturnFocus?.focus?.();
+  state.modalReturnFocus = null;
 }
 
 function renderBook() {
@@ -258,15 +266,35 @@ function recommendationHTML(client, recommendation, index) {
   const decision = decisionFor(client.client_id, index);
   const detail = decision?.action === "edited" && decision.note ? decision.note : recommendation.detail;
   const status = decision?.action || "pending";
+  const validation = recommendation.risk_validation;
+  const approvalBlocked = validation && (validation.band === "Blocked" || validation.blockers?.length);
   return `<article class="recommendation" data-recommendation="${index}">
-    <header><h4>${index + 1}. ${esc(recommendation.title)}</h4>${status !== "pending" ? `<span class="decision-status ${status}">${esc(status)}</span>` : ""}</header>
+    <header><h4>${index + 1}. ${esc(recommendation.title)}</h4><div class="recommendation-badges">${validation ? `<button class="confidence-chip ${validation.band.toLowerCase().replaceAll(" ", "-")}" data-risk-index="${index}" aria-label="Open confidence rubric for ${esc(recommendation.title)}"><b>${validation.score}</b><span>${esc(validation.band)}</span></button>` : ""}${status !== "pending" ? `<span class="decision-status ${status}">${esc(status)}</span>` : ""}</div></header>
     <p>${esc(detail)}</p>
+    ${recommendationRationaleHTML(recommendation)}
     <footer><span class="suitability">${esc(recommendation.suitability)}</span><div class="recommendation-actions">
       <button class="action-button" data-decision="edit" data-index="${index}">Edit</button>
-      ${status === "approved" ? `<button class="action-button" data-decision="pending" data-index="${index}">Reopen</button>` : `<button class="action-button approve" data-decision="approved" data-index="${index}">Approve</button>`}
+      ${status === "approved" ? `<button class="action-button" data-decision="pending" data-index="${index}">Reopen</button>` : approvalBlocked ? `<button class="action-button" disabled title="Resolve hard-stop controls before approval">Blocked</button>` : `<button class="action-button approve" data-decision="approved" data-index="${index}">Approve</button>`}
       <button class="action-button dismiss" data-decision="dismissed" data-index="${index}">Dismiss</button>
     </div></footer>
   </article>`;
+}
+
+function recommendationRationaleHTML(recommendation) {
+  const rationale = recommendation.decision_rationale;
+  if (!rationale) return "";
+  const evidence = rationale.supporting_evidence || [];
+  const checks = rationale.rm_checks || [];
+  return `<details class="action-rationale">
+    <summary><span>Why this action</span><small>View rationale and evidence</small></summary>
+    <div class="rationale-body">
+      <p class="rationale-summary">${esc(rationale.summary)}</p>
+      <div class="rationale-section"><strong>Trigger</strong><p>${esc(rationale.trigger)}</p></div>
+      ${evidence.length ? `<div class="rationale-section"><strong>Evidence used</strong><div class="rationale-evidence">${evidence.map((item) => `<div><span>${esc(item.claim)}</span><small>${esc(item.source)} · ${esc(item.status)}</small></div>`).join("")}</div></div>` : ""}
+      ${checks.length ? `<div class="rationale-section"><strong>RM checks before action</strong><ul>${checks.map((item) => `<li>${esc(item)}</li>`).join("")}</ul></div>` : ""}
+      <p class="rationale-method">${esc(rationale.method)}</p>
+    </div>
+  </details>`;
 }
 
 function recommendationsHTML(client) {
@@ -343,23 +371,69 @@ function renderDecisionLedger() {
 
 function renderGovernance() {
   const { governance, data_quality: quality } = state.data;
+  const rubric = governance.confidence_rubric;
   const nodes = [
     ["01", "Bank records", "Dated positions, portfolios, facilities, needs and RM notes"],
     ["02", "Temporal joins", "As-of views preserve valuation dates and surface stale marks"],
-    ["03", "Policy checks", "Mandates, exclusions, concentration and event authority"],
-    ["04", "Evidence set", "Minimum records required for each review point"],
-    ["05", "Brief assembly", "Structured summary prepared inside the bank boundary"],
-    ["06", "RM decision", "Approve, edit, dismiss and rationale retained in the ledger"],
+    ["03", "Deterministic gate", "Mandates, exclusions, concentration and source integrity"],
+    ["04", "Three data lenses", "Customer, product and signal evidence stay separately visible"],
+    ["05", "Independent panel", "Predictive readiness and opt-in judges from different providers"],
+    ["06", "RM decision", "Action taken is required before approval and retained in the ledger"],
   ];
   $("#governance-view").innerHTML = `
-    <section class="governance-hero"><span class="section-kicker">CONTROLLED BY DESIGN</span><h1>Every review point has an owner, a source and a recorded outcome.</h1><p>TESSERA checks data quality and suitability before preparing a brief. Relationship Managers remain accountable for the action taken and the rationale behind it.</p></section>
-    <section class="architecture"><div class="panel-title"><h3>Operating architecture</h3><small>NO EXTERNAL CLIENT-DATA EGRESS</small></div><div class="architecture-flow">${nodes.map((node) => `<div class="architecture-node"><b>${node[0]}</b><strong>${node[1]}</strong><span>${node[2]}</span></div>`).join("")}</div></section>
+    <section class="governance-hero"><span class="section-kicker">CONTROLLED BY DESIGN</span><h1>Every review point has an owner, a source and a recorded outcome.</h1><p>TESSERA separates deterministic controls, predictive probability readiness and independent model opinions. Relationship Managers remain accountable for the action taken and the rationale behind it.</p></section>
+    <section class="architecture"><div class="panel-title"><h3>Operating architecture</h3><small>EXTERNAL JUDGES ARE PURPOSE-LIMITED AND OPT-IN</small></div><div class="architecture-flow">${nodes.map((node) => `<div class="architecture-node"><b>${node[0]}</b><strong>${node[1]}</strong><span>${node[2]}</span></div>`).join("")}</div></section>
     <div class="governance-grid"><section class="panel"><div class="panel-title"><h3>Control framework</h3><small>${esc(governance.recommendation_state)}</small></div><div class="principle-list">${governance.principles.map((principle, index) => `<div class="principle-item"><b>${index + 1}</b><p>${esc(principle)}</p></div>`).join("")}</div></section><section class="panel"><div class="panel-title"><h3>Data fitness before advice</h3><small>${esc(quality.overall)}</small></div><div class="quality-list">${quality.checks.map((item) => `<div class="quality-item"><div><strong>${esc(item.name)}</strong><span>${esc(item.evidence)}</span></div><b class="quality-status ${esc(item.status)}">${esc(item.status)}</b></div>`).join("")}</div></section></div>
+    ${rubric ? `<section class="panel confidence-rubric"><div class="panel-title"><div><h3>Recommendation confidence rubric</h3><p>${esc(rubric.meaning)}</p></div><small>VERSION ${esc(rubric.version)} · ${esc(rubric.calibration)}</small></div><div class="rubric-layout"><div class="rubric-weights">${rubric.weights.map((item) => `<div><span>${esc(item.name)}</span><b>${item.weight} pts</b></div>`).join("")}</div><div class="rubric-bands">${rubric.bands.map((item) => `<div><b>${esc(item.range)}</b><strong>${esc(item.label)}</strong><span>${esc(item.action)}</span></div>`).join("")}</div></div></section>` : ""}
     <section class="panel decision-ledger"><div class="panel-title"><h3>Decision ledger</h3><small>${state.decisions.records.length} RECORDED EVENT${state.decisions.records.length === 1 ? "" : "S"}</small></div>${renderDecisionLedger()}</section>`;
 }
 
 function showEvidence(client) {
   openModal(`<span class="section-kicker">EVIDENCE PASSPORT</span><h2>${esc(client.name)}</h2><p>${esc(client.confidence.reason)} Each review point remains linked to the record used to support it.</p>${client.evidence_passport.map((item) => `<div class="passport-row"><header><strong>${esc(item.claim)}</strong><b>${esc(item.status)}</b></header><p>${esc(item.source)}</p></div>`).join("")}`);
+}
+
+function showRiskValidation(client, index) {
+  const recommendation = client.recommendations[index];
+  const validation = recommendation.risk_validation;
+  if (!validation) return;
+  openModal(`<span class="section-kicker">RECOMMENDATION RISK RUBRIC</span><h2>${esc(recommendation.title)}</h2><div class="validation-summary"><strong>${validation.score}/100</strong><div><b>${esc(validation.band)}</b><span>${esc(validation.disposition)}</span></div></div><p>${esc(validation.score_meaning)} Residual hallucination risk: ${esc(validation.residual_hallucination_risk)}.</p><div class="validation-layers"><div><small>DETERMINISTIC VALIDATION</small><b>${esc(validation.model_validation.status)}</b><span>${esc(validation.model_validation.reason)}</span></div><div><small>HUMAN VALIDATION</small><b>${esc(validation.human_validation.status)}</b><span>${esc(validation.human_validation.owner)}: ${esc(validation.human_validation.decision)}</span></div></div><div class="dimension-list">${validation.dimensions.map((item) => `<div class="dimension-row"><div><strong>${esc(item.name)}</strong><span>${esc(item.reason)}</span></div><b>${item.score}/${item.max}</b></div>`).join("")}</div>${validation.caps.length ? `<div class="validation-flags"><strong>Applied confidence caps</strong>${validation.caps.map((item) => `<span>Maximum ${item.value}: ${esc(item.reason)}</span>`).join("")}</div>` : ""}${validation.blockers.length ? `<div class="validation-flags blocked"><strong>Hard stops</strong>${validation.blockers.map((item) => `<span>${esc(item)}</span>`).join("")}</div>` : ""}<div id="evaluation-panel" class="evaluation-panel evaluation-launch"><div><strong>Independent evaluation panel</strong><span>Compare deterministic controls, predictive probability readiness and judges from different model providers.</span></div><button class="action-button approve" data-run-evaluation="${index}">Run model panel</button></div>`, "risk");
+}
+
+function judgeFailureMessage(judge) {
+  const message = String(judge.reason || judge.error || "Judge unavailable");
+  if (/unterminated string|jsondecode|expecting (?:value|property)|structured judgement/i.test(message)) {
+    return "The provider returned an incomplete structured judgement. Run the panel again later.";
+  }
+  return message;
+}
+
+function evaluationPanelHTML(evaluation, index) {
+  const predictive = evaluation.predictive;
+  return `<div class="evaluation-heading"><div><span class="section-kicker">MODEL PANEL RESULT</span><h3>Independent evaluation</h3></div><button class="action-button" data-run-evaluation="${index}">Run again</button></div><div class="panel-consensus"><strong>${evaluation.consensus.score}/100</strong><div><b>${esc(evaluation.consensus.band)}</b><span>${esc(evaluation.consensus.rule)}</span></div></div><h4 class="evaluation-subtitle">Evidence coverage</h4><div class="dataset-scores">${Object.entries(evaluation.datasets).map(([name, lens]) => `<div><small>${esc(name)} dataset</small><b>${lens.score}/100</b><span>${esc(lens.detail)}</span></div>`).join("")}</div><div class="validation-layers"><div><small>DETERMINISTIC ALGORITHM</small><b>${evaluation.deterministic.score}/100 · ${esc(evaluation.deterministic.status)}</b><span>Policy, evidence, suitability, freshness and hard-stop validation.</span></div><div><small>PREDICTIVE PROBABILITY</small><b>${esc(predictive.status)}</b><span>${esc(predictive.reason)}</span></div></div><h4 class="evaluation-subtitle">Independent judges</h4><div class="judge-list">${evaluation.judges.map((judge) => `<article class="${judge.status === "Completed" ? "completed" : "unavailable"}"><header><div><small>${esc(judge.provider)} provider</small><strong>${esc(judge.model)}</strong></div><b>${judge.status === "Completed" ? `${judge.score}/100` : esc(judge.status)}</b></header>${judge.status === "Completed" ? `<p>${esc(judge.rationale)}</p><div><span>Customer ${judge.customer_fit}</span><span>Product ${judge.product_fit}</span><span>Signal ${judge.signal_support}</span></div>${judge.required_rm_checks?.length ? `<ul>${judge.required_rm_checks.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>` : ""}` : `<p>${esc(judgeFailureMessage(judge))}</p>`}</article>`).join("")}</div><p class="privacy-note">${esc(evaluation.privacy)} RM approval is still required.</p>`;
+}
+
+async function runIndependentEvaluation(client, index, button) {
+  button.disabled = true;
+  button.textContent = "Evaluating…";
+  try {
+    const response = await fetch("/api/evaluations", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ client_id: client.client_id, recommendation_index: index }),
+    });
+    const payload = await response.json().catch(() => ({ error: `Evaluation service returned ${response.status}` }));
+    if (response.status === 404) {
+      throw new Error("Evaluation API unavailable. Start the project with python app.py (not a static file server), then refresh.");
+    }
+    if (!response.ok) throw new Error(payload.error || `Request failed (${response.status})`);
+    const panel = $("#evaluation-panel");
+    panel.className = "evaluation-panel evaluation-results";
+    panel.innerHTML = evaluationPanelHTML(payload, index);
+  } catch (error) {
+    button.disabled = false;
+    button.textContent = "Retry model panel";
+    showToast(error.message, "error");
+  }
 }
 
 function showMethod() {
@@ -373,13 +447,19 @@ function showEditRecommendation(client, index) {
   openModal(`<span class="section-kicker">EDIT ACTION</span><h2>${esc(recommendation.title)}</h2><p>Update the wording before approval. The original recommendation remains available in the evidence record.</p><form id="edit-action-form" data-index="${index}"><label class="form-field"><span>Revised action</span><textarea name="note" maxlength="1000" rows="7" required>${esc(value)}</textarea></label><div class="modal-actions"><button type="button" class="small-button" data-close-modal>Cancel</button><button type="submit" class="action-button approve">Save revision</button></div></form>`);
 }
 
+function showApproveRecommendation(client, index) {
+  const recommendation = client.recommendations[index];
+  const current = decisionFor(client.client_id, index);
+  openModal(`<span class="section-kicker">RM APPROVAL</span><h2>${esc(recommendation.title)}</h2><p>Record what you have done or will do for this client. Approval is written to the evidence ledger and does not place a trade.</p><form id="approve-action-form" data-index="${index}"><label class="form-field"><span>Action taken or agreed</span><textarea name="note" minlength="10" maxlength="1000" rows="6" required placeholder="Example: Confirmed the facility buffer with Credit and scheduled a client review before funding.">${esc(current?.note || "")}</textarea></label><div class="modal-actions"><button type="button" class="small-button" data-close-modal>Cancel</button><button type="submit" class="action-button approve">Approve and record</button></div></form>`);
+}
+
 async function persistDecision(client, index, action, note = "") {
   const response = await fetch("/api/decisions", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ client_id: client.client_id, recommendation_index: index, action, note }),
   });
-  const payload = await response.json();
+  const payload = await response.json().catch(() => ({ error: `Decision service returned ${response.status}` }));
   if (!response.ok) throw new Error(payload.error || `Request failed (${response.status})`);
   state.decisions = { records: payload.records, effective: payload.effective };
   if (state.currentView === "client") renderClient(state.currentClient);
@@ -434,6 +514,8 @@ function bindEvents() {
       const action = decisionButton.dataset.decision;
       if (action === "edit") {
         showEditRecommendation(client, index);
+      } else if (action === "approved") {
+        showApproveRecommendation(client, index);
       } else {
         decisionButton.disabled = true;
         try {
@@ -444,6 +526,18 @@ function bindEvents() {
           showToast(error.message, "error");
         }
       }
+    }
+
+    const riskButton = event.target.closest("[data-risk-index]");
+    if (riskButton) showRiskValidation(profiles()[state.currentClient], Number(riskButton.dataset.riskIndex));
+
+    const evaluationButton = event.target.closest("[data-run-evaluation]");
+    if (evaluationButton) {
+      await runIndependentEvaluation(
+        profiles()[state.currentClient],
+        Number(evaluationButton.dataset.runEvaluation),
+        evaluationButton,
+      );
     }
 
     if (event.target.closest("[data-evidence]")) showEvidence(profiles()[state.currentClient]);
@@ -478,15 +572,16 @@ function bindEvents() {
   });
 
   document.addEventListener("submit", async (event) => {
-    if (!event.target.matches("#edit-action-form")) return;
+    if (!event.target.matches("#edit-action-form, #approve-action-form")) return;
     event.preventDefault();
     const form = event.target;
     const submit = form.querySelector('[type="submit"]');
     submit.disabled = true;
     try {
-      await persistDecision(profiles()[state.currentClient], Number(form.dataset.index), "edited", new FormData(form).get("note"));
+      const isApproval = form.matches("#approve-action-form");
+      await persistDecision(profiles()[state.currentClient], Number(form.dataset.index), isApproval ? "approved" : "edited", new FormData(form).get("note"));
       closeModal();
-      showToast("Revision saved to the decision ledger.");
+      showToast(isApproval ? "Action approved with the RM action recorded." : "Revision saved to the decision ledger.");
     } catch (error) {
       submit.disabled = false;
       showToast(error.message, "error");
