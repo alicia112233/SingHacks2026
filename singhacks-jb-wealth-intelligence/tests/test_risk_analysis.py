@@ -16,10 +16,17 @@ class RiskAnalysisTests(unittest.TestCase):
         cls.as_of = str(cls.bundle['holdings'].snapshot_date.max())
         cls.payload = build_intelligence_payload(ROOT / 'data')
 
-    def test_supplied_customers_and_unchanged_urgency(self):
-        expected = {'CL-0014':79,'CL-0011':69,'CL-0017':64,'CL-0003':61,'CL-0012':53,'CL-0016':53,'CL-0006':47,'CL-0019':46,'CL-0018':42,'CL-0001':36,'CL-0005':36,'CL-0002':31,'CL-0020':29,'CL-0009':25,'CL-0004':20,'CL-0008':20,'CL-0007':15,'CL-0013':15,'CL-0010':10,'CL-0015':10}
+    def test_urgency_includes_risk_appetite_and_portfolio_alignment(self):
+        expected = {'CL-0014':80,'CL-0011':79,'CL-0003':71,'CL-0017':70,'CL-0016':58,'CL-0012':57,'CL-0006':50,'CL-0019':49,'CL-0018':46,'CL-0005':41,'CL-0001':40,'CL-0002':33,'CL-0020':30,'CL-0009':26,'CL-0004':23,'CL-0008':22,'CL-0007':19,'CL-0013':16,'CL-0010':9,'CL-0015':7}
         queue = self.payload['book']['priority_queue']
         self.assertEqual({c['client_id']:c['score'] for c in queue}, expected)
+        for customer in queue:
+            self.assertIn('risk_appetite_adjustment', customer)
+            self.assertIn('portfolio_alignment_pressure', customer)
+        self.assertLess(
+            self.payload['book']['priority_queue'][0]['risk_appetite_adjustment'],
+            self.payload['book']['priority_queue'][1]['risk_appetite_adjustment'],
+        )
         for client in self.payload['client_profiles'].values():
             risk = client['risk_analysis']
             self.assertTrue(all(1 <= risk[k] <= 5 for k in ('capacity','tolerance','horizon')))

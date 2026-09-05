@@ -281,6 +281,20 @@ def _theme_exposure(current: pd.DataFrame, ids: Iterable[str], aum: float) -> fl
     return float(value) / aum * 100 if aum else 0.0
 
 
+def _risk_urgency_adjustments(client_row: Any, current: pd.DataFrame, aum: float) -> tuple[int, int, float, float]:
+    """Return appetite relief and portfolio risk-alignment pressure."""
+    tolerance = float(client_row.risk_tolerance_score)
+    appetite_adjustment = max(-6, min(6, round((5 - tolerance) * 1.5)))
+    risk_assets = current.loc[
+        current.asset_class.isin(["Equity", "Alternatives", "Structured Products", "Commodities"]),
+        "market_value_usd",
+    ].sum()
+    risk_share = float(risk_assets) / aum if aum else 0.0
+    target_share = 0.10 + tolerance * 0.07
+    alignment_pressure = min(6, round(abs(risk_share - target_share) * 20))
+    return appetite_adjustment, alignment_pressure, risk_share, target_share
+
+
 def _priority_card(bundle: dict[str, Any], client_row: Any) -> dict[str, Any]:
     client_id = client_row.client_id
     aum = float(client_row.total_aum_usd)
@@ -319,7 +333,23 @@ def _priority_card(bundle: dict[str, Any], client_row: Any) -> dict[str, Any]:
         time_pressure = min(15.0, time_pressure + 6.0)
 
     goal_pressure = float(rule.get("goal_points", 8.0))
-    score = min(99, round(goal_pressure + liquidity_pressure + governance_pressure + time_pressure))
+    appetite_adjustment, alignment_pressure, risk_share, target_risk_share = _risk_urgency_adjustments(
+        client_row, current, aum
+    )
+    score = min(
+        99,
+        max(
+            0,
+            round(
+                goal_pressure
+                + liquidity_pressure
+                + governance_pressure
+                + time_pressure
+                + appetite_adjustment
+                + alignment_pressure
+            ),
+        ),
+    )
 
     if rule.get("theme_ids"):
         exposure = _theme_exposure(current, rule["theme_ids"], aum)
@@ -354,6 +384,10 @@ def _priority_card(bundle: dict[str, Any], client_row: Any) -> dict[str, Any]:
         "client_id": client_id,
         "client_name": client_row.client_name,
         "score": score,
+        "risk_appetite_adjustment": appetite_adjustment,
+        "portfolio_alignment_pressure": alignment_pressure,
+        "risk_asset_share": _round(risk_share * 100, 1),
+        "target_risk_share": _round(target_risk_share * 100, 1),
         "priority": "Now" if score >= 78 else "Next" if score >= 60 else "Watch",
         "tension": rule.get("label", "Portfolio evidence requires review"),
         "evidence": evidence_line,
