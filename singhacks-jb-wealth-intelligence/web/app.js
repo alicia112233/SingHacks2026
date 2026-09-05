@@ -308,7 +308,7 @@ function recommendationHTML(client, recommendation, index) {
     ${recommendationRationaleHTML(recommendation)}
     <footer><span class="suitability">${esc(recommendation.suitability)}</span><div class="recommendation-actions">
       <button class="action-button" data-decision="edit" data-index="${index}">Edit</button>
-      ${status === "approved" ? `<button class="action-button" data-decision="pending" data-index="${index}">Reopen</button>` : approvalBlocked ? `<button class="action-button" disabled title="Resolve hard-stop controls before approval">Blocked</button>` : `<button class="action-button approve" data-decision="approved" data-index="${index}">Approve</button>`}
+      ${status === "approved" ? `<button class="action-button" data-decision="pending" data-index="${index}">Reopen</button>` : approvalBlocked ? `<span class="action-tooltip" data-tooltip="Resolve hard-stop controls before approval" tabindex="0"><button class="action-button" disabled aria-label="Approval blocked">Blocked</button></span>` : `<button class="action-button approve" data-decision="approved" data-index="${index}">Approve</button>`}
       <button class="action-button dismiss" data-decision="dismissed" data-index="${index}">Dismiss</button>
     </div></footer>
   </article>`;

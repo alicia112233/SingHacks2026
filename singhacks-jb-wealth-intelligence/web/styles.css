@@ -312,7 +312,10 @@ nav { display: grid; gap: 7px; }
 .action-button { padding: 7px 10px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
 .action-button.approve { color: white; border-color: var(--teal); background: var(--teal); }
 .action-button.dismiss { color: var(--coral); }
-.action-button:disabled { opacity: .55; cursor: wait; }
+.action-button:disabled { opacity: .55; cursor: not-allowed; }
+.action-tooltip { position: relative; display: inline-flex; cursor: help; }
+.action-tooltip::after { content: attr(data-tooltip); position: absolute; z-index: 5; right: 0; bottom: calc(100% + 7px); width: 190px; padding: 7px 9px; color: white; background: var(--ink); font-size: 9px; font-weight: 500; line-height: 1.35; text-align: left; opacity: 0; pointer-events: none; transform: translateY(3px); transition: opacity .15s ease, transform .15s ease; }
+.action-tooltip:hover::after, .action-tooltip:focus-visible::after { opacity: 1; transform: translateY(0); }
 .recommendation-actions { display: flex; gap: 5px; }
 .decision-status { display: inline-block; padding: 4px 7px; color: var(--muted); background: #e9e5de; font-size: 8px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
 .decision-status.approved { color: var(--teal); background: var(--teal-soft); }
