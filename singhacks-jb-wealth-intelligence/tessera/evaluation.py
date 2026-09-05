@@ -10,6 +10,8 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from tessera.retrieval import retrieve_recommendation_evidence
+
 
 GATEWAY_URL = "https://ai-gateway.vercel.sh/v1/chat/completions"
 DEFAULT_JUDGE_MODELS = (
@@ -61,7 +63,9 @@ def _recommendation(
 
 
 def _evaluation_packet(
-    client: dict[str, Any], recommendation: dict[str, Any]
+    client: dict[str, Any],
+    recommendation: dict[str, Any],
+    retrieved_evidence: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Return a purpose-limited packet without client name, ID or raw RM notes."""
 
@@ -90,6 +94,7 @@ def _evaluation_packet(
             "reversible": recommendation.get("reversible"),
         },
         "evidence_passport": client.get("evidence_passport", []),
+        "retrieved_evidence": retrieved_evidence or [],
         "deterministic_validation": recommendation.get("risk_validation", {}),
     }
 
@@ -352,7 +357,8 @@ def evaluate_recommendation(
     models = _models()
     enabled = _external_judges_enabled()
     token = _gateway_token()
-    packet = _evaluation_packet(client, recommendation)
+    retrieval = retrieve_recommendation_evidence(client, recommendation)
+    packet = _evaluation_packet(client, recommendation, retrieval["evidence"])
     if enabled and token:
         judges: list[dict[str, Any]] = []
         with ThreadPoolExecutor(max_workers=len(models)) as executor:
@@ -400,6 +406,7 @@ def evaluate_recommendation(
     return {
         "recommendation_id": f"{client_id}:{recommendation_index}",
         "recommendation_title": recommendation.get("title"),
+        "retrieval": retrieval,
         "datasets": dataset_lenses,
         "deterministic": {
             "score": deterministic_score,
