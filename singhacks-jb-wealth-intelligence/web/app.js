@@ -91,7 +91,15 @@ function showView(name, clientId, updateHistory = true) {
 
   state.currentView = nextView;
   if (updateHistory) history.pushState({ view: nextView, clientId }, "", routeFor(nextView, clientId));
-  window.scrollTo({ top: 0, behavior: "smooth" });
+ // Update scroll handling here:
+  if (nextView === "client") {
+    state.lastScrollY = window.scrollY; // Save position before switching
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  } else if (nextView === "book" && state.lastScrollY !== undefined) {
+    window.scrollTo({ top: state.lastScrollY, behavior: "instant" }); // Restore position
+  } else {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 }
 
 function applyRoute() {
@@ -150,14 +158,13 @@ function renderBook() {
     </div>
     <div class="queue">
       <div class="queue-head"><span>Score</span><span>Client</span><span>Reason for review</span><span>RM follow-up</span><span></span></div>
-      ${queue.map((item) => `
-        <div class="queue-row priority-${item.priority.toLowerCase()}">
-          <div class="score-ring" style="--score:${item.score}"><b>${item.score}</b></div>
-          <div class="client-cell"><strong>${esc(item.client_name)}</strong><span>${esc(item.client_id)} · ${esc(item.booking_centre)} · $${item.aum_usd_m}m</span></div>
-          <div class="cell-copy"><strong>${esc(item.tension)}</strong><span>${esc(item.evidence)}${item.ltv ? ` · ${esc(item.ltv)}` : ""}</span></div>
-          <div class="cell-copy"><span class="priority-chip ${item.priority.toLowerCase()}">${esc(item.priority)}</span><span>${esc(item.next_step)}</span></div>
-          <button class="open-client" data-open-client="${esc(item.client_id)}" aria-label="Open ${esc(item.client_name)}">↗</button>
-        </div>`).join("")}
+     ${queue.map((item) => `
+  <div class="queue-row priority-${item.priority.toLowerCase()}" data-open-client="${esc(item.client_id)}" style="cursor: pointer;">
+    <div class="score-ring" style="--score:${item.score}"><b>${item.score}</b></div>
+    <div class="client-cell"><strong>${esc(item.client_name)}</strong><span>${esc(item.client_id)} · ${esc(item.booking_centre)} · $${item.aum_usd_m}m</span></div>
+    <div class="cell-copy"><strong>${esc(item.tension)}</strong><span>${esc(item.evidence)}${item.ltv ? ` · ${esc(item.ltv)}` : ""}</span></div>
+    <div class="cell-copy"><span class="priority-chip ${item.priority.toLowerCase()}">${esc(item.priority)}</span><span>${esc(item.next_step)}</span></div>
+  </div>`).join("")}
     </div>
 
     <div class="section-head">
