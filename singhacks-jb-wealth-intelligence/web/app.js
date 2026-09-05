@@ -166,10 +166,11 @@ function followUpLabel(item) {
 
 function renderBook() {
   const { book, market_signal: signal, featured_clients: featured } = state.data;
-  const queue = book.priority_queue.slice(0, 7).map((item) => ({
+  const queue = book.priority_queue.map((item) => ({
     ...item,
+    score: urgencyScore(item),
     complete: isClientReviewComplete(item.client_id),
-  })).sort((left, right) => Number(left.complete) - Number(right.complete));
+  })).sort((left, right) => Number(left.complete) - Number(right.complete) || right.score - left.score).slice(0, 7);
   const attentionCount = conversationsRequiringAttention();
   updateTodayCount();
   $("#book-view").innerHTML = `
@@ -294,6 +295,17 @@ function scenarioHTML(client, index, scale = 100, adjustable = false) {
 
 function decisionFor(clientId, index) {
   return state.decisions.effective[`${clientId}:${index}`] || null;
+}
+
+function approvedActionRelief(clientId) {
+  const approvedCount = Object.values(state.decisions.effective).filter((decision) => (
+    decision.client_id === clientId && decision.action === "approved"
+  )).length;
+  return Math.min(24, approvedCount * 8);
+}
+
+function urgencyScore(item) {
+  return Math.max(0, item.score - approvedActionRelief(item.client_id));
 }
 
 function recommendationHTML(client, recommendation, index) {
