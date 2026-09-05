@@ -8,6 +8,7 @@ const state = {
   studioScenario: 0,
   studioScale: 100,
   chartRange: "YTD",
+  dismissedListOpen: false,
 };
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -85,6 +86,7 @@ function showView(name, clientId, updateHistory = true) {
     $("#governance-view").hidden = false;
     $("#page-title").textContent = "Evidence & governance";
   } else {
+    renderBook();
     $("#book-view").hidden = false;
     $("#page-title").textContent = "Today’s review queue";
   }
@@ -136,14 +138,45 @@ function closeModal() {
   state.modalReturnFocus = null;
 }
 
+function isClientReviewComplete(clientId) {
+  const client = profiles()[clientId];
+  if (!client?.recommendations?.length) return false;
+  return client.recommendations.every((_, index) => {
+    const action = decisionFor(clientId, index)?.action;
+    return action === "approved" || action === "dismissed";
+  });
+}
+
+function conversationsRequiringAttention() {
+  return state.data.book.priority_queue.filter(
+    (item) => item.priority === "Now" && !isClientReviewComplete(item.client_id),
+  ).length;
+}
+
+function updateTodayCount() {
+  $("#now-count").textContent = conversationsRequiringAttention();
+}
+
+function followUpLabel(item) {
+  if (item.complete) return "No action required";
+  if (item.priority === "Now") return "Immediate";
+  if (item.priority === "Next") return "In next 2 days";
+  return item.priority;
+}
+
 function renderBook() {
   const { book, market_signal: signal, featured_clients: featured } = state.data;
-  const queue = book.priority_queue.slice(0, 7);
+  const queue = book.priority_queue.slice(0, 7).map((item) => ({
+    ...item,
+    complete: isClientReviewComplete(item.client_id),
+  })).sort((left, right) => Number(left.complete) - Number(right.complete));
+  const attentionCount = conversationsRequiringAttention();
+  updateTodayCount();
   $("#book-view").innerHTML = `
     <div class="hero-grid">
       <article class="hero-panel">
         <span class="section-kicker">DAILY BOOK REVIEW</span>
-        <h1>${book.conversations_now} client reviews require RM attention today.</h1>
+        <h1>${attentionCount} client review${attentionCount === 1 ? "" : "s"} require RM attention today.</h1>
         <p>Priorities combine client objectives, liquidity timing, mandate limits, credit exposure and record quality. Every score can be traced to its source records.</p>
         <div class="hero-stats">
           <div><strong>${book.client_count}</strong><small>clients monitored</small></div>
@@ -162,7 +195,7 @@ function renderBook() {
 
     <div class="section-head">
       <div><span class="section-kicker">REVIEW QUEUE</span><h2>Prioritised client follow-up</h2></div>
-      <p>Now items are intended for today’s capacity; Next items should be prepared after the immediate queue is cleared.</p>
+      <p>Immediate items require today’s attention; items due in the next 2 days should be prepared once the immediate queue is cleared.</p>
     </div>
     <div class="queue">
       <div class="queue-head"><span>Score</span><span>Client</span><span>Reason for review</span><span>RM follow-up</span><span></span></div>
@@ -171,7 +204,7 @@ function renderBook() {
           <div class="score-ring" style="--score:${item.score}"><b>${item.score}</b></div>
           <div class="client-cell"><strong>${esc(item.client_name)}</strong><span>${esc(item.client_id)} · ${esc(item.booking_centre)} · $${item.aum_usd_m}m</span></div>
           <div class="cell-copy"><strong>${esc(item.tension)}</strong><span>${esc(item.evidence)}${item.ltv ? ` · ${esc(item.ltv)}` : ""}</span></div>
-          <div class="cell-copy"><span class="priority-chip ${item.priority.toLowerCase()}">${esc(item.priority)}</span><span>${esc(item.next_step)}</span></div>
+    <div class="cell-copy"><span class="priority-chip ${item.complete ? "done" : item.priority.toLowerCase()}">${esc(followUpLabel(item))}</span><span>${esc(item.complete ? "All actions recorded" : item.next_step)}</span></div>
           <span class="queue-row-arrow" aria-hidden="true">↗</span>
         </a>`).join("")}
     </div>
@@ -305,8 +338,10 @@ function recommendationsHTML(client) {
     if (decisionFor(client.client_id, index)?.action === "dismissed") dismissed.push(entry);
     else active.push(entry);
   });
+  const dismissedOpen = state.dismissedListOpen && dismissed.length > 0;
+  state.dismissedListOpen = false;
   return `${active.length ? active.map(({ recommendation, index }) => recommendationHTML(client, recommendation, index)).join("") : `<div class="empty-state"><strong>No actions in the active list</strong><span>Restore a dismissed action below or return to the review queue.</span></div>`}
-    ${dismissed.length ? `<details class="dismissed-list"><summary>${dismissed.length} dismissed action${dismissed.length > 1 ? "s" : ""}</summary>${dismissed.map(({ recommendation, index }) => `<div class="dismissed-row"><div><strong>${esc(recommendation.title)}</strong><span>${esc(decisionFor(client.client_id, index)?.note || "Dismissed from the active review")}</span></div><button class="action-button" data-decision="pending" data-index="${index}">Restore</button></div>`).join("")}</details>` : ""}`;
+    ${dismissed.length ? `<details class="dismissed-list"${dismissedOpen ? " open" : ""}><summary>${dismissed.length} dismissed action${dismissed.length > 1 ? "s" : ""}</summary>${dismissed.map(({ recommendation, index }) => `<div class="dismissed-row"><div><strong>${esc(recommendation.title)}</strong><span>${esc(decisionFor(client.client_id, index)?.note || "Dismissed from the active review")}</span></div><button class="action-button" data-decision="pending" data-index="${index}">Restore</button></div>`).join("")}</details>` : ""}`;
 }
 
 function riskAnalysisHTML(risk = {}) {
@@ -474,6 +509,7 @@ async function persistDecision(client, index, action, note = "") {
   const payload = await response.json().catch(() => ({ error: `Decision service returned ${response.status}` }));
   if (!response.ok) throw new Error(payload.error || `Request failed (${response.status})`);
   state.decisions = { records: payload.records, effective: payload.effective };
+  renderBook();
   if (state.currentView === "client") renderClient(state.currentClient);
   if (state.currentView === "governance") renderGovernance();
 }
@@ -535,6 +571,7 @@ function bindEvents() {
       } else if (action === "approved") {
         showApproveRecommendation(client, index);
       } else {
+        state.dismissedListOpen = action === "pending" && decisionButton.closest(".dismissed-list")?.open === true;
         decisionButton.disabled = true;
         try {
           await persistDecision(client, index, action, decisionFor(client.client_id, index)?.note || "");
@@ -628,7 +665,6 @@ async function init() {
     $("#rm-context").textContent = `${state.data.meta.rm} · ${state.data.meta.desk}`.toUpperCase();
     $("#rm-avatar").textContent = initials(state.data.meta.rm);
     $("#rm-avatar").setAttribute("aria-label", state.data.meta.rm);
-    $("#now-count").textContent = state.data.book.conversations_now;
     renderBook();
     renderGovernance();
     bindEvents();

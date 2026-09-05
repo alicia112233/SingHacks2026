@@ -161,6 +161,8 @@ nav { display: grid; gap: 7px; }
 .priority-chip.now { color: var(--now); background: var(--now-soft); }
 .priority-chip.next { color: var(--next); background: var(--next-soft); }
 .priority-chip.watch { color: var(--watch); background: var(--watch-soft); }
+.priority-chip.done { color: var(--muted); background: #e9e5de; }
+.queue-row:has(.priority-chip.done) { opacity: .72; }
 
 .featured-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .featured-card { min-height: 190px; padding: 21px; border: 1px solid var(--line); background: var(--paper-2); cursor: pointer; text-align: left; position: relative; overflow: hidden; }
