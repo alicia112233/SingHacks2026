@@ -166,13 +166,14 @@ function renderBook() {
     </div>
     <div class="queue">
       <div class="queue-head"><span>Score</span><span>Client</span><span>Reason for review</span><span>RM follow-up</span><span></span></div>
-     ${queue.map((item) => `
-  <div class="queue-row priority-${item.priority.toLowerCase()}" data-open-client="${esc(item.client_id)}" style="cursor: pointer;">
-    <div class="score-ring" style="--score:${item.score}"><b>${item.score}</b></div>
-    <div class="client-cell"><strong>${esc(item.client_name)}</strong><span>${esc(item.client_id)} · ${esc(item.booking_centre)} · $${item.aum_usd_m}m</span></div>
-    <div class="cell-copy"><strong>${esc(item.tension)}</strong><span>${esc(item.evidence)}${item.ltv ? ` · ${esc(item.ltv)}` : ""}</span></div>
-    <div class="cell-copy"><span class="priority-chip ${item.priority.toLowerCase()}">${esc(item.priority)}</span><span>${esc(item.next_step)}</span></div>
-  </div>`).join("")}
+      ${queue.map((item) => `
+        <a class="queue-row priority-${item.priority.toLowerCase()}" href="${routeFor("client", item.client_id)}" data-open-client="${esc(item.client_id)}" aria-label="Open client review for ${esc(item.client_name)}">
+          <div class="score-ring" style="--score:${item.score}"><b>${item.score}</b></div>
+          <div class="client-cell"><strong>${esc(item.client_name)}</strong><span>${esc(item.client_id)} · ${esc(item.booking_centre)} · $${item.aum_usd_m}m</span></div>
+          <div class="cell-copy"><strong>${esc(item.tension)}</strong><span>${esc(item.evidence)}${item.ltv ? ` · ${esc(item.ltv)}` : ""}</span></div>
+          <div class="cell-copy"><span class="priority-chip ${item.priority.toLowerCase()}">${esc(item.priority)}</span><span>${esc(item.next_step)}</span></div>
+          <span class="queue-row-arrow" aria-hidden="true">↗</span>
+        </a>`).join("")}
     </div>
 
     <div class="section-head">
@@ -479,7 +480,13 @@ function bindEvents() {
     const nav = event.target.closest("[data-view]");
     if (nav) showView(nav.dataset.view, nav.dataset.client);
     const open = event.target.closest("[data-open-client]");
-    if (open) showView("client", open.dataset.openClient);
+    if (open) {
+      const useNativeLink = open.matches("a")
+        && (event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey);
+      if (useNativeLink) return;
+      event.preventDefault();
+      showView("client", open.dataset.openClient);
+    }
     const studio = event.target.closest("[data-open-studio]");
     if (studio) showView("scenario", studio.dataset.openStudio);
     if (event.target.closest("[data-back-book]")) showView("book");

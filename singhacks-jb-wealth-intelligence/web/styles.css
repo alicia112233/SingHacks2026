@@ -139,9 +139,10 @@ nav { display: grid; gap: 7px; }
 .queue { background: var(--paper-2); border: 1px solid var(--line); box-shadow: 0 12px 34px rgba(27,32,29,.05); }
 .queue-head, .queue-row { display: grid; grid-template-columns: 64px 1.1fr 1.45fr 1.25fr 38px; gap: 18px; align-items: center; }
 .queue-head { min-height: 40px; padding: 0 20px; color: var(--muted); background: #eee9df; font-size: 9px; letter-spacing: .1em; text-transform: uppercase; }
-.queue-row { min-height: 82px; padding: 13px 20px; border-top: 1px solid var(--line); }
+.queue-row { min-height: 82px; padding: 13px 20px; border-top: 1px solid var(--line); color: inherit; text-decoration: none; cursor: pointer; transition: background-color .15s ease; }
 .queue-row:first-of-type { border-top: 0; }
 .queue-row:hover { background: white; }
+.queue-row:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; background: white; position: relative; z-index: 1; }
 .queue-row { --priority-color: var(--watch); border-left: 3px solid transparent; }
 .queue-row.priority-now { --priority-color: var(--now); border-left-color: var(--now); }
 .queue-row.priority-next { --priority-color: var(--next); border-left-color: var(--next); }
@@ -154,8 +155,8 @@ nav { display: grid; gap: 7px; }
 .client-cell span { margin-top: 5px; color: var(--muted); font-size: 10px; }
 .cell-copy strong { font-size: 12px; font-weight: 600; }
 .cell-copy span { margin-top: 5px; color: var(--muted); font-size: 10px; line-height: 1.35; }
-.open-client { width: 30px; height: 30px; border: 1px solid var(--line); background: transparent; cursor: pointer; }
-.open-client:hover { color: white; border-color: var(--teal); background: var(--teal); }
+.queue-row-arrow { width: 30px; height: 30px; display: grid; place-items: center; border: 1px solid var(--line); transition: color .15s ease, border-color .15s ease, background-color .15s ease; }
+.queue-row:hover .queue-row-arrow, .queue-row:focus-visible .queue-row-arrow { color: white; border-color: var(--teal); background: var(--teal); }
 .priority-chip { display: inline-block; padding: 4px 7px; color: var(--teal); background: var(--teal-soft); font-size: 8px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .priority-chip.now { color: var(--now); background: var(--now-soft); }
 .priority-chip.next { color: var(--next); background: var(--next-soft); }
