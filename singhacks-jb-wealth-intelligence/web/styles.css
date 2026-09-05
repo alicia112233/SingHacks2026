@@ -428,6 +428,16 @@ nav { display: grid; gap: 7px; }
 .evaluation-results .validation-layers small { font-size: 10px; }
 .evaluation-results .validation-layers b { font-size: 14px; }
 .evaluation-results .validation-layers span { font-size: 12px; }
+.retrieval-status { display: flex; gap: 10px; align-items: baseline; padding: 12px 14px; border: 1px solid var(--line); background: var(--paper); }
+.retrieval-status strong { color: var(--muted); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+.retrieval-status.ready strong { color: var(--teal); }
+.retrieval-status span { color: var(--muted); font-size: 12px; }
+.retrieval-list { display: grid; gap: 8px; margin-top: 8px; }
+.retrieval-list article { padding: 12px 14px; border-left: 3px solid var(--teal); background: white; }
+.retrieval-list header { display: flex; justify-content: space-between; gap: 12px; }
+.retrieval-list header strong { font-size: 11px; }
+.retrieval-list header span { color: var(--gold); font-size: 9px; text-transform: uppercase; }
+.retrieval-list p { margin: 7px 0 0; color: var(--muted); font-size: 11px; line-height: 1.5; }
 .judge-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
 .judge-list article { min-width: 0; padding: 15px; border: 1px solid var(--line); background: white; }
 .judge-list article.unavailable { border-color: #dfc8ab; background: #fcf8f1; }

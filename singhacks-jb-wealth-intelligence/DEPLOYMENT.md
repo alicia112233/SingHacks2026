@@ -36,7 +36,27 @@ runtime user only `SELECT` and `INSERT` afterward.
 Do not put the connection string in source control. `.env` and `.env.local` are
 ignored; `.env.example` contains only the variable shape.
 
-## 3. Deploy
+## 3. Add optional Chroma Cloud retrieval
+
+Follow [`docs/CHROMA_CLOUD.md`](docs/CHROMA_CLOUD.md) to create a database,
+index the controlled corpus, and add the Chroma variables to Vercel. Chroma is
+failure-isolated and off by default; the deterministic intelligence API remains
+available when semantic retrieval is disabled or temporarily unavailable.
+
+## 4. Deploy from `main`
+
+For this repository, connect the Vercel project to
+`alicia112233/SingHacks2026`, set **Production Branch** to `main`, and retain the
+Root Directory shown above. A push to `main` then creates a production
+deployment, while other branches create previews.
+
+This repository is private and the project currently uses Vercel Hobby. On that
+combination, Vercel only deploys commits whose author is the Hobby team owner.
+Commits from another collaborator are marked `BLOCKED`; either have the owner
+merge/re-author the production commit or move to a Pro team and add each
+committer as a member.
+
+### Manual preview deployment
 
 ### Optional independent model judges
 
@@ -86,11 +106,10 @@ redirect to Vercel sign-in, and only team members or explicitly granted viewers
 should receive access.
 
 On a Hobby account, Standard Protection does not protect the canonical production
-domain. Do not run `vercel deploy --prod` until the account supports protection
-for all deployments or the application has its own production identity and
-authorization layer.
+domain. The bundled records are synthetic, but real client data still requires
+application identity and authorization before production use.
 
-## 4. Verify the deployment
+## 5. Verify the deployment
 
 Replace the host below with the production domain:
 
@@ -100,7 +119,8 @@ curl.exe https://your-domain.example/api/intelligence
 curl.exe https://your-domain.example/api/decisions
 ```
 
-The health response must report `decision_storage` as `configured`. In the UI,
+The health response must report `decision_storage` as `configured`. If Chroma is
+enabled, it must also report `vector_search` as `configured`. In the UI,
 open a client, dismiss an action, refresh the page, restore it, and confirm both
 events appear in the Evidence Ledger.
 

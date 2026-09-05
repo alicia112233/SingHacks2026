@@ -12,6 +12,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 from tessera.evaluation import evaluate_recommendation
+from tessera.retrieval import retrieval_configuration_status
 from tessera.services import (
     MAX_REQUEST_BYTES,
     DecisionStore,
@@ -91,7 +92,13 @@ class TesseraHandler(SimpleHTTPRequestHandler):
             self._send_json(DECISIONS.snapshot())
             return
         if path == "/health":
-            self._send_json({"status": "ok", "service": "tessera"})
+            self._send_json(
+                {
+                    "status": "ok",
+                    "service": "tessera",
+                    "vector_search": retrieval_configuration_status()["status"],
+                }
+            )
             return
         if path == "/favicon.ico":
             self.send_response(HTTPStatus.NO_CONTENT)

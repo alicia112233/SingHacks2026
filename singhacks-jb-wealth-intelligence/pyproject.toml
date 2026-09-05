@@ -1,5 +1,5 @@
 [project]
 name = "app"
 version = "0.1.0"
-dependencies = [ "pandas>=2.0", "flask>=3.1, <4", "psycopg[binary]>=3.2, <4" ]
+dependencies = [ "pandas>=2.0", "flask>=3.1, <4", "psycopg[binary]>=3.2, <4", "chromadb-client==1.5.9" ]
 requires-python = "~=3.13.0"

@@ -22,6 +22,13 @@ Vercel AI Gateway key as `AI_GATEWAY_API_KEY` or a current
 edit the comma-separated `TESSERA_JUDGE_MODELS` value to use other supported
 models such as Claude Opus.
 
+Chroma Cloud can supplement that panel with source-labelled semantic evidence
+from controlled RM notes, events, mandates and instrument references. It uses a
+thin cloud client and explicit Vercel AI Gateway embeddings; exact portfolio and
+suitability calculations remain deterministic. See
+[`docs/CHROMA_CLOUD.md`](docs/CHROMA_CLOUD.md) for setup, indexing, cost and
+deployment instructions.
+
 ## Main routes
 
 - `/` — daily book review

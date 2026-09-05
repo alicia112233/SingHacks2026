@@ -10,6 +10,7 @@ from pathlib import Path
 from flask import Flask, jsonify, request, send_from_directory
 
 from tessera.evaluation import evaluate_recommendation
+from tessera.retrieval import retrieval_configuration_status
 from tessera.services import (
     MAX_REQUEST_BYTES,
     IntelligenceService,
@@ -121,4 +122,5 @@ def health():
         status="ok",
         service="tessera",
         decision_storage="configured" if os.environ.get("DATABASE_URL") else "not_configured",
+        vector_search=retrieval_configuration_status()["status"],
     )
