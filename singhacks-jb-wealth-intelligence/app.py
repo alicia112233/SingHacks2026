@@ -4,88 +4,24 @@ from __future__ import annotations
 
 import argparse
 import json
-import threading
-import uuid
-from datetime import datetime, timezone
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from tessera import build_intelligence_payload
+from tessera.services import (
+    MAX_REQUEST_BYTES,
+    DecisionStore,
+    IntelligenceService,
+    create_decision_record,
+)
 
 
 ROOT = Path(__file__).resolve().parent
 WEB = ROOT / "web"
 RUNTIME = ROOT / "runtime"
 DECISION_FILE = RUNTIME / "decisions.json"
-MAX_REQUEST_BYTES = 8_192
-ALLOWED_DECISIONS = {"approved", "dismissed", "edited", "pending"}
-
-
-class IntelligenceService:
-    """Cache analytics until one of the controlled source files changes."""
-
-    def __init__(self, data_dir: Path):
-        self.data_dir = data_dir
-        self._lock = threading.Lock()
-        self._signature: tuple[tuple[str, int, int], ...] | None = None
-        self._payload: dict[str, Any] | None = None
-
-    def _source_signature(self) -> tuple[tuple[str, int, int], ...]:
-        files = sorted((*self.data_dir.glob("*.csv"), *self.data_dir.glob("*.json")))
-        return tuple(
-            (path.name, path.stat().st_mtime_ns, path.stat().st_size) for path in files
-        )
-
-    def get(self) -> dict[str, Any]:
-        signature = self._source_signature()
-        with self._lock:
-            if self._payload is None or signature != self._signature:
-                self._payload = build_intelligence_payload(self.data_dir)
-                self._signature = signature
-            return self._payload
-
-
-class DecisionStore:
-    """Thread-safe append-only decision ledger persisted as JSON."""
-
-    def __init__(self, path: Path):
-        self.path = path
-        self._lock = threading.Lock()
-
-    def _read_unlocked(self) -> list[dict[str, Any]]:
-        if not self.path.exists():
-            return []
-        with self.path.open(encoding="utf-8") as handle:
-            payload = json.load(handle)
-        if not isinstance(payload, list):
-            raise ValueError("Decision ledger must contain a JSON array")
-        return payload
-
-    @staticmethod
-    def _effective(records: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
-        return {record["recommendation_id"]: record for record in records}
-
-    def snapshot(self) -> dict[str, Any]:
-        with self._lock:
-            records = self._read_unlocked()
-        return {"records": records, "effective": self._effective(records)}
-
-    def append(self, record: dict[str, Any]) -> dict[str, Any]:
-        with self._lock:
-            records = self._read_unlocked()
-            records.append(record)
-            self.path.parent.mkdir(parents=True, exist_ok=True)
-            temporary = self.path.with_suffix(".tmp")
-            with temporary.open("w", encoding="utf-8") as handle:
-                json.dump(records, handle, ensure_ascii=False, indent=2)
-                handle.write("\n")
-            temporary.replace(self.path)
-        return {"record": record, "records": records, "effective": self._effective(records)}
-
-
 INTELLIGENCE = IntelligenceService(ROOT / "data")
 DECISIONS = DecisionStore(DECISION_FILE)
 
@@ -162,38 +98,9 @@ class TesseraHandler(SimpleHTTPRequestHandler):
             return
 
         try:
-            body = json.loads(self.rfile.read(length).decode("utf-8"))
-            if not isinstance(body, dict):
-                raise ValueError("Request body must be an object")
-            client_id = str(body.get("client_id", ""))
-            recommendation_index = int(body.get("recommendation_index", -1))
-            action = str(body.get("action", "")).lower()
-            note = str(body.get("note", "")).strip()
-
             intelligence = INTELLIGENCE.get()
-            client = intelligence["featured_clients"].get(client_id)
-            if client is None:
-                raise ValueError("Unknown client")
-            if recommendation_index < 0 or recommendation_index >= len(client["recommendations"]):
-                raise ValueError("Unknown recommendation")
-            if action not in ALLOWED_DECISIONS:
-                raise ValueError("Unsupported decision")
-            if len(note) > 1_000:
-                raise ValueError("Note must be 1,000 characters or fewer")
-
-            recommendation = client["recommendations"][recommendation_index]
-            record = {
-                "id": str(uuid.uuid4()),
-                "recommendation_id": f"{client_id}:{recommendation_index}",
-                "client_id": client_id,
-                "client_name": client["name"],
-                "recommendation_index": recommendation_index,
-                "recommendation_title": recommendation["title"],
-                "action": action,
-                "note": note,
-                "actor": intelligence["meta"]["rm"],
-                "recorded_at": datetime.now(timezone.utc).isoformat(),
-            }
+            body = json.loads(self.rfile.read(length).decode("utf-8"))
+            record = create_decision_record(body, intelligence)
             self._send_json(DECISIONS.append(record), HTTPStatus.CREATED)
         except (json.JSONDecodeError, UnicodeDecodeError, TypeError, ValueError) as error:
             self._send_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)

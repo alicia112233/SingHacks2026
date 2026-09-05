@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+.venv/
+.vercel/
+.env
+.env.local
+runtime/
+
+.vercel
+.env*.local
+node_modules/
+outputs/

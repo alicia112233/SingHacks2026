@@ -56,9 +56,9 @@ Scenarios are sensitivities, not forecasts. The screen explicitly identifies cal
 
 ### Action decisions and audit trail
 
-Actions can be edited, approved, dismissed or restored. Each event is posted to `/api/decisions` and appended to `runtime/decisions.json`. The effective state is reconstructed from the latest event for each recommendation, while the complete history remains available in the Evidence Ledger.
+Actions can be edited, approved, dismissed or restored. Each event is posted to `/api/decisions`. The effective state is reconstructed from the latest event for each recommendation, while the complete history remains available in the Evidence Ledger.
 
-The local JSON store is intentionally simple and durable across application restarts. In a bank environment, the same API contract should be backed by an append-only relational audit table or event store.
+The local server persists these events to `runtime/decisions.json`. Vercel deployments use the same API contract with the append-only PostgreSQL store configured by `DATABASE_URL`; no production decision depends on ephemeral function storage.
 
 ## Application routes
 
@@ -83,11 +83,14 @@ python app.py
 
 Open `http://127.0.0.1:8000`.
 
+For a hosted deployment, follow [`DEPLOYMENT.md`](DEPLOYMENT.md). The repository includes Vercel routing, Python function entry points and PostgreSQL-backed decision persistence.
+
 ## Verify
 
 ```bash
 python -m unittest discover -s tests -v
 node --check web/app.js
+python -m json.tool vercel.json
 ```
 
 The test suite covers analytical controls, full-book profile availability, decision-ledger durability, application-route fallback, health and favicon handling.
@@ -114,11 +117,11 @@ The application sends no client data to an external model. If a bank later adds 
 
 ## Production integration path
 
-The current service is a deployable reference implementation. A controlled bank rollout would replace local adapters while retaining the workflow and API contracts:
+The service can run locally or on Vercel. A controlled bank rollout would replace the bundled source adapters while retaining the workflow and API contracts:
 
 - **Identity and access:** SSO, role-based book access, maker-checker controls and session policy.
 - **Data:** read-only connectors to positions, mandates, CRM, credit and approved market-event systems; lineage IDs retained in every evidence record.
-- **Persistence:** PostgreSQL or an event store for immutable decisions, versioned recommendations and retention policy.
+- **Persistence:** the hosted decision API already uses PostgreSQL; production governance still needs database migrations, versioned recommendations, retention policy and recovery procedures.
 - **Processing:** scheduled book scoring plus event-driven refresh when positions, facilities or client records change.
 - **Controls:** suitability rules as versioned policy, with effective dates and approval ownership.
 - **Security:** encryption in transit and at rest, field-level access controls, private networking and secrets management.
