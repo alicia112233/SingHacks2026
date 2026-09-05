@@ -309,6 +309,16 @@ function recommendationsHTML(client) {
     ${dismissed.length ? `<details class="dismissed-list"><summary>${dismissed.length} dismissed action${dismissed.length > 1 ? "s" : ""}</summary>${dismissed.map(({ recommendation, index }) => `<div class="dismissed-row"><div><strong>${esc(recommendation.title)}</strong><span>${esc(decisionFor(client.client_id, index)?.note || "Dismissed from the active review")}</span></div><button class="action-button" data-decision="pending" data-index="${index}">Restore</button></div>`).join("")}</details>` : ""}`;
 }
 
+function riskAnalysisHTML(risk = {}) {
+  risk = risk || {};
+  const score = value => typeof value === "number" && Number.isFinite(value) ? `${Number(value.toFixed(1))}/5` : "Insufficient data";
+  return `<section class="panel risk-analysis">
+    <div class="panel-title"><h3>Risk Appetite</h3></div>
+    <div class="risk-analysis-scores">${["capacity", "tolerance", "horizon", "overall"].map(key => `<div><span>${key[0].toUpperCase() + key.slice(1)}:</span> <strong>${score(risk[key])}</strong></div>`).join("")}</div>
+    <p>${esc(risk.explanation || "Insufficient data. Risk analysis is unavailable in the current customer record.")}</p>
+  </section>`;
+}
+
 function renderClient(clientId) {
   const client = profiles()[clientId];
   if (!client) return;
@@ -319,6 +329,7 @@ function renderClient(clientId) {
       <div><div class="profile-tags"><span>${esc(client.risk_profile)}</span><span>${esc(client.reporting_language)}</span><span>${esc(client.booking_centre)}</span></div><div class="client-aum"><strong>$${client.aum_usd_m}m</strong><small>CURRENT BANK-HELD AUM</small></div></div>
     </div>
     <div class="metric-rail">${client.headline_metrics.map((metric) => `<div><strong>${esc(metric.value)}</strong><span>${esc(metric.label)}</span></div>`).join("")}</div>
+    ${riskAnalysisHTML(client.risk_analysis)}
     <div class="tension-map">
       <div class="tension-item"><small>CLIENT POSITION</small><p>${esc(client.tension.client_says)}</p></div>
       <div class="tension-item"><small>PORTFOLIO POSITION</small><p>${esc(client.tension.portfolio_does)}</p></div>

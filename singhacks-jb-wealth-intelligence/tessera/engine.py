@@ -16,6 +16,8 @@ from typing import Any, Iterable
 
 import pandas as pd
 
+from tessera.risk_analysis import analyse_client, order_by_urgency
+
 
 SEVERITY_ORDER = {"Severe": 3, "High": 2, "Medium": 1, "Low": 0}
 
@@ -1304,7 +1306,10 @@ def build_intelligence_payload(data_dir: str | Path) -> dict[str, Any]:
     as_of = _as_of(bundle)
     clients = bundle["clients"]
     priority = [_priority_card(bundle, row) for row in clients.itertuples()]
-    priority.sort(key=lambda item: item["score"], reverse=True)
+    risk_analysis = {row.client_id: analyse_client(bundle, row, as_of) for row in clients.itertuples()}
+    for item in priority:
+        item["risk_analysis"] = risk_analysis[item["client_id"]]
+    priority = order_by_urgency(priority)
     # The queue is capacity-aware: one RM gets five "Now" slots, then a second
     # review band. The underlying numeric score remains visible and inspectable.
     for index, item in enumerate(priority):
@@ -1322,6 +1327,9 @@ def build_intelligence_payload(data_dir: str | Path) -> dict[str, Any]:
         client_id: _feature_profile(bundle, client_id)
         for client_id in clients.client_id.tolist()
     }
+    for client_id, profile in client_profiles.items():
+        profile["risk_analysis"] = risk_analysis[client_id]
+
     for profile in client_profiles.values():
         for recommendation in profile["recommendations"]:
             recommendation["risk_validation"] = _recommendation_risk_validation(
@@ -1330,6 +1338,7 @@ def build_intelligence_payload(data_dir: str | Path) -> dict[str, Any]:
             recommendation["decision_rationale"] = _recommendation_decision_rationale(
                 profile, recommendation
             )
+            
     focus_client_ids = ["CL-0012", "CL-0014", "CL-0019"]
 
     return {
