@@ -2,6 +2,7 @@ import json
 import tempfile
 import threading
 import unittest
+from unittest import mock
 from http.server import ThreadingHTTPServer
 from pathlib import Path
 from urllib.error import HTTPError
@@ -9,6 +10,8 @@ from urllib.request import Request, urlopen
 
 import app as app_module
 from app import DecisionStore, TesseraHandler
+from api.index import app as vercel_app
+from tessera.services import create_decision_record
 
 
 class DecisionStoreTests(unittest.TestCase):
@@ -29,7 +32,28 @@ class DecisionStoreTests(unittest.TestCase):
 
             snapshot = DecisionStore(path).snapshot()
             self.assertEqual(len(snapshot["records"]), 2)
-            self.assertEqual(snapshot["effective"]["CL-0012:0"]["action"], "dismissed")
+        self.assertEqual(snapshot["effective"]["CL-0012:0"]["action"], "dismissed")
+
+    def test_decision_request_is_validated_against_current_recommendations(self):
+        intelligence = app_module.INTELLIGENCE.get()
+        record = create_decision_record(
+            {
+                "client_id": "CL-0012",
+                "recommendation_index": 0,
+                "action": "dismissed",
+                "note": "Not suitable after review",
+            },
+            intelligence,
+        )
+        self.assertEqual(record["recommendation_id"], "CL-0012:0")
+        self.assertEqual(record["action"], "dismissed")
+        self.assertEqual(record["client_name"], intelligence["featured_clients"]["CL-0012"]["name"])
+
+        with self.assertRaisesRegex(ValueError, "Unknown client"):
+            create_decision_record(
+                {"client_id": "NOT-A-CLIENT", "recommendation_index": 0, "action": "approved"},
+                intelligence,
+            )
 
 
 class ApplicationRouteTests(unittest.TestCase):
@@ -91,6 +115,35 @@ class ApplicationRouteTests(unittest.TestCase):
             snapshot = json.load(response)
         self.assertEqual(snapshot["effective"]["CL-0012:0"]["action"], "pending")
         self.assertEqual(len(snapshot["records"]), 2)
+
+
+class VercelRouteTests(unittest.TestCase):
+    def setUp(self):
+        self.client = vercel_app.test_client()
+
+    def test_intelligence_and_health_routes(self):
+        intelligence = self.client.get("/api/intelligence")
+        self.assertEqual(intelligence.status_code, 200)
+        self.assertIn("meta", intelligence.get_json())
+
+        health = self.client.get("/health")
+        self.assertEqual(health.status_code, 200)
+        self.assertEqual(health.get_json()["status"], "ok")
+
+    def test_frontend_and_direct_application_routes(self):
+        for path in ["/", "/clients/CL-0012", "/scenario-studio", "/evidence-ledger"]:
+            with self.subTest(path=path):
+                response = self.client.get(path)
+                self.assertEqual(response.status_code, 200)
+                self.assertIn(b"TESSERA", response.data)
+        self.assertEqual(self.client.get("/app.js").status_code, 200)
+        self.assertEqual(self.client.get("/styles.css").status_code, 200)
+
+    def test_unconfigured_hosted_ledger_fails_clearly(self):
+        with mock.patch.dict("os.environ", {}, clear=True):
+            response = self.client.get("/api/decisions")
+        self.assertEqual(response.status_code, 503)
+        self.assertIn("DATABASE_URL", response.get_json()["error"])
 
 
 if __name__ == "__main__":

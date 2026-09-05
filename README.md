@@ -14,6 +14,14 @@ python app.py
 
 Open `http://127.0.0.1:8000`.
 
+## Deploy to Vercel
+
+The application now includes Vercel Python Functions, SPA route rewrites and a
+PostgreSQL-backed hosted decision ledger. Follow the project-specific
+[`DEPLOYMENT.md`](singhacks-jb-wealth-intelligence/DEPLOYMENT.md). A pooled
+`DATABASE_URL` is required for approve, edit, dismiss and restore actions in a
+hosted environment.
+
 ## Product capabilities
 
 - Full-book Now, Next and Watch review queue.
