@@ -78,6 +78,18 @@ key, not an OpenAI, Anthropic or Google provider key. For local `python app.py`
 runs, copy `.env.example` to `.env.local`; the local server loads that file at
 startup. Alternatively, `vercel env pull .env.local` supplies a short-lived
 `VERCEL_OIDC_TOKEN`.
+
+The evidence assistant works without model credentials using local extractive
+answers. To enable model-written answers over the same retrieved evidence, add:
+
+```text
+TESSERA_CHAT_ENABLED=true
+TESSERA_CHAT_MODEL=openai/gpt-5.4
+```
+
+It reuses the AI Gateway authentication above. See
+[`docs/RAG_CHAT_ASSISTANT.md`](docs/RAG_CHAT_ASSISTANT.md) for its fallback,
+citation and browser-audio behavior.
 Review the configured models against the live AI Gateway model catalogue before
 deployment. The evaluator sends a purpose-limited packet without client name,
 client ID or raw RM notes. For real banking data, enable this only after privacy,
@@ -123,6 +135,10 @@ The health response must report `decision_storage` as `configured`. If Chroma is
 enabled, it must also report `vector_search` as `configured`. In the UI,
 open a client, dismiss an action, refresh the page, restore it, and confirm both
 events appear in the Evidence Ledger.
+
+Open **Ask TESSERA**, select a client, ask for current AUM and expand the returned
+sources. Test microphone dictation and read-aloud in the browser selected for the
+deployment; speech recognition support is browser-dependent.
 
 Open a recommendation confidence badge and run the model panel. Confirm that
 the deterministic score always acts as a ceiling, predictive probability is

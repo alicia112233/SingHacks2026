@@ -9,6 +9,7 @@ from pathlib import Path
 
 from flask import Flask, jsonify, request, send_from_directory
 
+from tessera.chat import answer_chat, chat_configuration_status
 from tessera.evaluation import evaluate_recommendation
 from tessera.retrieval import retrieval_configuration_status
 from tessera.services import (
@@ -116,6 +117,22 @@ def post_evaluation():
         return jsonify(error="The independent evaluation could not be completed."), HTTPStatus.SERVICE_UNAVAILABLE
 
 
+@app.post("/api/chat")
+def post_chat():
+    if not request.is_json:
+        return jsonify(error="Content-Type must be application/json"), HTTPStatus.UNSUPPORTED_MEDIA_TYPE
+    try:
+        body = request.get_json(silent=True)
+        if body is None:
+            raise ValueError("Request body must be valid JSON")
+        return jsonify(answer_chat(INTELLIGENCE.get(), body))
+    except (TypeError, ValueError) as error:
+        return jsonify(error=str(error)), HTTPStatus.BAD_REQUEST
+    except Exception:
+        app.logger.exception("Evidence assistant failed")
+        return jsonify(error="The evidence assistant is temporarily unavailable."), HTTPStatus.SERVICE_UNAVAILABLE
+
+
 @app.get("/health")
 def health():
     return jsonify(
@@ -123,4 +140,5 @@ def health():
         service="tessera",
         decision_storage="configured" if os.environ.get("DATABASE_URL") else "not_configured",
         vector_search=retrieval_configuration_status()["status"],
+        chat=chat_configuration_status()["status"],
     )

@@ -29,6 +29,13 @@ suitability calculations remain deterministic. See
 [`docs/CHROMA_CLOUD.md`](docs/CHROMA_CLOUD.md) for setup, indexing, cost and
 deployment instructions.
 
+The global **Ask TESSERA** assistant supports client-scoped questions with
+numbered source citations, microphone dictation and browser read-aloud. It works
+without cloud credentials using local factual retrieval, and can optionally
+combine Chroma semantic results with model-written answers. See
+[`docs/RAG_CHAT_ASSISTANT.md`](docs/RAG_CHAT_ASSISTANT.md). Its API endpoint is
+`POST /api/chat`.
+
 ## Main routes
 
 - `/` — daily book review

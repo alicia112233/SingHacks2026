@@ -187,6 +187,23 @@ class ApplicationRouteTests(unittest.TestCase):
             ["openai", "anthropic", "google"],
         )
 
+    def test_local_chat_endpoint_returns_grounded_citations(self):
+        body = json.dumps(
+            {"client_id": "CL-0001", "question": "What is the current AUM?"}
+        ).encode("utf-8")
+        request = Request(
+            f"{self.base_url}/api/chat",
+            data=body,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with mock.patch.dict("os.environ", {}, clear=True):
+            with urlopen(request) as response:
+                self.assertEqual(response.status, 200)
+                payload = json.load(response)
+        self.assertEqual(payload["mode"], "grounded_extract")
+        self.assertTrue(payload["citations"])
+
 
 class VercelRouteTests(unittest.TestCase):
     def setUp(self):
@@ -243,6 +260,20 @@ class VercelRouteTests(unittest.TestCase):
         self.assertIsNone(payload["predictive"]["probability"])
         self.assertTrue(all(judge["status"] == "Not run" for judge in payload["judges"]))
         self.assertTrue(payload["consensus"]["rm_decision_required"])
+
+    def test_hosted_chat_route_validates_and_answers(self):
+        with mock.patch.dict("os.environ", {}, clear=True):
+            response = self.client.post(
+                "/api/chat",
+                json={"client_id": "CL-0001", "question": "Summarise liquidity"},
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.get_json()["citations"])
+
+        invalid = self.client.post(
+            "/api/chat", json={"client_id": "CL-0001", "question": "x"}
+        )
+        self.assertEqual(invalid.status_code, 400)
 
 
 if __name__ == "__main__":

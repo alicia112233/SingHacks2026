@@ -31,6 +31,7 @@ hosted environment.
 - Evidence passports and data-quality controls.
 - Persistent approve, edit, dismiss and restore workflow.
 - Append-only decision history in the Evidence Ledger.
+- Client-scoped RAG evidence assistant with citations, dictation and read-aloud.
 - Direct routes that remain valid on browser refresh.
 
 Read [`SOLUTION.md`](SOLUTION.md) for the product model and [`README_SOLUTION.md`](singhacks-jb-wealth-intelligence/README_SOLUTION.md) for implementation and rollout details.

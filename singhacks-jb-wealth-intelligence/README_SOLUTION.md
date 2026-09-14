@@ -46,6 +46,20 @@ while analytical validation is sensitivity-only, and never replaces RM
 approval. See [`docs/RECOMMENDATION_RISK_RUBRIC.md`](docs/RECOMMENDATION_RISK_RUBRIC.md)
 for weights, hard stops, confidence caps and the production model contract.
 
+### Evidence assistant with voice
+
+The global **Ask TESSERA** panel answers client-scoped questions about current
+allocations, liquidity needs, credit, scenarios, review priorities and proposed
+actions. Answers contain expandable numbered source citations. Local lexical
+retrieval works without cloud credentials; configured Chroma results are fused
+with those structured facts, and optional model generation falls back safely if
+the gateway is unavailable or returns an uncited answer.
+
+The microphone transcribes a question through supported browser speech APIs,
+and each response can be read aloud. Raw audio is not sent to or stored by the
+TESSERA server. See [`docs/RAG_CHAT_ASSISTANT.md`](docs/RAG_CHAT_ASSISTANT.md)
+for the retrieval, grounding, privacy and evaluation design.
+
 Chart labels use a consistent `Mon YYYY` format. The application-wide data date is derived from the latest holding snapshot, and each chart point can be selected with a mouse or keyboard to show its exact value and change from the previous observed snapshot.
 
 ### Scenario Studio
@@ -77,6 +91,7 @@ The local server persists these events to `runtime/decisions.json`. Vercel deplo
 | `/api/intelligence` | Current analytics payload; recalculated when a source file changes |
 | `/api/decisions` | Decision history and effective state |
 | `/api/evaluations` | On-demand deterministic, predictive-readiness and independent-judge panel |
+| `/api/chat` | Client-scoped hybrid retrieval and cited assistant answers |
 | `/health` | Service health |
 
 Unknown extensionless paths return the application shell so browser refreshes on client and studio routes do not fail. Missing static assets still return a genuine 404. Browser favicon requests return 204 rather than polluting service logs with a false error.
@@ -121,6 +136,11 @@ Position, client, mandate, credit and event records
 ```
 
 External model judges are disabled by default. When explicitly enabled, they receive a purpose-limited evidence packet without client name, client ID or raw RM notes. Their scores cannot override a deterministic hard stop or raise the deterministic score, and RM approval remains mandatory. A bank rollout should use approved private endpoints and its data-processing controls.
+
+Assistant model generation is also disabled by default. The chat remains usable
+through local extractive answers. When enabled, generation receives only the
+retrieved client-scoped chunks and short conversation history; invalid or
+unavailable model responses fall back to cited extractive output.
 
 ## Production integration path
 

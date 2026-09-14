@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+from tessera.chat import answer_chat, chat_configuration_status
 from tessera.evaluation import evaluate_recommendation
 from tessera.retrieval import retrieval_configuration_status
 from tessera.services import (
@@ -97,6 +98,7 @@ class TesseraHandler(SimpleHTTPRequestHandler):
                     "status": "ok",
                     "service": "tessera",
                     "vector_search": retrieval_configuration_status()["status"],
+                    "chat": chat_configuration_status()["status"],
                 }
             )
             return
@@ -122,7 +124,7 @@ class TesseraHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self):  # noqa: N802 - required by BaseHTTPRequestHandler
         path = urlparse(self.path).path
-        if path not in {"/api/decisions", "/api/evaluations"}:
+        if path not in {"/api/decisions", "/api/evaluations", "/api/chat"}:
             self._send_json({"error": "Endpoint not found"}, HTTPStatus.NOT_FOUND)
             return
 
@@ -137,7 +139,9 @@ class TesseraHandler(SimpleHTTPRequestHandler):
         try:
             intelligence = INTELLIGENCE.get()
             body = json.loads(self.rfile.read(length).decode("utf-8"))
-            if path == "/api/evaluations":
+            if path == "/api/chat":
+                self._send_json(answer_chat(intelligence, body))
+            elif path == "/api/evaluations":
                 if not isinstance(body, dict):
                     raise ValueError("Request body must be an object")
                 evaluation = evaluate_recommendation(
