@@ -467,8 +467,9 @@ function recommendationHTML(client, recommendation, index) {
   const status = decision?.action || "pending";
   const validation = recommendation.risk_validation;
   const approvalBlocked = validation && (validation.band === "Blocked" || validation.blockers?.length);
+  const replacementChip = recommendation.replacement_for ? `<span class="replacement-chip" title="Generated after the RM dismissed: ${esc(recommendation.replacement_for)}">Replacement suggestion</span>` : "";
   return `<article class="recommendation" data-recommendation="${index}">
-    <header><h4>${index + 1}. ${esc(recommendation.title)}</h4><div class="recommendation-badges">${validation ? `<button class="confidence-chip ${validation.band.toLowerCase().replaceAll(" ", "-")}" data-risk-index="${index}" aria-label="Open confidence rubric for ${esc(recommendation.title)}"><b>${validation.score}</b><span>${esc(validation.band)}</span></button>` : ""}${status !== "pending" ? `<span class="decision-status ${status}">${esc(status)}</span>` : ""}</div></header>
+    <header><h4>${index + 1}. ${esc(recommendation.title)}</h4><div class="recommendation-badges">${replacementChip}${validation ? `<button class="confidence-chip ${validation.band.toLowerCase().replaceAll(" ", "-")}" data-risk-index="${index}" aria-label="Open confidence rubric for ${esc(recommendation.title)}"><b>${validation.score}</b><span>${esc(validation.band)}</span></button>` : ""}${status !== "pending" ? `<span class="decision-status ${status}">${esc(status)}</span>` : ""}</div></header>
     <p>${esc(detail)}</p>
     ${recommendationRationaleHTML(recommendation)}
     <footer><span class="suitability">${esc(recommendation.suitability)}</span><div class="recommendation-actions">
@@ -669,6 +670,19 @@ function showApproveRecommendation(client, index) {
   openModal(`<span class="section-kicker">RM APPROVAL</span><h2>${esc(recommendation.title)}</h2><p>Record what you have done or will do for this client. Approval is written to the evidence ledger and does not place a trade.</p><form id="approve-action-form" data-index="${index}"><label class="form-field"><span>Action taken or agreed</span><textarea name="note" minlength="10" maxlength="1000" rows="6" required placeholder="Example: Confirmed the facility buffer with Credit and scheduled a client review before funding.">${esc(current?.note || "")}</textarea></label><div class="modal-actions"><button type="button" class="small-button" data-close-modal>Cancel</button><button type="submit" class="action-button approve">Approve and record</button></div></form>`);
 }
 
+async function requestAlternativeRecommendation(client, dismissedIndex, dismissedTitle) {
+  const response = await fetch("/api/recommendations/alternate", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ client_id: client.client_id, dismissed_index: dismissedIndex }),
+  });
+  const payload = await response.json().catch(() => ({ error: `Recommendation service returned ${response.status}` }));
+  if (!response.ok) throw new Error(payload.error || `Request failed (${response.status})`);
+  payload.recommendation.replacement_for = dismissedTitle;
+  client.recommendations.push(payload.recommendation);
+  return payload.recommendation;
+}
+
 async function persistDecision(client, index, action, note = "") {
   const response = await fetch("/api/decisions", {
     method: "POST",
@@ -757,6 +771,16 @@ function bindEvents() {
         try {
           await persistDecision(client, index, action, decisionFor(client.client_id, index)?.note || "");
           showToast(action === "dismissed" ? "Action dismissed. It can be restored from this review." : action === "approved" ? "Action approved and written to the decision ledger." : "Action restored to the active review.");
+          if (action === "dismissed") {
+            const dismissedTitle = client.recommendations[index].title;
+            try {
+              const replacement = await requestAlternativeRecommendation(client, index, dismissedTitle);
+              renderClient(state.currentClient);
+              showToast(`How about this instead? ${replacement.title}`);
+            } catch (replacementError) {
+              console.warn(replacementError);
+            }
+          }
         } catch (error) {
           decisionButton.disabled = false;
           showToast(error.message, "error");

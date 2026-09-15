@@ -10,7 +10,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Protocol
 
-from tessera.engine import build_intelligence_payload
+from tessera.engine import build_intelligence_payload, generate_alternative_recommendation
 
 
 MAX_REQUEST_BYTES = 8_192
@@ -253,3 +253,18 @@ def create_decision_record(
         "actor": intelligence["meta"]["rm"],
         "recorded_at": datetime.now(timezone.utc).isoformat(),
     }
+
+
+def create_alternative_recommendation(
+    body: Any, intelligence: dict[str, Any]
+) -> dict[str, Any]:
+    """Generate the replacement action shown after an RM dismisses one."""
+
+    if not isinstance(body, dict):
+        raise ValueError("Request body must be an object")
+    client_id = str(body.get("client_id", ""))
+    try:
+        dismissed_index = int(body.get("dismissed_index", -1))
+    except (TypeError, ValueError) as error:
+        raise ValueError("Unknown recommendation") from error
+    return generate_alternative_recommendation(intelligence, client_id, dismissed_index)

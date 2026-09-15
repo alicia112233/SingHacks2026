@@ -14,6 +14,10 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Iterable
 
+# Cache of the most recent dataset bundle, reused to generate alternative
+# recommendations without rebuilding the payload.
+_LAST_BUNDLE: dict[str, Any] | None = None
+
 import pandas as pd
 
 from tessera.risk_analysis import analyse_client, order_by_urgency
@@ -1211,6 +1215,150 @@ def _recommendation_risk_validation(
     }
 
 
+def _alternative_recommendation_candidates(
+    bundle: dict[str, Any], profile: dict[str, Any]
+) -> list[dict[str, Any]]:
+    """Data-grounded fallback actions used to replace a dismissed suggestion.
+
+    Every candidate is built from the same controlled records as the primary
+    recommendations, so the replacement stays source-backed and reversible.
+    Details only cite figures that already appear in the profile's grounding
+    fields so the numeric-evidence check continues to pass.
+    """
+
+    client_id = profile["client_id"]
+    current = bundle["holdings"][
+        (bundle["holdings"].client_id == client_id)
+        & (bundle["holdings"].snapshot_date == _as_of(bundle))
+    ]
+    aum = float(current.market_value_usd.sum()) if not current.empty else 0.0
+    candidates: list[dict[str, Any]] = []
+
+    for need in profile.get("cash_needs", [])[:2]:
+        candidates.append(
+            {
+                "title": f"Stage funding for the {need['due_from'][:4]} {need['currency']} {need['amount_usd_m']:.2f}m need",
+                "detail": (
+                    f"Place the {need['currency']} {need['amount_usd_m']:.2f}m "
+                    f"requirement from {need['due_from'][:4]} in a dated sleeve "
+                    f"instead of leaving it invested."
+                ),
+                "suitability": "Client confirmation required",
+                "reversible": True,
+            }
+        )
+
+    for finding in profile.get("mandate_findings", [])[:3]:
+        label = finding["label"]
+        actual = finding.get("actual_pct")
+        detail = (
+            f"Record whether the {actual:.1f}% reading reflects drift or a "
+            "deliberate client instruction."
+            if isinstance(actual, (int, float))
+            else "Record whether the finding reflects drift or client instruction."
+        )
+        candidates.append(
+            {
+                "title": f"Document the instruction behind: {label}",
+                "detail": detail,
+                "suitability": "Mandate review required",
+                "reversible": True,
+            }
+        )
+
+    ltv = profile.get("ltv")
+    if ltv:
+        candidates.append(
+            {
+                "title": "Schedule a facility headroom review",
+                "detail": (
+                    f"Walk the client through the {ltv['points_to_trigger']:.2f} point "
+                    "distance to the margin-call trigger and the actions available "
+                    "before it is reached."
+                ),
+                "suitability": "Credit desk confirmation required",
+                "reversible": True,
+            }
+        )
+
+    if aum and not current.empty:
+        daily = float(current.loc[current.liquidity_tier == "Daily", "market_value_usd"].sum())
+        candidates.append(
+            {
+                "title": "Review liquidity tiering against planned needs",
+                "detail": "Compare the daily-liquidity share of the portfolio with the dated obligations on record.",
+                "suitability": "RM judgement required",
+                "reversible": True,
+            }
+        )
+        del daily
+
+    currencies = profile.get("currency_mix", [])
+    if len(currencies) >= 2:
+        candidates.append(
+            {
+                "title": "Review currency mix against reporting and spending currency",
+                "detail": "Check whether the current currency mix still matches how the client reports and spends.",
+                "suitability": "RM judgement required",
+                "reversible": True,
+            }
+        )
+
+    candidates.append(
+        {
+            "title": "Set a dated follow-up review on the dismissed point",
+            "detail": "Agree a specific review date so the dismissed topic returns with fresh evidence rather than being dropped.",
+            "suitability": "RM judgement required",
+            "reversible": True,
+        }
+    )
+    return candidates
+
+
+def generate_alternative_recommendation(
+    intelligence: dict[str, Any], client_id: str, dismissed_index: int
+) -> dict[str, Any]:
+    """Produce the next best unused action after an RM dismisses a suggestion.
+
+    The replacement is appended to the client profile so approve, edit and
+    dismiss keep working on it through the existing decision workflow.
+    """
+
+    profiles = {
+        **intelligence.get("client_profiles", {}),
+        **intelligence.get("featured_clients", {}),
+    }
+    # Mutate the canonical profile object so both maps see the new action.
+    profile = intelligence.get("client_profiles", {}).get(client_id) or profiles.get(client_id)
+    if profile is None:
+        raise ValueError("Unknown client")
+    recommendations = profile["recommendations"]
+    if dismissed_index < 0 or dismissed_index >= len(recommendations):
+        raise ValueError("Unknown recommendation")
+
+    # Reuse the bundle that produced this payload so the replacement stays
+    # grounded in the same controlled records.
+    bundle = _LAST_BUNDLE
+    if bundle is None:
+        raise ValueError("Intelligence payload is missing its source bundle")
+
+    used_titles = {str(item["title"]).strip().lower() for item in recommendations}
+    candidates = _alternative_recommendation_candidates(bundle, profile)
+    chosen = next((c for c in candidates if c["title"].strip().lower() not in used_titles), None)
+    if chosen is None:
+        base = candidates[-1]
+        attempt = len(recommendations)
+        chosen = {
+            **base,
+            "title": f"{base['title']} (revisit {attempt})",
+        }
+
+    chosen["risk_validation"] = _recommendation_risk_validation(bundle, profile, chosen)
+    chosen["decision_rationale"] = _recommendation_decision_rationale(profile, chosen)
+    recommendations.append(chosen)
+    return {"index": len(recommendations) - 1, "recommendation": chosen}
+
+
 def _recommendation_decision_rationale(
     profile: dict[str, Any], recommendation: dict[str, Any]
 ) -> dict[str, Any]:
@@ -1337,6 +1485,8 @@ def _data_quality(bundle: dict[str, Any]) -> dict[str, Any]:
 def build_intelligence_payload(data_dir: str | Path) -> dict[str, Any]:
     data_path = Path(data_dir)
     bundle = load_dataset(data_path)
+    global _LAST_BUNDLE
+    _LAST_BUNDLE = bundle
     as_of = _as_of(bundle)
     clients = bundle["clients"]
     priority = [_priority_card(bundle, row) for row in clients.itertuples()]
@@ -1372,7 +1522,7 @@ def build_intelligence_payload(data_dir: str | Path) -> dict[str, Any]:
             recommendation["decision_rationale"] = _recommendation_decision_rationale(
                 profile, recommendation
             )
-            
+
     focus_client_ids = ["CL-0012", "CL-0014", "CL-0019"]
 
     return {

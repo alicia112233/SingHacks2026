@@ -15,6 +15,7 @@ from tessera.retrieval import retrieval_configuration_status
 from tessera.services import (
     MAX_REQUEST_BYTES,
     IntelligenceService,
+    create_alternative_recommendation,
     create_decision_record,
     production_decision_store,
 )
@@ -91,6 +92,22 @@ def post_decision():
         return jsonify(error=str(error)), HTTPStatus.SERVICE_UNAVAILABLE
     except Exception:
         return jsonify(error="The decision could not be recorded."), HTTPStatus.SERVICE_UNAVAILABLE
+
+
+@app.post("/api/recommendations/alternate")
+def post_alternate_recommendation():
+    if not request.is_json:
+        return jsonify(error="Content-Type must be application/json"), HTTPStatus.UNSUPPORTED_MEDIA_TYPE
+    try:
+        body = request.get_json(silent=True)
+        if body is None:
+            raise ValueError("Request body must be valid JSON")
+        return jsonify(create_alternative_recommendation(body, INTELLIGENCE.get()))
+    except (TypeError, ValueError) as error:
+        return jsonify(error=str(error)), HTTPStatus.BAD_REQUEST
+    except Exception:
+        app.logger.exception("Alternative recommendation generation failed")
+        return jsonify(error="A replacement recommendation could not be generated."), HTTPStatus.SERVICE_UNAVAILABLE
 
 
 @app.post("/api/evaluations")

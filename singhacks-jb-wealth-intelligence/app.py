@@ -18,6 +18,7 @@ from tessera.services import (
     MAX_REQUEST_BYTES,
     DecisionStore,
     IntelligenceService,
+    create_alternative_recommendation,
     create_decision_record,
 )
 
@@ -124,7 +125,7 @@ class TesseraHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self):  # noqa: N802 - required by BaseHTTPRequestHandler
         path = urlparse(self.path).path
-        if path not in {"/api/decisions", "/api/evaluations", "/api/chat"}:
+        if path not in {"/api/decisions", "/api/evaluations", "/api/chat", "/api/recommendations/alternate"}:
             self._send_json({"error": "Endpoint not found"}, HTTPStatus.NOT_FOUND)
             return
 
@@ -141,6 +142,8 @@ class TesseraHandler(SimpleHTTPRequestHandler):
             body = json.loads(self.rfile.read(length).decode("utf-8"))
             if path == "/api/chat":
                 self._send_json(answer_chat(intelligence, body))
+            elif path == "/api/recommendations/alternate":
+                self._send_json(create_alternative_recommendation(body, intelligence))
             elif path == "/api/evaluations":
                 if not isinstance(body, dict):
                     raise ValueError("Request body must be an object")

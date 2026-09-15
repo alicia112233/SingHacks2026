@@ -657,3 +657,5 @@ nav { display: grid; gap: 7px; }
 .risk-analysis-scores strong { color: var(--teal); font-weight: 600; }
 .risk-analysis p { margin: 16px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
 @media (max-width: 760px) { .risk-analysis-scores { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.replacement-chip { color: var(--next); background: var(--next-soft); border: 1px solid var(--next); border-radius: 999px; padding: 2px 8px; font-size: 8px; letter-spacing: .06em; text-transform: uppercase; }
