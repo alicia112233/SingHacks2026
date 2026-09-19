@@ -9,7 +9,7 @@ pip install -r requirements.txt
 python app.py
 ```
 
-Open `http://127.0.0.1:8000`.
+Open `http://127.0.0.1:5000`.
 
 Run this application server rather than `python -m http.server`; the latter can
 serve the frontend but will return 404 for `/api/evaluations` and the other API
@@ -40,6 +40,7 @@ combine Chroma semantic results with model-written answers. See
 
 - `/` — daily book review
 - `/clients/{client_id}` — client review room
+- `/market-events` — all controlled and relevant live market events, with source links and calendar filters
 - `/scenario-studio` — adjustable portfolio scenarios
 - `/evidence-ledger` — controls, data fitness and decision history
 - `/health` — service health
@@ -54,6 +55,29 @@ node --check web/app.js
 See [`README_SOLUTION.md`](README_SOLUTION.md) for the product workflow, architecture, API behavior, control model and production integration path.
 
 The bundled records are controlled non-production data. They are not investment advice and are not authorised for client use.
+
+## Optional live market news
+
+Enable live RSS polling with:
+
+```text
+TESSERA_LIVE_NEWS_ENABLED=true
+TESSERA_NEWS_INTERVAL_SECONDS=21600
+```
+
+The local server polls in the background every six hours, or you can call
+`POST /api/market-news/refresh` manually.
+Only exposure-relevant headlines pass the deterministic filter; unrelated
+stories are discarded and repeated stories are deduplicated. Approved signals
+are stored separately in `runtime/live_events.json` and merged into the next
+intelligence calculation. Matching clients receive bounded market-event
+pressure of 2, 5 or 8 points for Medium, High or Severe signals. This is a
+review trigger, not an investment forecast or an automatic trade instruction.
+
+The dashboard's latest-event panel links to `/market-events`. Relationship
+Managers can filter the event register with `From` and `To` calendar fields,
+clear the range, and open the original RSS source for live-news records.
+Controlled CSV events remain source-labelled but do not have external links.
 
 ## Risk Analysis
 

@@ -20,14 +20,17 @@ ALLOWED_DECISIONS = {"approved", "dismissed", "edited", "pending"}
 class IntelligenceService:
     """Cache analytics until one of the controlled source files changes."""
 
-    def __init__(self, data_dir: Path):
+    def __init__(self, data_dir: Path, live_events_path: Path | None = None):
         self.data_dir = data_dir
+        self.live_events_path = live_events_path or data_dir.parent / "runtime" / "live_events.json"
         self._lock = threading.Lock()
         self._signature: tuple[tuple[str, int, int], ...] | None = None
         self._payload: dict[str, Any] | None = None
 
     def _source_signature(self) -> tuple[tuple[str, int, int], ...]:
         files = sorted((*self.data_dir.glob("*.csv"), *self.data_dir.glob("*.json")))
+        if self.live_events_path.exists():
+            files.append(self.live_events_path)
         return tuple(
             (path.name, path.stat().st_mtime_ns, path.stat().st_size) for path in files
         )
@@ -36,7 +39,7 @@ class IntelligenceService:
         signature = self._source_signature()
         with self._lock:
             if self._payload is None or signature != self._signature:
-                self._payload = build_intelligence_payload(self.data_dir)
+                self._payload = build_intelligence_payload(self.data_dir, self.live_events_path)
                 self._signature = signature
             return self._payload
 

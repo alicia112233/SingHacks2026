@@ -11,6 +11,7 @@ from flask import Flask, jsonify, request, send_from_directory
 
 from tessera.chat import answer_chat, chat_configuration_status
 from tessera.evaluation import evaluate_recommendation
+from tessera.market_news import refresh as refresh_market_news
 from tessera.retrieval import retrieval_configuration_status
 from tessera.services import (
     MAX_REQUEST_BYTES,
@@ -24,6 +25,7 @@ from tessera.services import (
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
 INTELLIGENCE = IntelligenceService(ROOT / "data")
+LIVE_EVENTS = ROOT / "runtime" / "live_events.json"
 app = Flask(__name__, static_folder=str(WEB), static_url_path="")
 app.config["MAX_CONTENT_LENGTH"] = MAX_REQUEST_BYTES
 
@@ -46,6 +48,7 @@ def application_shell():
 
 
 @app.get("/clients/<path:client_id>")
+@app.get("/market-events")
 @app.get("/scenario-studio")
 @app.get("/evidence-ledger")
 def application_route(client_id: str | None = None):
@@ -159,3 +162,14 @@ def health():
         vector_search=retrieval_configuration_status()["status"],
         chat=chat_configuration_status()["status"],
     )
+
+
+@app.post("/api/market-news/refresh")
+def market_news_refresh():
+    try:
+        result = refresh_market_news(ROOT / "data", LIVE_EVENTS)
+        INTELLIGENCE.get()
+        return jsonify(result)
+    except Exception:
+        app.logger.exception("Market-news refresh failed")
+        return jsonify(error="The market-news refresh could not be completed."), HTTPStatus.SERVICE_UNAVAILABLE

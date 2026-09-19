@@ -12,6 +12,7 @@ const state = {
   chatClient: null,
   chatMessages: [],
   chatRecognition: null,
+  eventFilters: { from: "", to: "" },
 };
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -203,6 +204,7 @@ function routeFor(name, clientId) {
   if (name === "client") return `/clients/${encodeURIComponent(clientId)}`;
   if (name === "scenario") return `/scenario-studio?client=${encodeURIComponent(clientId || state.studioClient)}`;
   if (name === "governance") return "/evidence-ledger";
+  if (name === "market-events") return "/market-events";
   return "/";
 }
 
@@ -211,7 +213,7 @@ function initials(name) {
 }
 
 function showView(name, clientId, updateHistory = true) {
-  const availableViews = ["book", "client", "scenario", "governance"];
+  const availableViews = ["book", "client", "scenario", "governance", "market-events"];
   const nextView = availableViews.includes(name) ? name : "book";
   $$(".view").forEach((view) => { view.hidden = true; });
   $$(".nav-item").forEach((item) => item.classList.toggle("active", item.dataset.view === nextView));
@@ -238,6 +240,10 @@ function showView(name, clientId, updateHistory = true) {
     renderGovernance();
     $("#governance-view").hidden = false;
     $("#page-title").textContent = "Evidence & governance";
+  } else if (nextView === "market-events") {
+    renderMarketEvents();
+    $("#market-events-view").hidden = false;
+    $("#page-title").textContent = "Market events";
   } else {
     renderBook();
     $("#book-view").hidden = false;
@@ -266,6 +272,8 @@ function applyRoute() {
     showView("scenario", params.get("client") || state.studioClient, false);
   } else if (path === "/evidence-ledger") {
     showView("governance", null, false);
+  } else if (path === "/market-events") {
+    showView("market-events", null, false);
   } else {
     showView("book", null, false);
   }
@@ -343,7 +351,8 @@ function renderBook() {
         <div class="signal-header"><span class="section-kicker">LATEST MARKET EVENT</span><span class="severity">${esc(signal.severity)}</span></div>
         <h2>${esc(signal.description)}</h2>
         <p><strong>Portfolio channel:</strong> ${esc(signal.transmission)}</p>
-        <span class="source-line">Controlled event register · ${fullDate(signal.date)}</span>
+        <span class="source-line">${esc(signal.source || "Market event")} · ${fullDate(signal.date)}${signal.source_url ? ` · <a href="${esc(signal.source_url)}" target="_blank" rel="noopener noreferrer">Open source</a>` : ""}</span>
+        <button class="small-button event-list-link" data-view="market-events">View all market events →</button>
       </aside>
     </div>
 
@@ -376,6 +385,26 @@ function renderBook() {
           <b>↗</b>
         </button>`).join("")}
     </div>`;
+}
+
+function renderMarketEvents() {
+  const events = state.data.market_events || [];
+  const { from, to } = state.eventFilters;
+  const filteredEvents = events.filter((event) => (!from || event.date >= from) && (!to || event.date <= to));
+  $("#market-events-view").innerHTML = `
+    <section class="events-hero">
+      <div><span class="section-kicker">MARKET INTELLIGENCE</span><h1>All market events</h1><p>Controlled events and relevant live-news signals that inform the review workflow.</p></div>
+      <button class="back-link" data-view="book">← Back to today</button>
+    </section>
+    <section class="panel all-events-panel">
+      <div class="panel-title"><div><h3>${filteredEvents.length} event${filteredEvents.length === 1 ? "" : "s"} shown</h3><small>${events.length} TOTAL · NEWEST FIRST</small></div></div>
+      <div class="event-filters" aria-label="Filter market events by date">
+        <label><span>From</span><input type="date" value="${esc(from)}" data-event-from aria-label="Start date"></label>
+        <label><span>To</span><input type="date" value="${esc(to)}" data-event-to aria-label="End date"></label>
+        <button class="small-button" type="button" data-clear-event-filters ${from || to ? "" : "disabled"}>Clear dates</button>
+      </div>
+      <div class="all-events-list">${filteredEvents.length ? filteredEvents.map((event) => `<article class="all-event-row"><div class="all-event-date"><strong>${fullDate(event.date)}</strong><span>${esc(event.region)} · ${esc(event.type)}</span></div><div class="all-event-copy"><header><span class="severity">${esc(event.severity)}</span><h3>${esc(event.description)}</h3></header><p>${esc(event.transmission)}</p><small>${esc(event.source)}${event.source_url ? ` · <a href="${esc(event.source_url)}" target="_blank" rel="noopener noreferrer">Open news source ↗</a>` : ""}</small></div></article>`).join("") : `<div class="empty-state"><strong>No events match those dates</strong><span>Choose a wider date range or clear the calendar filters.</span></div>`}</div>
+    </section>`;
 }
 
 function rangePoints(points, range) {
@@ -802,6 +831,10 @@ function bindEvents() {
 
     if (event.target.closest("[data-evidence]")) showEvidence(profiles()[state.currentClient]);
     if (event.target.closest("[data-close-modal]")) closeModal();
+    if (event.target.closest("[data-clear-event-filters]")) {
+      state.eventFilters = { from: "", to: "" };
+      renderMarketEvents();
+    }
   });
 
   document.addEventListener("change", (event) => {
@@ -817,6 +850,14 @@ function bindEvents() {
       state.studioScale = 100;
       history.replaceState({ view: "scenario", clientId: state.studioClient }, "", routeFor("scenario", state.studioClient));
       renderScenarioStudio();
+    }
+    if (event.target.matches("[data-event-from]")) {
+      state.eventFilters.from = event.target.value;
+      renderMarketEvents();
+    }
+    if (event.target.matches("[data-event-to]")) {
+      state.eventFilters.to = event.target.value;
+      renderMarketEvents();
     }
   });
 

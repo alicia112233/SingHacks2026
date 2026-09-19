@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import re
 from collections import defaultdict
 from datetime import date, datetime
@@ -110,7 +111,7 @@ def _iso(value: Any) -> str:
     return str(value)
 
 
-def load_dataset(data_dir: Path) -> dict[str, Any]:
+def load_dataset(data_dir: Path, live_events_path: Path | None = None) -> dict[str, Any]:
     names = [
         "clients",
         "portfolios",
@@ -127,6 +128,20 @@ def load_dataset(data_dir: Path) -> dict[str, Any]:
     bundle: dict[str, Any] = {
         name: pd.read_csv(data_dir / f"{name}.csv") for name in names
     }
+    live_path = live_events_path or data_dir.parent / "runtime" / "live_events.json"
+    live_enabled = os.environ.get("TESSERA_LIVE_NEWS_ENABLED", "").lower() in {
+        "1",
+        "true",
+        "yes",
+    }
+    if live_enabled and live_path.exists():
+        with live_path.open(encoding="utf-8") as handle:
+            live_events = json.load(handle)
+        approved = [item for item in live_events if item.get("status") == "approved"]
+        if approved:
+            bundle["event_log"] = pd.concat(
+                [bundle["event_log"], pd.DataFrame(approved)], ignore_index=True, sort=False
+            )
     with (data_dir / "rm_notes.json").open(encoding="utf-8") as handle:
         bundle["rm_notes"] = json.load(handle)
     return bundle
@@ -299,6 +314,26 @@ def _risk_urgency_adjustments(client_row: Any, current: pd.DataFrame, aum: float
     return appetite_adjustment, alignment_pressure, risk_share, target_share
 
 
+def _live_event_pressure(bundle: dict[str, Any], client_id: str, as_of: str) -> int:
+    channels = {
+        "CL-0012": ("rates", "yield", "fixed income"),
+        "CL-0014": ("growth equity", "lending", "risk assets"),
+        "CL-0019": ("energy", "shipping", "transport"),
+        "CL-0006": ("usd", "credit", "energy"),
+        "CL-0003": ("european fixed income", "eur", "energy"),
+    }.get(client_id, ())
+    if not channels:
+        return 0
+    pressure = 0
+    for event in bundle["event_log"].to_dict("records"):
+        if event.get("source_type") != "live_news" or str(event.get("event_date", "")) < as_of:
+            continue
+        transmission = str(event.get("primary_transmission", "")).lower()
+        if any(channel in transmission for channel in channels):
+            pressure = max(pressure, {"Severe": 8, "High": 5, "Medium": 2}.get(event.get("severity"), 1))
+    return pressure
+
+
 def _priority_card(bundle: dict[str, Any], client_row: Any) -> dict[str, Any]:
     client_id = client_row.client_id
     aum = float(client_row.total_aum_usd)
@@ -340,6 +375,7 @@ def _priority_card(bundle: dict[str, Any], client_row: Any) -> dict[str, Any]:
     appetite_adjustment, alignment_pressure, risk_share, target_risk_share = _risk_urgency_adjustments(
         client_row, current, aum
     )
+    market_event_pressure = _live_event_pressure(bundle, client_id, as_of)
     score = min(
         99,
         max(
@@ -351,6 +387,7 @@ def _priority_card(bundle: dict[str, Any], client_row: Any) -> dict[str, Any]:
                 + time_pressure
                 + appetite_adjustment
                 + alignment_pressure
+                + market_event_pressure
             ),
         ),
     )
@@ -390,6 +427,7 @@ def _priority_card(bundle: dict[str, Any], client_row: Any) -> dict[str, Any]:
         "score": score,
         "risk_appetite_adjustment": appetite_adjustment,
         "portfolio_alignment_pressure": alignment_pressure,
+        "market_event_pressure": market_event_pressure,
         "risk_asset_share": _round(risk_share * 100, 1),
         "target_risk_share": _round(target_risk_share * 100, 1),
         "priority": "Now" if score >= 78 else "Next" if score >= 60 else "Watch",
@@ -406,6 +444,7 @@ def _priority_card(bundle: dict[str, Any], client_row: Any) -> dict[str, Any]:
             "liquidity": _round(liquidity_pressure, 0),
             "governance": _round(governance_pressure, 0),
             "time": _round(time_pressure, 0),
+            "market_event": market_event_pressure,
         },
     }
 
@@ -423,17 +462,40 @@ def _linked_events(bundle: dict[str, Any], client_id: str) -> list[dict[str, Any
     for row in events.itertuples():
         transmission = str(row.primary_transmission).lower()
         if any(channel.lower() in transmission for channel in channels):
+            source_type = getattr(row, "source_type", None)
+            source_url = getattr(row, "source", None)
             selected.append(
                 {
                     "date": row.event_date,
                     "severity": row.severity,
                     "description": row.description,
                     "transmission": row.primary_transmission,
-                    "source": f"event_log.csv • {row.event_date}",
+                    "source": "live news" if source_type == "live_news" else f"event_log.csv • {row.event_date}",
+                    "source_url": source_url if source_type == "live_news" else None,
                 }
             )
     selected.sort(key=lambda item: (item["date"], SEVERITY_ORDER.get(item["severity"], 0)))
     return selected[-5:]
+
+
+def _market_events(bundle: dict[str, Any]) -> list[dict[str, Any]]:
+    events = []
+    for row in bundle["event_log"].sort_values("event_date", ascending=False).itertuples():
+        source_type = getattr(row, "source_type", None)
+        source_url = getattr(row, "source", None)
+        events.append(
+            {
+                "date": row.event_date,
+                "type": row.event_type,
+                "region": row.region,
+                "description": row.description,
+                "transmission": row.primary_transmission,
+                "severity": row.severity,
+                "source": "live news" if source_type == "live_news" else f"event_log.csv • {row.event_date}",
+                "source_url": source_url if source_type == "live_news" else None,
+            }
+        )
+    return events
 
 
 def _position_delta(bundle: dict[str, Any], client_id: str) -> list[dict[str, Any]]:
@@ -1482,9 +1544,11 @@ def _data_quality(bundle: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def build_intelligence_payload(data_dir: str | Path) -> dict[str, Any]:
+def build_intelligence_payload(
+    data_dir: str | Path, live_events_path: Path | None = None
+) -> dict[str, Any]:
     data_path = Path(data_dir)
-    bundle = load_dataset(data_path)
+    bundle = load_dataset(data_path, live_events_path)
     global _LAST_BUNDLE
     _LAST_BUNDLE = bundle
     as_of = _as_of(bundle)
@@ -1548,8 +1612,18 @@ def build_intelligence_payload(data_dir: str | Path) -> dict[str, Any]:
             "severity": latest_event.severity,
             "description": latest_event.description,
             "transmission": latest_event.primary_transmission,
-            "source": f"event_log.csv • {latest_event.event_date} • authoritative",
+            "source": (
+                f"live news • {latest_event.event_date}"
+                if getattr(latest_event, "source_type", "") == "live_news"
+                else f"event_log.csv • {latest_event.event_date} • authoritative"
+            ),
+            "source_url": (
+                getattr(latest_event, "source", None)
+                if getattr(latest_event, "source_type", "") == "live_news"
+                else None
+            ),
         },
+        "market_events": _market_events(bundle),
         "client_profiles": client_profiles,
         "featured_clients": {
             client_id: client_profiles[client_id] for client_id in focus_client_ids
