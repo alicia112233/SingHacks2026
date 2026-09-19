@@ -12,7 +12,7 @@ const state = {
   chatClient: null,
   chatMessages: [],
   chatRecognition: null,
-  eventFilters: { from: "", to: "" },
+  eventFilters: { from: "", to: "", sort: "newest", severity: "all", source: "all" },
 };
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -389,19 +389,30 @@ function renderBook() {
 
 function renderMarketEvents() {
   const events = state.data.market_events || [];
-  const { from, to } = state.eventFilters;
-  const filteredEvents = events.filter((event) => (!from || event.date >= from) && (!to || event.date <= to));
+  const { from, to, sort, severity, source } = state.eventFilters;
+  const filteredEvents = events
+    .filter((event) => (!from || event.date >= from) && (!to || event.date <= to))
+    .filter((event) => severity === "all" || event.severity === severity)
+    .filter((event) => source === "all" || (source === "live" ? event.source === "live news" : event.source !== "live news"))
+    .sort((left, right) => {
+      if (sort === "oldest") return left.date.localeCompare(right.date);
+      if (sort === "severity") return ({ Severe: 0, High: 1, Medium: 2, Low: 3 }[left.severity] ?? 4) - ({ Severe: 0, High: 1, Medium: 2, Low: 3 }[right.severity] ?? 4) || right.date.localeCompare(left.date);
+      return right.date.localeCompare(left.date);
+    });
   $("#market-events-view").innerHTML = `
     <section class="events-hero">
       <div><span class="section-kicker">MARKET INTELLIGENCE</span><h1>All market events</h1><p>Controlled events and relevant live-news signals that inform the review workflow.</p></div>
       <button class="back-link" data-view="book">← Back to today</button>
     </section>
     <section class="panel all-events-panel">
-      <div class="panel-title"><div><h3>${filteredEvents.length} event${filteredEvents.length === 1 ? "" : "s"} shown</h3><small>${events.length} TOTAL · NEWEST FIRST</small></div></div>
+      <div class="panel-title"><div><h3>${filteredEvents.length} event${filteredEvents.length === 1 ? "" : "s"} shown</h3><small>${events.length} TOTAL · ${sort === "oldest" ? "OLDEST FIRST" : sort === "severity" ? "HIGHEST SEVERITY FIRST" : "NEWEST FIRST"}</small></div></div>
       <div class="event-filters" aria-label="Filter market events by date">
         <label><span>From</span><input type="date" value="${esc(from)}" data-event-from aria-label="Start date"></label>
         <label><span>To</span><input type="date" value="${esc(to)}" data-event-to aria-label="End date"></label>
-        <button class="small-button" type="button" data-clear-event-filters ${from || to ? "" : "disabled"}>Clear dates</button>
+        <label><span>Sort</span><select data-event-sort aria-label="Sort market events"><option value="newest" ${sort === "newest" ? "selected" : ""}>Newest first</option><option value="oldest" ${sort === "oldest" ? "selected" : ""}>Oldest first</option><option value="severity" ${sort === "severity" ? "selected" : ""}>Highest severity</option></select></label>
+        <label><span>Severity</span><select data-event-severity aria-label="Filter by severity"><option value="all" ${severity === "all" ? "selected" : ""}>All severities</option><option value="Severe" ${severity === "Severe" ? "selected" : ""}>Severe</option><option value="High" ${severity === "High" ? "selected" : ""}>High</option><option value="Medium" ${severity === "Medium" ? "selected" : ""}>Medium</option><option value="Low" ${severity === "Low" ? "selected" : ""}>Low</option></select></label>
+        <label><span>Source</span><select data-event-source aria-label="Filter by source"><option value="all" ${source === "all" ? "selected" : ""}>All sources</option><option value="live" ${source === "live" ? "selected" : ""}>Live news</option><option value="controlled" ${source === "controlled" ? "selected" : ""}>Controlled register</option></select></label>
+        <button class="small-button" type="button" data-clear-event-filters ${from || to || sort !== "newest" || severity !== "all" || source !== "all" ? "" : "disabled"}>Clear filters</button>
       </div>
       <div class="all-events-list">${filteredEvents.length ? filteredEvents.map((event) => `<article class="all-event-row"><div class="all-event-date"><strong>${fullDate(event.date)}</strong><span>${esc(event.region)} · ${esc(event.type)}</span></div><div class="all-event-copy"><header><span class="severity">${esc(event.severity)}</span><h3>${esc(event.description)}</h3></header><p>${esc(event.transmission)}</p><small>${esc(event.source)}${event.source_url ? ` · <a href="${esc(event.source_url)}" target="_blank" rel="noopener noreferrer">Open news source ↗</a>` : ""}</small></div></article>`).join("") : `<div class="empty-state"><strong>No events match those dates</strong><span>Choose a wider date range or clear the calendar filters.</span></div>`}</div>
     </section>`;
@@ -832,7 +843,7 @@ function bindEvents() {
     if (event.target.closest("[data-evidence]")) showEvidence(profiles()[state.currentClient]);
     if (event.target.closest("[data-close-modal]")) closeModal();
     if (event.target.closest("[data-clear-event-filters]")) {
-      state.eventFilters = { from: "", to: "" };
+      state.eventFilters = { from: "", to: "", sort: "newest", severity: "all", source: "all" };
       renderMarketEvents();
     }
   });
@@ -857,6 +868,18 @@ function bindEvents() {
     }
     if (event.target.matches("[data-event-to]")) {
       state.eventFilters.to = event.target.value;
+      renderMarketEvents();
+    }
+    if (event.target.matches("[data-event-sort]")) {
+      state.eventFilters.sort = event.target.value;
+      renderMarketEvents();
+    }
+    if (event.target.matches("[data-event-severity]")) {
+      state.eventFilters.severity = event.target.value;
+      renderMarketEvents();
+    }
+    if (event.target.matches("[data-event-source]")) {
+      state.eventFilters.source = event.target.value;
       renderMarketEvents();
     }
   });

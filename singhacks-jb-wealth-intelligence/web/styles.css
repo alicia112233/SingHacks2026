@@ -141,8 +141,8 @@ nav { display: grid; gap: 7px; }
 .events-hero p { max-width: 620px; margin: 0; color: var(--muted); line-height: 1.6; }
 .all-events-panel { padding: 26px; }
 .event-filters { display: flex; align-items: end; gap: 12px; margin: 20px 0 4px; padding: 14px; background: #eee9df; border: 1px solid var(--line); }
-.event-filters label { display: grid; gap: 5px; min-width: 160px; color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-.event-filters input { min-height: 36px; padding: 7px 9px; color: var(--ink); border: 1px solid var(--line); background: var(--paper-2); font: inherit; letter-spacing: 0; text-transform: none; }
+.event-filters label { display: grid; flex: 1 1 155px; gap: 5px; min-width: 145px; color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.event-filters input, .event-filters select { min-height: 36px; padding: 7px 9px; color: var(--ink); border: 1px solid var(--line); background: var(--paper-2); font: inherit; letter-spacing: 0; text-transform: none; }
 .event-filters button { min-height: 36px; color: var(--teal); border-color: var(--teal); background: transparent; font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
 .event-filters button:hover:not(:disabled) { color: white; border-color: var(--teal); background: var(--teal); }
 .event-filters button:disabled { opacity: .38; cursor: not-allowed; }

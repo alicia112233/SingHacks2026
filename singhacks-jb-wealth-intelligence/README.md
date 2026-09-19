@@ -40,7 +40,7 @@ combine Chroma semantic results with model-written answers. See
 
 - `/` — daily book review
 - `/clients/{client_id}` — client review room
-- `/market-events` — all controlled and relevant live market events, with source links and calendar filters
+- `/market-events` — all controlled and relevant live market events, with source links, calendar filters, severity/source filters, and newest/oldest sorting
 - `/scenario-studio` — adjustable portfolio scenarios
 - `/evidence-ledger` — controls, data fitness and decision history
 - `/health` — service health
@@ -78,6 +78,13 @@ The dashboard's latest-event panel links to `/market-events`. Relationship
 Managers can filter the event register with `From` and `To` calendar fields,
 clear the range, and open the original RSS source for live-news records.
 Controlled CSV events remain source-labelled but do not have external links.
+
+The default live-news feeds are Google News RSS searches for global markets,
+Federal Reserve markets, and oil/shipping geopolitics. Results may include
+publishers such as The Straits Times or Channel NewsAsia when Google returns
+their articles, but inclusion is not guaranteed. The source link opens the
+Google News article redirect to the publisher page. To use guaranteed publisher
+feeds, set `TESSERA_NEWS_FEEDS` to approved RSS URLs.
 
 ## Risk Analysis
 
