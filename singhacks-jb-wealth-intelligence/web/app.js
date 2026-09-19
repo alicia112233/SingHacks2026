@@ -348,7 +348,7 @@ function renderBook() {
         </div>
       </article>
       <aside class="signal-panel">
-        <div class="signal-header"><span class="section-kicker">LATEST MARKET EVENT</span><span class="severity">${esc(signal.severity)}</span></div>
+        <div class="signal-header"><span class="section-kicker">LATEST MARKET EVENT</span><span class="severity severity-${esc(signal.severity).toLowerCase()}">${esc(signal.severity)}</span></div>
         <h2>${esc(signal.description)}</h2>
         <p><strong>Portfolio channel:</strong> ${esc(signal.transmission)}</p>
         <span class="source-line">${esc(signal.source || "Market event")} · ${fullDate(signal.date)}${signal.source_url ? ` · <a href="${esc(signal.source_url)}" target="_blank" rel="noopener noreferrer">Open source</a>` : ""}</span>
@@ -414,7 +414,7 @@ function renderMarketEvents() {
         <label><span>Source</span><select data-event-source aria-label="Filter by source"><option value="all" ${source === "all" ? "selected" : ""}>All sources</option><option value="live" ${source === "live" ? "selected" : ""}>Live news</option><option value="controlled" ${source === "controlled" ? "selected" : ""}>Controlled register</option></select></label>
         <button class="small-button" type="button" data-clear-event-filters ${from || to || sort !== "newest" || severity !== "all" || source !== "all" ? "" : "disabled"}>Clear filters</button>
       </div>
-      <div class="all-events-list">${filteredEvents.length ? filteredEvents.map((event) => `<article class="all-event-row"><div class="all-event-date"><strong>${fullDate(event.date)}</strong><span>${esc(event.region)} · ${esc(event.type)}</span></div><div class="all-event-copy"><header><span class="severity">${esc(event.severity)}</span><h3>${esc(event.description)}</h3></header><p>${esc(event.transmission)}</p><small>${esc(event.source)}${event.source_url ? ` · <a href="${esc(event.source_url)}" target="_blank" rel="noopener noreferrer">Open news source ↗</a>` : ""}</small></div></article>`).join("") : `<div class="empty-state"><strong>No events match those dates</strong><span>Choose a wider date range or clear the calendar filters.</span></div>`}</div>
+      <div class="all-events-list">${filteredEvents.length ? filteredEvents.map((event) => `<article class="all-event-row"><div class="all-event-date"><strong>${fullDate(event.date)}</strong><span>${esc(event.region)} · ${esc(event.type)}</span></div><div class="all-event-copy"><header><span class="severity severity-${esc(event.severity).toLowerCase()}">${esc(event.severity)}</span><h3>${esc(event.description)}</h3></header><p>${esc(event.transmission)}</p><small>${esc(event.source)}${event.source_url ? ` · <a href="${esc(event.source_url)}" target="_blank" rel="noopener noreferrer">Open news source ↗</a>` : ""}</small></div></article>`).join("") : `<div class="empty-state"><strong>No events match those dates</strong><span>Choose a wider date range or clear the calendar filters.</span></div>`}</div>
     </section>`;
 }
 
