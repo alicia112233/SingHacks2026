@@ -149,7 +149,11 @@ class TesseraHandler(SimpleHTTPRequestHandler):
             elif path == "/api/chat":
                 self._send_json(answer_chat(intelligence, body))
             elif path == "/api/recommendations/alternate":
-                self._send_json(create_alternative_recommendation(body, intelligence))
+                self._send_json(
+                    create_alternative_recommendation(
+                        body, intelligence, DECISIONS.snapshot()["records"]
+                    )
+                )
             elif path == "/api/evaluations":
                 if not isinstance(body, dict):
                     raise ValueError("Request body must be an object")

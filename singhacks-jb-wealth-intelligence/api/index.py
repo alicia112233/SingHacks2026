@@ -105,7 +105,11 @@ def post_alternate_recommendation():
         body = request.get_json(silent=True)
         if body is None:
             raise ValueError("Request body must be valid JSON")
-        return jsonify(create_alternative_recommendation(body, INTELLIGENCE.get()))
+        return jsonify(
+            create_alternative_recommendation(
+                body, INTELLIGENCE.get(), _safe_decision_records()
+            )
+        )
     except (TypeError, ValueError) as error:
         return jsonify(error=str(error)), HTTPStatus.BAD_REQUEST
     except Exception:

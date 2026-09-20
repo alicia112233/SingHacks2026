@@ -1378,12 +1378,18 @@ def _alternative_recommendation_candidates(
 
 
 def generate_alternative_recommendation(
-    intelligence: dict[str, Any], client_id: str, dismissed_index: int
+    intelligence: dict[str, Any],
+    client_id: str,
+    dismissed_index: int,
+    decision_records: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Produce the next best unused action after an RM dismisses a suggestion.
 
     The replacement is appended to the client profile so approve, edit and
     dismiss keep working on it through the existing decision workflow.
+    Every title the RM has ever dismissed for this client is excluded, so
+    dismissing a replacement offers a genuinely different action instead of
+    cycling the same ones.
     """
 
     profiles = {
@@ -1405,14 +1411,27 @@ def generate_alternative_recommendation(
         raise ValueError("Intelligence payload is missing its source bundle")
 
     used_titles = {str(item["title"]).strip().lower() for item in recommendations}
+    # Anything the RM has ever dismissed for this client is burned, including
+    # from earlier cycles restored then dismissed again.
+    burned_titles = {
+        str(record.get("recommendation_title", "")).strip().lower()
+        for record in decision_records or []
+        if record.get("client_id") == client_id and record.get("action") == "dismissed"
+    }
+    used_titles |= burned_titles
     candidates = _alternative_recommendation_candidates(bundle, profile)
     chosen = next((c for c in candidates if c["title"].strip().lower() not in used_titles), None)
     if chosen is None:
         base = candidates[-1]
-        attempt = len(recommendations)
+        attempt = len(burned_titles) + 1
         chosen = {
             **base,
             "title": f"{base['title']} (revisit {attempt})",
+            "detail": (
+                f"All {len(burned_titles)} alternative actions for this client have been "
+                "dismissed. Revisit the dismissed topics with fresh evidence, or "
+                "close the review."
+            ),
         }
 
     chosen["risk_validation"] = _recommendation_risk_validation(bundle, profile, chosen)

@@ -259,7 +259,9 @@ def create_decision_record(
 
 
 def create_alternative_recommendation(
-    body: Any, intelligence: dict[str, Any]
+    body: Any,
+    intelligence: dict[str, Any],
+    decision_records: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Generate the replacement action shown after an RM dismisses one."""
 
@@ -270,4 +272,6 @@ def create_alternative_recommendation(
         dismissed_index = int(body.get("dismissed_index", -1))
     except (TypeError, ValueError) as error:
         raise ValueError("Unknown recommendation") from error
-    return generate_alternative_recommendation(intelligence, client_id, dismissed_index)
+    return generate_alternative_recommendation(
+        intelligence, client_id, dismissed_index, decision_records
+    )
