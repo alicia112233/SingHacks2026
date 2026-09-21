@@ -13,7 +13,7 @@ from urllib.parse import urlparse
 
 from tessera.chat import answer_chat, chat_configuration_status
 from tessera.evaluation import evaluate_recommendation
-from tessera.market_news import refresh as refresh_market_news
+from tessera.market_news import LocalNewsScheduler, refresh as refresh_market_news
 from tessera.retrieval import retrieval_configuration_status
 from tessera.services import (
     MAX_REQUEST_BYTES,
@@ -143,12 +143,9 @@ class TesseraHandler(SimpleHTTPRequestHandler):
             intelligence = INTELLIGENCE.get()
             body = json.loads(self.rfile.read(length).decode("utf-8"))
             if path == "/api/market-news/refresh":
-                try:
-                    result = refresh_market_news(ROOT / "data", LIVE_EVENTS)
-                    result["intelligence"] = INTELLIGENCE.get()
-                    self._send_json(result)
-                except (OSError, RuntimeError):
-                    self._send_json({"error": "Market news is temporarily unavailable"}, HTTPStatus.SERVICE_UNAVAILABLE)
+                result = refresh_market_news(ROOT / "data", LIVE_EVENTS)
+                INTELLIGENCE.get()
+                self._send_json(result)
             elif path == "/api/chat":
                 self._send_json(answer_chat(intelligence, body))
             elif path == "/api/recommendations/alternate":
@@ -183,6 +180,8 @@ def main() -> None:
     parser.add_argument("--port", type=int, default=5000)
     args = parser.parse_args()
     server = ThreadingHTTPServer((args.host, args.port), TesseraHandler)
+    if os.environ.get("TESSERA_LIVE_NEWS_ENABLED", "").lower() in {"1", "true", "yes"}:
+        LocalNewsScheduler(ROOT / "data", LIVE_EVENTS, lambda: INTELLIGENCE.get()).start()
     if loaded_settings:
         print(f"Loaded {len(loaded_settings)} setting(s) from .env.local")
     print(f"TESSERA is ready at http://{args.host}:{args.port} (application API enabled)")

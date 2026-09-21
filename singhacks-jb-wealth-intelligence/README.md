@@ -56,16 +56,17 @@ See [`README_SOLUTION.md`](README_SOLUTION.md) for the product workflow, archite
 
 The bundled records are controlled non-production data. They are not investment advice and are not authorised for client use.
 
-## Live market news
+## Optional live market news
 
-Each website load calls `POST /api/market-news/refresh` before showing current
-intelligence. This fetches Yahoo Finance, CNBC, and The Business Times RSS feeds,
-plus Google News searches scoped to WealthBriefingAsia, the Financial Times,
-Nikkei Asia, and CNA. The four scoped searches are not direct publisher APIs;
-direct commercial integration requires publisher access rights. Set
-`TESSERA_LIVE_NEWS_ENABLED=false` to disable live news, or set
-`TESSERA_NEWS_FEEDS` to a comma-separated list of approved RSS URLs.
-If the feeds are unavailable, the dashboard loads its last available intelligence.
+Enable live RSS polling with:
+
+```text
+TESSERA_LIVE_NEWS_ENABLED=true
+TESSERA_NEWS_INTERVAL_SECONDS=21600
+```
+
+The local server polls in the background every six hours, or you can call
+`POST /api/market-news/refresh` manually.
 Only exposure-relevant headlines pass the deterministic filter; unrelated
 stories are discarded and repeated stories are deduplicated. Approved signals
 are stored separately in `runtime/live_events.json` and merged into the next
@@ -78,11 +79,12 @@ Managers can filter the event register with `From` and `To` calendar fields,
 clear the range, and open the original RSS source for live-news records.
 Controlled CSV events remain source-labelled but do not have external links.
 
-The default sources are Yahoo Finance News, CNBC News, and the existing Google News
-market searches. Source links open
-the original article. Local approved events persist in `runtime/live_events.json`;
-hosted events use temporary instance storage and are returned directly to the
-loading website. Durable hosted news history requires a shared event store.
+The default live-news feeds are Google News RSS searches for global markets,
+Federal Reserve markets, and oil/shipping geopolitics. Results may include
+publishers such as The Straits Times or Channel NewsAsia when Google returns
+their articles, but inclusion is not guaranteed. The source link opens the
+Google News article redirect to the publisher page. To use guaranteed publisher
+feeds, set `TESSERA_NEWS_FEEDS` to approved RSS URLs.
 
 ## Risk Analysis
 

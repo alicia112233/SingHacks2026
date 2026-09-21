@@ -7,7 +7,6 @@ import json
 import os
 import re
 import threading
-from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from pathlib import Path
@@ -16,26 +15,10 @@ from urllib.request import Request, urlopen
 from xml.etree import ElementTree
 
 
-_STATE_LOCK = threading.Lock()
-
-DEFAULT_FEEDS = (
-    "https://finance.yahoo.com/rss/topstories",
-    "https://www.cnbc.com/id/100003114/device/rss/rss.html",
-    "https://www.businesstimes.com.sg/rss/companies-markets",
-)
-FEED_PUBLISHERS = {
-    DEFAULT_FEEDS[0]: "Yahoo Finance",
-    DEFAULT_FEEDS[1]: "CNBC",
-    DEFAULT_FEEDS[2]: "The Business Times",
-}
-DEFAULT_GOOGLE_QUERIES = (
+DEFAULT_FEED_QUERIES = (
     "global markets finance",
     "Federal Reserve markets",
     "oil shipping geopolitics",
-    "site:wealthbriefingasia.com investment markets",
-    "site:ft.com markets finance",
-    "site:asia.nikkei.com markets finance",
-    "site:channelnewsasia.com business markets",
 )
 SEVERITY_KEYWORDS = {
     "Severe": ("war", "blockade", "default", "emergency", "attack", "closure"),
@@ -51,16 +34,16 @@ TRANSMISSION_KEYWORDS = {
 
 
 def enabled() -> bool:
-    return os.environ.get("TESSERA_LIVE_NEWS_ENABLED", "true").lower() in {"1", "true", "yes"}
+    return os.environ.get("TESSERA_LIVE_NEWS_ENABLED", "").lower() in {"1", "true", "yes"}
 
 
 def _feed_urls() -> tuple[str, ...]:
     configured = os.environ.get("TESSERA_NEWS_FEEDS", "").strip()
     if configured:
         return tuple(item.strip() for item in configured.split(",") if item.strip())
-    return DEFAULT_FEEDS + tuple(
+    return tuple(
         "https://news.google.com/rss/search?q=" + quote(query) + "&hl=en-SG&gl=SG&ceid=SG:en"
-        for query in DEFAULT_GOOGLE_QUERIES
+        for query in DEFAULT_FEED_QUERIES
     )
 
 
@@ -90,7 +73,7 @@ def _event_date(value: str) -> str:
         return datetime.now(timezone.utc).date().isoformat()
 
 
-def _approved_event(item: ElementTree.Element, feed_publisher: str = "") -> dict[str, str] | None:
+def _approved_event(item: ElementTree.Element) -> dict[str, str] | None:
     raw_title = _text(item, "title")
     raw_summary = _text(item, "description")
     source_name = _text(item, "source")
@@ -119,7 +102,6 @@ def _approved_event(item: ElementTree.Element, feed_publisher: str = "") -> dict
         "primary_transmission": transmission,
         "severity": severity,
         "source": link,
-        "publisher": source_name or feed_publisher,
         "source_type": "live_news",
         "status": "approved",
     }
@@ -138,43 +120,47 @@ def refresh(data_dir: str | Path, state_path: str | Path) -> dict[str, object]:
 
     if not enabled():
         return {"status": "disabled", "added": 0, "events": _read(Path(state_path))}
-    feeds = _feed_urls()
-    if not feeds:
-        raise RuntimeError("No market-news feeds are configured")
-
-    def fetch_feed(feed_url: str):
-        try:
-            request = Request(feed_url, headers={"User-Agent": "Mozilla/5.0 TESSERA/1.0"})
-            with urlopen(request, timeout=8) as response:
-                return ElementTree.fromstring(response.read())
-        except (OSError, ElementTree.ParseError):
-            return None
-
-    with ThreadPoolExecutor(max_workers=len(feeds)) as pool:
-        roots = list(pool.map(fetch_feed, feeds))
-    if all(root is None for root in roots):
-        raise RuntimeError("All market-news feeds are unavailable")
-
     state = Path(state_path)
-    with _STATE_LOCK:
-        stored = _read(state)
-        existing = [_normalise_event(item) for item in stored]
-        known = {item.get("event_id") for item in existing}
-        added: list[dict[str, str]] = []
-        for feed_url, root in zip(feeds, roots):
-            if root is None:
-                continue
-            for item in root.findall(".//item"):
-                event = _approved_event(item, FEED_PUBLISHERS.get(feed_url, ""))
-                if event and event["event_id"] not in known:
-                    known.add(event["event_id"])
-                    added.append(event)
-        events = sorted(existing + added, key=lambda item: (item.get("event_date", ""), item.get("event_id", "")))
-        if added or existing != stored or not state.exists():
-            state.parent.mkdir(parents=True, exist_ok=True)
-            temporary = state.with_suffix(".tmp")
-            with temporary.open("w", encoding="utf-8") as handle:
-                json.dump(events, handle, ensure_ascii=True, indent=2)
-                handle.write("\n")
-            temporary.replace(state)
-    return {"status": "partial" if None in roots else "refreshed", "added": len(added), "events": events}
+    existing = [_normalise_event(item) for item in _read(state)]
+    known = {item.get("event_id") for item in existing}
+    added: list[dict[str, str]] = []
+    for feed_url in _feed_urls():
+        request = Request(feed_url, headers={"User-Agent": "TESSERA/1.0 market-news monitor"})
+        with urlopen(request, timeout=15) as response:
+            root = ElementTree.fromstring(response.read())
+        for item in root.findall(".//item"):
+            event = _approved_event(item)
+            if event and event["event_id"] not in known:
+                known.add(event["event_id"])
+                added.append(event)
+    events = sorted(existing + added, key=lambda item: (item.get("event_date", ""), item.get("event_id", "")))
+    state.parent.mkdir(parents=True, exist_ok=True)
+    temporary = state.with_suffix(".tmp")
+    with temporary.open("w", encoding="utf-8") as handle:
+        json.dump(events, handle, ensure_ascii=True, indent=2)
+        handle.write("\n")
+    temporary.replace(state)
+    return {"status": "refreshed", "added": len(added), "events": events}
+
+
+class LocalNewsScheduler:
+    """Poll live feeds in a local process when explicitly enabled."""
+
+    def __init__(self, data_dir: Path, state_path: Path, refresh_callback):
+        self.data_dir = data_dir
+        self.state_path = state_path
+        self.refresh_callback = refresh_callback
+        self.interval = max(300, int(os.environ.get("TESSERA_NEWS_INTERVAL_SECONDS", "21600")))
+        self._stop = threading.Event()
+
+    def start(self) -> None:
+        def loop() -> None:
+            while not self._stop.is_set():
+                try:
+                    refresh(self.data_dir, self.state_path)
+                    self.refresh_callback()
+                except Exception:
+                    pass
+                self._stop.wait(self.interval)
+
+        threading.Thread(target=loop, name="tessera-market-news", daemon=True).start()

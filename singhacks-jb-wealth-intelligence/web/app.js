@@ -414,7 +414,7 @@ function renderMarketEvents() {
         <label><span>Source</span><select data-event-source aria-label="Filter by source"><option value="all" ${source === "all" ? "selected" : ""}>All sources</option><option value="live" ${source === "live" ? "selected" : ""}>Live news</option><option value="controlled" ${source === "controlled" ? "selected" : ""}>Controlled register</option></select></label>
         <button class="small-button" type="button" data-clear-event-filters ${from || to || sort !== "newest" || severity !== "all" || source !== "all" ? "" : "disabled"}>Clear filters</button>
       </div>
-      <div class="all-events-list">${filteredEvents.length ? filteredEvents.map((event) => `<article class="all-event-row"><div class="all-event-date"><strong>${fullDate(event.date)}</strong><span>${esc(event.region)} · ${esc(event.type)}</span></div><div class="all-event-copy"><header><span class="severity severity-${esc(event.severity).toLowerCase()}">${esc(event.severity)}</span><h3>${esc(event.description)}</h3></header><p>${esc(event.transmission)}</p><small>${esc(event.publisher || event.source)}${event.source_url ? ` · <a href="${esc(event.source_url)}" target="_blank" rel="noopener noreferrer">Open news source ↗</a>` : ""}</small></div></article>`).join("") : `<div class="empty-state"><strong>No events match those dates</strong><span>Choose a wider date range or clear the calendar filters.</span></div>`}</div>
+      <div class="all-events-list">${filteredEvents.length ? filteredEvents.map((event) => `<article class="all-event-row"><div class="all-event-date"><strong>${fullDate(event.date)}</strong><span>${esc(event.region)} · ${esc(event.type)}</span></div><div class="all-event-copy"><header><span class="severity severity-${esc(event.severity).toLowerCase()}">${esc(event.severity)}</span><h3>${esc(event.description)}</h3></header><p>${esc(event.transmission)}</p><small>${esc(event.source)}${event.source_url ? ` · <a href="${esc(event.source_url)}" target="_blank" rel="noopener noreferrer">Open news source ↗</a>` : ""}</small></div></article>`).join("") : `<div class="empty-state"><strong>No events match those dates</strong><span>Choose a wider date range or clear the calendar filters.</span></div>`}</div>
     </section>`;
 }
 
@@ -584,8 +584,8 @@ function renderClient(clientId) {
         <p class="chart-note">Value includes market movement, transactions, withdrawals and currency translation. Select a point for the exact snapshot value and period change.</p>
       </section>
       <aside class="panel">
-        <div class="panel-title"><h3>Relevant market events</h3><small>EVENT REGISTER + LIVE NEWS</small></div>
-        <div class="events-list">${client.linked_events.length ? client.linked_events.slice(-3).map((event) => `<div class="event-item"><small>${fullDate(event.date)} · ${esc(event.severity)}${event.publisher ? ` · ${esc(event.publisher)}` : ""}</small><p>${esc(event.description)}</p><span>${esc(event.transmission)}${event.source_url ? ` · <a href="${esc(event.source_url)}" target="_blank" rel="noopener noreferrer">Open source ↗</a>` : ""}</span></div>`).join("") : `<div class="empty-state"><strong>No directly linked events</strong><span>The review is based on portfolio, mandate and client records.</span></div>`}</div>
+        <div class="panel-title"><h3>Relevant market events</h3><small>CONTROLLED EVENT REGISTER</small></div>
+        <div class="events-list">${client.linked_events.length ? client.linked_events.slice(-3).map((event) => `<div class="event-item"><small>${fullDate(event.date)} · ${esc(event.severity)}</small><p>${esc(event.description)}</p><span>${esc(event.transmission)}</span></div>`).join("") : `<div class="empty-state"><strong>No directly linked events</strong><span>The review is based on portfolio, mandate and client records.</span></div>`}</div>
       </aside>
     </div>
 
@@ -944,31 +944,15 @@ function bindEvents() {
   window.addEventListener("popstate", applyRoute);
 }
 
-async function loadIntelligence() {
-  try {
-    const newsResponse = await fetch("/api/market-news/refresh", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: "{}",
-    });
-    if (newsResponse.ok) return (await newsResponse.json()).intelligence;
-    console.warn(`Market-news refresh returned ${newsResponse.status}`);
-  } catch (error) {
-    console.warn("Market-news refresh failed", error);
-  }
-  const intelligenceResponse = await fetch("/api/intelligence");
-  if (!intelligenceResponse.ok) throw new Error(`Intelligence service returned ${intelligenceResponse.status}`);
-  return intelligenceResponse.json();
-}
-
 async function init() {
   try {
-    const [intelligence, decisionsResponse] = await Promise.all([
-      loadIntelligence(),
+    const [intelligenceResponse, decisionsResponse] = await Promise.all([
+      fetch("/api/intelligence"),
       fetch("/api/decisions"),
     ]);
+    if (!intelligenceResponse.ok) throw new Error(`Intelligence service returned ${intelligenceResponse.status}`);
     if (!decisionsResponse.ok) throw new Error(`Decision ledger returned ${decisionsResponse.status}`);
-    state.data = intelligence;
+    state.data = await intelligenceResponse.json();
     state.decisions = await decisionsResponse.json();
     const focusClients = Object.keys(state.data.featured_clients);
     state.currentClient = focusClients[0] || Object.keys(profiles())[0];

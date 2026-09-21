@@ -147,17 +147,20 @@ independent result.
 
 ### Optional live market news
 
-Each website load calls `POST /api/market-news/refresh`. The default feeds are
-Yahoo Finance, CNBC, and The Business Times RSS, plus Google News searches
-scoped to WealthBriefingAsia, the Financial Times, Nikkei Asia, and CNA. Those
-four searches are not direct publisher APIs; direct commercial use requires
-publisher access rights. Set
-`TESSERA_LIVE_NEWS_ENABLED=false` to
-disable live news or `TESSERA_NEWS_FEEDS` to a comma-separated list of approved
-RSS URLs. Relevant, deduplicated stories become approved live events in the
-returned intelligence. Local state persists in `runtime/live_events.json`.
-Vercel uses temporary instance storage, so live events may not persist across
-instances; use a shared event store if durable hosted news history is needed.
+For local use, set these environment variables to enable the six-hour refresh:
+
+```text
+TESSERA_LIVE_NEWS_ENABLED=true
+TESSERA_NEWS_INTERVAL_SECONDS=21600
+```
+
+The local scheduler calls `POST /api/market-news/refresh` behavior internally,
+using Google News RSS by default. Set `TESSERA_NEWS_FEEDS` to a comma-separated
+list of approved RSS URLs to use another source. Relevant, deduplicated stories
+are stored as approved live events and included in the next deterministic
+intelligence calculation. No Telegram notification is involved in this feature.
+Hosted scheduling still needs a durable market-event store before it should be
+enabled on Vercel; the current JSON state is intentionally local-only.
 
 ## Production controls
 
