@@ -129,7 +129,9 @@ def load_dataset(data_dir: Path, live_events_path: Path | None = None) -> dict[s
         name: pd.read_csv(data_dir / f"{name}.csv") for name in names
     }
     live_path = live_events_path or data_dir.parent / "runtime" / "live_events.json"
-    live_enabled = os.environ.get("TESSERA_LIVE_NEWS_ENABLED", "").lower() in {
+    live_enabled = os.environ.get(
+        "TESSERA_LIVE_NEWS_ENABLED", "true" if live_events_path else ""
+    ).lower() in {
         "1",
         "true",
         "yes",
@@ -314,23 +316,45 @@ def _risk_urgency_adjustments(client_row: Any, current: pd.DataFrame, aum: float
     return appetite_adjustment, alignment_pressure, risk_share, target_share
 
 
-def _live_event_pressure(bundle: dict[str, Any], client_id: str, as_of: str) -> int:
-    channels = {
-        "CL-0012": ("rates", "yield", "fixed income"),
-        "CL-0014": ("growth equity", "lending", "risk assets"),
-        "CL-0019": ("energy", "shipping", "transport"),
-        "CL-0006": ("usd", "credit", "energy"),
-        "CL-0003": ("european fixed income", "eur", "energy"),
-    }.get(client_id, ())
-    if not channels:
+def _client_market_exposure(bundle: dict[str, Any], client_id: str) -> str:
+    current = bundle["holdings"][
+        (bundle["holdings"].client_id == client_id)
+        & (bundle["holdings"].snapshot_date == _as_of(bundle))
+    ]
+    references = bundle["instruments"].set_index("instrument_id").underlying_reference
+    return " ".join(
+        " ".join((str(row.instrument_name), str(row.sector), str(references.get(row.instrument_id, ""))))
+        for row in current.itertuples()
+    ).lower()
+
+
+def _live_event_relevance(description: str, exposure: str) -> int:
+    headline = description.lower()
+    if re.search(r"\b(?:heloc|mortgage|savings interest rates?|savings accounts?|credit card)\b", headline):
         return 0
+    topics = (
+        (r"\b(?:oil|crude|petroleum|energy|natural gas|lng)\b", ("energy", "coal")),
+        (r"\b(?:shipping|tanker|freight|logistics)\b", ("shipping", "logistics")),
+        (r"\b(?:gold|bullion)\b", ("gold", "xau")),
+        (r"\b(?:ai|technology|tech|semiconductor|chip|cloud)\b", ("technology", "semiconductor", "cloud")),
+        (r"\b(?:healthcare|pharma|biotech)\b", ("health care", "pharma")),
+        (r"\b(?:property|real estate|reit|housing)\b", ("real estate", "property", "reit")),
+        (r"\b(?:rate|rates|yield|yields|fed|treasury|bond|bonds|inflation|central bank|credit)\b", ("fixed income", "credit", "bond", "treasury")),
+    )
+    matched = [terms for pattern, terms in topics if re.search(pattern, headline)]
+    if matched:
+        return 2 if any(term in exposure for terms in matched for term in terms) else 0
+    return 1 if re.search(r"\b(?:market|markets|equities)\b", headline) and "equity" in exposure else 0
+
+
+def _live_event_pressure(bundle: dict[str, Any], client_id: str, as_of: str) -> int:
+    exposure = _client_market_exposure(bundle, client_id)
     pressure = 0
-    for event in bundle["event_log"].to_dict("records"):
-        if event.get("source_type") != "live_news" or str(event.get("event_date", "")) < as_of:
+    for event in bundle["event_log"].itertuples():
+        if getattr(event, "source_type", None) != "live_news" or str(event.event_date) < as_of:
             continue
-        transmission = str(event.get("primary_transmission", "")).lower()
-        if any(channel in transmission for channel in channels):
-            pressure = max(pressure, {"Severe": 8, "High": 5, "Medium": 2}.get(event.get("severity"), 1))
+        if _live_event_relevance(str(event.description), exposure):
+            pressure = max(pressure, {"Severe": 8, "High": 5, "Medium": 2}.get(event.severity, 1))
     return pressure
 
 
@@ -458,11 +482,16 @@ def _linked_events(bundle: dict[str, Any], client_id: str) -> list[dict[str, Any
         "CL-0006": ["USD", "Private credit"],
         "CL-0003": ["European fixed income", "EUR assets", "Energy"],
     }.get(client_id, [])
+    exposure = _client_market_exposure(bundle, client_id)
     selected = []
     for row in events.itertuples():
         transmission = str(row.primary_transmission).lower()
-        if any(channel.lower() in transmission for channel in channels):
-            source_type = getattr(row, "source_type", None)
+        source_type = getattr(row, "source_type", None)
+        if (
+            source_type == "live_news" and _live_event_relevance(str(row.description), exposure)
+        ) or (
+            source_type != "live_news" and any(channel.lower() in transmission for channel in channels)
+        ):
             source_url = getattr(row, "source", None)
             selected.append(
                 {
@@ -472,9 +501,14 @@ def _linked_events(bundle: dict[str, Any], client_id: str) -> list[dict[str, Any
                     "transmission": row.primary_transmission,
                     "source": "live news" if source_type == "live_news" else f"event_log.csv • {row.event_date}",
                     "source_url": source_url if source_type == "live_news" else None,
+                    "publisher": getattr(row, "publisher", None) if source_type == "live_news" else None,
                 }
             )
-    selected.sort(key=lambda item: (item["date"], SEVERITY_ORDER.get(item["severity"], 0)))
+    selected.sort(key=lambda item: (
+        item["date"],
+        _live_event_relevance(item["description"], exposure) if item["source"] == "live news" else 1,
+        SEVERITY_ORDER.get(item["severity"], 0),
+    ))
     return selected[-5:]
 
 
@@ -493,6 +527,7 @@ def _market_events(bundle: dict[str, Any]) -> list[dict[str, Any]]:
                 "severity": row.severity,
                 "source": "live news" if source_type == "live_news" else f"event_log.csv • {row.event_date}",
                 "source_url": source_url if source_type == "live_news" else None,
+                "publisher": getattr(row, "publisher", None) if source_type == "live_news" else None,
             }
         )
     return events
