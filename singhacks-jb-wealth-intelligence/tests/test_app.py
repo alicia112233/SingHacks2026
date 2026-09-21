@@ -130,6 +130,34 @@ class ApplicationRouteTests(unittest.TestCase):
                 self.assertEqual(response.status, 200)
                 self.assertIn("TESSERA", response.read().decode("utf-8"))
 
+    def test_each_refresh_request_fetches_news_and_returns_updated_intelligence(self):
+        request = Request(
+            f"{self.base_url}/api/market-news/refresh",
+            data=b"{}",
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with mock.patch("app.refresh_market_news", return_value={"status": "refreshed", "added": 1, "events": []}) as refresh_news:
+            for _ in range(2):
+                with urlopen(request) as response:
+                    payload = json.load(response)
+                self.assertIn("meta", payload["intelligence"])
+            self.assertEqual(refresh_news.call_count, 2)
+
+    def test_news_outage_does_not_break_other_routes(self):
+        request = Request(
+            f"{self.base_url}/api/market-news/refresh",
+            data=b"{}",
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with mock.patch("app.refresh_market_news", side_effect=RuntimeError("feeds unavailable")):
+            with self.assertRaises(HTTPError) as error:
+                urlopen(request)
+        self.assertEqual(error.exception.code, 503)
+        with urlopen(f"{self.base_url}/api/intelligence") as response:
+            self.assertEqual(response.status, 200)
+
     def test_health_and_favicon_do_not_return_404(self):
         with urlopen(f"{self.base_url}/health") as response:
             self.assertEqual(json.load(response)["status"], "ok")
@@ -217,6 +245,13 @@ class VercelRouteTests(unittest.TestCase):
         health = self.client.get("/health")
         self.assertEqual(health.status_code, 200)
         self.assertEqual(health.get_json()["status"], "ok")
+
+    def test_hosted_refresh_returns_current_intelligence(self):
+        with mock.patch("api.index.refresh_market_news", return_value={"status": "refreshed", "added": 0, "events": []}) as refresh_news:
+            response = self.client.post("/api/market-news/refresh")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("meta", response.get_json()["intelligence"])
+        refresh_news.assert_called_once()
 
     def test_frontend_and_direct_application_routes(self):
         for path in ["/", "/clients/CL-0012", "/scenario-studio", "/evidence-ledger"]:

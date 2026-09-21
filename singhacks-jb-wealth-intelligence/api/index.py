@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import tempfile
 from functools import lru_cache
 from http import HTTPStatus
 from pathlib import Path
@@ -24,8 +25,8 @@ from tessera.services import (
 
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
-INTELLIGENCE = IntelligenceService(ROOT / "data")
-LIVE_EVENTS = ROOT / "runtime" / "live_events.json"
+LIVE_EVENTS = Path(tempfile.gettempdir()) / f"tessera-live-events-{os.getpid()}.json"
+INTELLIGENCE = IntelligenceService(ROOT / "data", LIVE_EVENTS)
 app = Flask(__name__, static_folder=str(WEB), static_url_path="")
 app.config["MAX_CONTENT_LENGTH"] = MAX_REQUEST_BYTES
 
@@ -172,7 +173,7 @@ def health():
 def market_news_refresh():
     try:
         result = refresh_market_news(ROOT / "data", LIVE_EVENTS)
-        INTELLIGENCE.get()
+        result["intelligence"] = INTELLIGENCE.get()
         return jsonify(result)
     except Exception:
         app.logger.exception("Market-news refresh failed")
