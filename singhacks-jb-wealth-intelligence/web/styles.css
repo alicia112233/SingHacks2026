@@ -706,3 +706,68 @@ nav { display: grid; gap: 7px; }
 @media (max-width: 760px) { .risk-analysis-scores { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 .replacement-chip { color: var(--next); background: var(--next-soft); border: 1px solid var(--next); border-radius: 999px; padding: 2px 8px; font-size: 8px; letter-spacing: .06em; text-transform: uppercase; }
+
+/* ---- Follow-up tiers, summary header, next-up tag, all clients, dismiss ---- */
+
+.priority-chip.today { color: var(--severity-high); background: var(--severity-high-soft); }
+.priority-chip.overdue { color: var(--severity-severe); background: var(--severity-severe-soft); }
+
+.queue-row { --priority-color: var(--watch); }
+.queue-row.tier-now, .queue-row.tier-overdue { --priority-color: var(--now); border-left-color: var(--now); }
+.queue-row.tier-today { --priority-color: var(--next); border-left-color: var(--next); }
+.queue-row.tier-soon { --priority-color: var(--next); }
+
+.next-up-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 6px;
+  color: #fff;
+  background: var(--teal);
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  vertical-align: 1px;
+}
+
+.queue-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 12px;
+  padding: 12px 18px;
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 11px;
+}
+.queue-summary b { color: var(--ink); font-size: 14px; margin-right: 4px; }
+.queue-summary .dot, .queue-summary-item { display: inline-flex; align-items: center; gap: 4px; }
+.queue-summary-item.urgent { color: var(--now); font-weight: 700; }
+.queue-summary-item.urgent b { color: var(--now); }
+.queue-summary-total { margin-left: auto; font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+
+.all-clients-link-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 14px 0 6px;
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.dismiss-reasons { display: grid; gap: 8px; margin-bottom: 16px; }
+.dismiss-reason {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: border-color .15s ease, background-color .15s ease;
+}
+.dismiss-reason:hover, .dismiss-reason:has(input:checked) { border-color: var(--teal); background: var(--teal-soft); }
+.dismiss-reason input { margin-top: 3px; accent-color: var(--teal); }
+.dismiss-reason b { display: block; font-size: 12px; }
+.dismiss-reason small { color: var(--muted); font-size: 10px; }

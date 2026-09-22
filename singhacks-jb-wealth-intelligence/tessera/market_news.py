@@ -170,7 +170,9 @@ def refresh(data_dir: str | Path, state_path: str | Path) -> dict[str, object]:
             state.parent.mkdir(parents=True, exist_ok=True)
             temporary = state.with_suffix(".tmp")
             with temporary.open("w", encoding="utf-8") as handle:
-                json.dump(events, handle, ensure_ascii=True, indent=2)
+                # allow_nan=False keeps the stored register strict JSON; NaN
+                # elsewhere would break every client that parses this file.
+                json.dump(events, handle, ensure_ascii=True, allow_nan=False, default=str, indent=2)
                 handle.write("\n")
             temporary.replace(state)
     return {"status": "partial" if None in roots else "refreshed", "added": len(added), "events": events}

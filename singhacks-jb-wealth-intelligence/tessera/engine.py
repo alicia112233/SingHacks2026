@@ -11,7 +11,7 @@ import math
 import os
 import re
 from collections import defaultdict
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -348,13 +348,11 @@ def _live_event_relevance(description: str, exposure: str) -> int:
 
 
 def _live_event_pressure(bundle: dict[str, Any], client_id: str, as_of: str) -> int:
-    exposure = _client_market_exposure(bundle, client_id)
     pressure = 0
-    for event in bundle["event_log"].itertuples():
-        if getattr(event, "source_type", None) != "live_news" or str(event.event_date) < as_of:
+    for event in _linked_events(bundle, client_id):
+        if str(event["date"]) < as_of:
             continue
-        if _live_event_relevance(str(event.description), exposure):
-            pressure = max(pressure, {"Severe": 8, "High": 5, "Medium": 2}.get(event.severity, 1))
+        pressure = max(pressure, {"Severe": 8, "High": 5, "Medium": 2}.get(event["severity"], 1))
     return pressure
 
 
@@ -416,6 +414,28 @@ def _priority_card(bundle: dict[str, Any], client_row: Any) -> dict[str, Any]:
         ),
     )
 
+    # RM follow-up deadline: the review clock, anchored to the as_of date so
+    # tiers escalate deterministically from the data. Urgent clients are due
+    # within hours, mid-priority within 24-48h, and low-priority clients carry
+    # no dated follow-up (they sit in Monitor).
+    as_of_dt = datetime.strptime(as_of, "%Y-%m-%d")
+    # Bands are chosen so the derived clock and the score always agree with
+    # the frontend rubric:  Act now  = hours <= 6 OR score >= 70;
+    # Due today = hours <= 24;  Due by <date> = hours <= 48;  else Monitor.
+    if score >= 70:
+        follow_hours = 2 + (score % 5)  # 2-6h: Act now (score alone triggers it)
+    elif score >= 55:
+        follow_hours = 14 + (score % 10)  # 14-23h: Due today
+    elif score >= 45:
+        follow_hours = 26 + (score % 21)  # 26-46h: Due by <date>
+    else:
+        follow_hours = None
+    if follow_hours is None:
+        deadline_date, deadline_type = "", "No dated follow-up"
+    else:
+        deadline_date = (as_of_dt + timedelta(hours=follow_hours)).date().isoformat()
+        deadline_type = "RM follow-up"
+
     if rule.get("theme_ids"):
         exposure = _theme_exposure(current, rule["theme_ids"], aum)
         evidence_line = f"{exposure:.1f}% linked to {rule['theme']} before outside wealth"
@@ -454,7 +474,8 @@ def _priority_card(bundle: dict[str, Any], client_row: Any) -> dict[str, Any]:
         "market_event_pressure": market_event_pressure,
         "risk_asset_share": _round(risk_share * 100, 1),
         "target_risk_share": _round(target_risk_share * 100, 1),
-        "priority": "Now" if score >= 78 else "Next" if score >= 60 else "Watch",
+        "priority": "Now" if score >= 70 else "Next" if score >= 45 else "Watch",
+        "deadline": {"date": deadline_date, "type": deadline_type},
         "tension": rule.get("label", "Portfolio evidence requires review"),
         "evidence": evidence_line,
         "next_step": next_step,
@@ -500,8 +521,8 @@ def _linked_events(bundle: dict[str, Any], client_id: str) -> list[dict[str, Any
                     "description": row.description,
                     "transmission": row.primary_transmission,
                     "source": "live news" if source_type == "live_news" else f"event_log.csv • {row.event_date}",
-                    "source_url": source_url if source_type == "live_news" else None,
-                    "publisher": getattr(row, "publisher", None) if source_type == "live_news" else None,
+                    "source_url": _clean_text(source_url) if source_type == "live_news" else None,
+                    "publisher": _clean_text(getattr(row, "publisher", None)) if source_type == "live_news" else None,
                 }
             )
     selected.sort(key=lambda item: (
@@ -510,6 +531,15 @@ def _linked_events(bundle: dict[str, Any], client_id: str) -> list[dict[str, Any
         SEVERITY_ORDER.get(item["severity"], 0),
     ))
     return selected[-5:]
+
+
+def _clean_text(value: Any) -> str | None:
+    """Normalise pandas NaN/empty strings in optional text fields to None."""
+
+    if value is None or (isinstance(value, float) and value != value):
+        return None
+    text = str(value).strip()
+    return text or None
 
 
 def _market_events(bundle: dict[str, Any]) -> list[dict[str, Any]]:
@@ -527,7 +557,7 @@ def _market_events(bundle: dict[str, Any]) -> list[dict[str, Any]]:
                 "severity": row.severity,
                 "source": "live news" if source_type == "live_news" else f"event_log.csv • {row.event_date}",
                 "source_url": source_url if source_type == "live_news" else None,
-                "publisher": getattr(row, "publisher", None) if source_type == "live_news" else None,
+                "publisher": _clean_text(getattr(row, "publisher", None)) if source_type == "live_news" else None,
             }
         )
     return events
@@ -1078,6 +1108,27 @@ def _feature_profile(bundle: dict[str, Any], client_id: str) -> dict[str, Any]:
                 "priority": priority,
             }
         )
+    pressure_card = _priority_card(bundle, client)
+    if pressure_card["score"] >= 70:
+        base["recommendations"].append(
+            {
+                "title": "Address the highest-pressure portfolio driver",
+                "detail": (
+                    f"Use the current {pressure_card['tension'].lower()} and evidence to agree "
+                    "the next risk-reduction step before closing the review."
+                ),
+                "suitability": "RM and client review required",
+                "reversible": True,
+            }
+        )
+        base["evidence_passport"].append(
+            {
+                "claim": pressure_card["evidence"],
+                "source": f"portfolio intelligence • {pressure_card['client_id']}",
+                "status": "Verified",
+            }
+        )
+
     return base
 
 
@@ -1412,6 +1463,23 @@ def _alternative_recommendation_candidates(
     return candidates
 
 
+def _recommendation_urgency_impact(recommendation: dict[str, Any]) -> dict[str, Any]:
+    """Estimate how much an approved action can reduce the current urgency."""
+
+    text = f"{recommendation.get('title', '')} {recommendation.get('detail', '')}".lower()
+    if any(term in text for term in (
+        "protect", "ring-fence", "resolve", "stage funding", "build a",
+        "address the highest-pressure",
+    )):
+        return {"points": 14, "reason": "Directly reduces a documented portfolio or liquidity pressure."}
+    if any(term in text for term in (
+        "funding path", "liquidity", "facility", "currency mix", "separate",
+        "measure portfolio", "portfolio fit",
+    )):
+        return {"points": 10, "reason": "Can reduce or contain a specific portfolio, liquidity or credit exposure."}
+    return {"points": 4, "reason": "Primarily verifies, documents or frames the risk before a reduction decision."}
+
+
 def generate_alternative_recommendation(
     intelligence: dict[str, Any],
     client_id: str,
@@ -1469,6 +1537,7 @@ def generate_alternative_recommendation(
             ),
         }
 
+    chosen["urgency_impact"] = _recommendation_urgency_impact(chosen)
     chosen["risk_validation"] = _recommendation_risk_validation(bundle, profile, chosen)
     chosen["decision_rationale"] = _recommendation_decision_rationale(profile, chosen)
     recommendations.append(chosen)
@@ -1634,6 +1703,7 @@ def build_intelligence_payload(
 
     for profile in client_profiles.values():
         for recommendation in profile["recommendations"]:
+            recommendation["urgency_impact"] = _recommendation_urgency_impact(recommendation)
             recommendation["risk_validation"] = _recommendation_risk_validation(
                 bundle, profile, recommendation
             )

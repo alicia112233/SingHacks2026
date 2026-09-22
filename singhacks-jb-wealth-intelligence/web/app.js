@@ -205,6 +205,7 @@ function routeFor(name, clientId) {
   if (name === "scenario") return `/scenario-studio?client=${encodeURIComponent(clientId || state.studioClient)}`;
   if (name === "governance") return "/evidence-ledger";
   if (name === "market-events") return "/market-events";
+  if (name === "all-clients") return "/all-clients";
   return "/";
 }
 
@@ -213,7 +214,7 @@ function initials(name) {
 }
 
 function showView(name, clientId, updateHistory = true) {
-  const availableViews = ["book", "client", "scenario", "governance", "market-events"];
+  const availableViews = ["book", "client", "scenario", "governance", "market-events", "all-clients"];
   const nextView = availableViews.includes(name) ? name : "book";
   $$(".view").forEach((view) => { view.hidden = true; });
   $$(".nav-item").forEach((item) => item.classList.toggle("active", item.dataset.view === nextView));
@@ -236,6 +237,10 @@ function showView(name, clientId, updateHistory = true) {
     renderScenarioStudio();
     $("#scenario-view").hidden = false;
     $("#page-title").textContent = "Scenario studio";
+  } else if (nextView === "all-clients") {
+    renderAllClients();
+    $("#all-clients-view").hidden = false;
+    $("#page-title").textContent = "All clients";
   } else if (nextView === "governance") {
     renderGovernance();
     $("#governance-view").hidden = false;
@@ -270,6 +275,8 @@ function applyRoute() {
     showView("client", decodeURIComponent(path.split("/").filter(Boolean)[1] || ""), false);
   } else if (path === "/scenario-studio") {
     showView("scenario", params.get("client") || state.studioClient, false);
+  } else if (path === "/all-clients") {
+    showView("all-clients", null, false);
   } else if (path === "/evidence-ledger") {
     showView("governance", null, false);
   } else if (path === "/market-events") {
@@ -302,44 +309,151 @@ function closeModal() {
 function isClientReviewComplete(clientId) {
   const client = profiles()[clientId];
   if (!client?.recommendations?.length) return false;
-  return client.recommendations.every((_, index) => {
+  const actionsRecorded = client.recommendations.every((_, index) => {
     const action = decisionFor(clientId, index)?.action;
     return action === "approved" || action === "dismissed";
   });
+  const queueItem = state.data.book.priority_queue.find((item) => item.client_id === clientId);
+  return actionsRecorded && queueItem && urgencyScore(queueItem) < 70;
 }
 
 function conversationsRequiringAttention() {
-  return state.data.book.priority_queue.filter(
-    (item) => item.priority === "Now" && !isClientReviewComplete(item.client_id),
-  ).length;
+  // Aligned with the follow-up rubric: an active client "needs attention now"
+  // when its tier is Act now (deadline under 6h, or urgency score >= 70).
+  return state.data.book.priority_queue.filter((item) => {
+    if (isClientReviewComplete(item.client_id)) return false;
+    return followUpInfo({ ...item, score: urgencyScore(item) }).key === "now";
+  }).length;
 }
 
-function updateTodayCount() {
-  $("#now-count").textContent = conversationsRequiringAttention();
+function updateTodayCount(count = conversationsRequiringAttention()) {
+  $("#now-count").textContent = count;
 }
 
 function followUpLabel(item) {
-  if (item.complete) return "No action required";
-  if (item.priority === "Now") return "Immediate";
-  if (item.priority === "Next") return "In next 2 days";
-  return item.priority;
+  return followUpInfo(item).label;
 }
 
-function renderBook() {
-  const { book, market_signal: signal, featured_clients: featured } = state.data;
-  const queue = book.priority_queue.map((item) => ({
+// Follow-up tiers follow the fixed rubric:
+//   1 Act now      — hard trigger (deadline under 6h) or score ≥ 70
+//   2 Due today    — under 24h to deadline
+//   3 Due by <date> — 24-48h to deadline (date shown, not "next 2 days")
+//   4 Monitor      — score under the action threshold, deadline > 48h away
+//   5 Resolved     — RM logged the action, risk cleared
+const TIER_RANK = { now: 1, today: 2, soon: 3, monitor: 4, resolved: 5 };
+
+function hoursUntil(iso) {
+  // Anchored to the dataset's as_of date, not wall-clock time, so the demo
+  // tiers stay stable and escalate deterministically from the data.
+  if (!iso) return Number.POSITIVE_INFINITY;
+  const asOf = state.data ? state.data.meta.as_of : new Date().toISOString().slice(0, 10);
+  return (new Date(`${iso}T23:59:59`) - new Date(`${asOf}T00:00:00`)) / 3_600_000;
+}
+
+function countdown(hours) {
+  const total = Math.max(1, Math.ceil(hours));
+  if (total >= 48) return `due in ${Math.round(total / 24)}d`;
+  if (total >= 24) {
+    const days = Math.floor(total / 24);
+    const rest = total % 24;
+    return rest ? `due in ${days}d ${rest}h` : `due in ${days}d`;
+  }
+  return `due in ${total}h`;
+}
+
+function followUpInfo(item) {
+  if (item.complete) return { key: "resolved", label: "Resolved · no action required", short: "Resolved" };
+  const hours = hoursUntil(item.deadline?.date);
+  const deadline = item.deadline || {};
+  if (hours <= 6 || item.score >= 70) return { key: "now", label: "ACT NOW", short: "Act now" };
+  if (hours <= 24) return { key: "today", label: `DUE TODAY · ${countdown(hours)}`, short: `Due today · ${countdown(hours)}` };
+  if (hours <= 48) return { key: "soon", label: `DUE BY ${fullDate(deadline.date)}`, short: `Due by ${fullDate(deadline.date)}` };
+  return { key: "monitor", label: "MONITOR", short: "Monitor" };
+}
+
+function queueCounts(rows) {
+  const counts = { now: 0, within48: 0, monitor: 0, resolved: 0 };
+  rows.forEach((item) => {
+    const tier = followUpInfo(item).key;
+    if (tier === "now") counts.now += 1;
+    else if (tier === "today" || tier === "soon") counts.within48 += 1;
+    else if (tier === "monitor") counts.monitor += 1;
+    else counts.resolved += 1;
+  });
+  return counts;
+}
+
+function buildQueue() {
+  return state.data.book.priority_queue.map((item) => ({
     ...item,
     score: urgencyScore(item),
     complete: isClientReviewComplete(item.client_id),
-  })).sort((left, right) => Number(left.complete) - Number(right.complete) || right.score - left.score).slice(0, 7);
-  const attentionCount = conversationsRequiringAttention();
-  updateTodayCount();
+  })).map((item) => ({ ...item, tier: followUpInfo(item) }))
+    .sort((left, right) => (
+      Number(left.complete) - Number(right.complete)
+      || TIER_RANK[left.tier.key] - TIER_RANK[right.tier.key]
+      || hoursUntil(left.deadline?.date) - hoursUntil(right.deadline?.date)
+      || right.score - left.score
+    ));
+}
+
+// "Next up" shows where the queue continues when nothing is urgent, so clearing
+// the immediate items reveals work rather than an empty page.
+function markNextUp(queue) {
+  const active = queue.filter((item) => !item.complete);
+  const urgent = active.some((item) => item.tier.key === "now");
+  if (urgent) return null;
+  return active[0]?.client_id || null;
+}
+
+function queueRowHTML(item, nextUpId) {
+  const nextUp = item.client_id === nextUpId;
+  return `
+    <a class="queue-row tier-${item.tier.key}" href="${routeFor("client", item.client_id)}" data-open-client="${esc(item.client_id)}" aria-label="Open client review for ${esc(item.client_name)}">
+      <div class="score-ring" style="--score:${item.score}"><b>${item.score}</b></div>
+      <div class="client-cell"><strong>${esc(item.client_name)}${nextUp ? '<span class="next-up-tag">Next up</span>' : ""}</strong><span>${esc(item.client_id)} · ${esc(item.booking_centre)} · $${item.aum_usd_m}m</span></div>
+      <div class="cell-copy"><strong>${esc(item.tension)}</strong><span>${esc(item.evidence)}${item.ltv ? ` · ${esc(item.ltv)}` : ""}</span></div>
+      <div class="cell-copy"><span class="priority-chip ${item.tier.key === "soon" ? "next" : item.tier.key === "now" ? "now" : item.tier.key === "resolved" ? "done" : item.tier.key}">${esc(item.tier.short)}</span><span>${esc(item.complete ? "All actions recorded" : item.next_step)}</span></div>
+      <span class="queue-row-arrow" aria-hidden="true">↗</span>
+    </a>`;
+}
+
+function queueTableHTML(queue, nextUpId) {
+  return `
+    <div class="queue">
+      <div class="queue-head"><span>Score</span><span>Client</span><span>Reason for review</span><span>RM follow-up</span><span></span></div>
+      ${queue.map((item) => queueRowHTML(item, nextUpId)).join("")}
+    </div>`;
+}
+
+function summaryHeaderHTML(counts, total) {
+  return `
+    <div class="queue-summary" aria-label="Follow-up summary">
+      <span class="queue-summary-item urgent"><b>${counts.now}</b> need${counts.now === 1 ? "s" : ""} action now</span>
+      <span class="queue-summary-item">·</span>
+      <span class="queue-summary-item"><b>${counts.within48}</b> due within 48h</span>
+      <span class="queue-summary-item">·</span>
+      <span class="queue-summary-item"><b>${counts.monitor}</b> monitoring</span>
+      <span class="queue-summary-item">·</span>
+      <span class="queue-summary-item"><b>${counts.resolved}</b> resolved</span>
+      <span class="queue-summary-total">of ${total} clients</span>
+    </div>`;
+}
+
+function renderBook() {
+  const { book, market_signal: signal } = state.data;
+  const fullQueue = buildQueue();
+  const counts = queueCounts(fullQueue);
+  const nextUpId = markNextUp(fullQueue);
+  const queue = fullQueue.slice(0, 5); // Today shows the first five; the rest live on the All clients page
+  const attentionCount = counts.now;
+  updateTodayCount(attentionCount);
   $("#book-view").innerHTML = `
     <div class="hero-grid">
       <article class="hero-panel">
         <span class="section-kicker">DAILY BOOK REVIEW</span>
         <h1>${attentionCount} client review${attentionCount === 1 ? "" : "s"} require RM attention today.</h1>
-        <p>Priorities combine client objectives, liquidity timing, mandate limits, credit exposure and record quality. Every score can be traced to its source records.</p>
+        <p>Follow-up tiers are set by time remaining: “due by <date>” items escalate to “due today” and then “act now” as the clock runs down. Every score can be traced to its source records.</p>
         <div class="hero-stats">
           <div><strong>${book.client_count}</strong><small>clients monitored</small></div>
           <div><strong>$${book.aum_usd_m}m</strong><small>book AUM</small></div>
@@ -358,26 +472,18 @@ function renderBook() {
 
     <div class="section-head">
       <div><span class="section-kicker">REVIEW QUEUE</span><h2>Prioritised client follow-up</h2></div>
-      <p>Immediate items require today’s attention; items due in the next 2 days should be prepared once the immediate queue is cleared.</p>
+      <p>Act-now items first, then the countdown queue. Clearing urgent work reveals the next clients in line.</p>
     </div>
-    <div class="queue">
-      <div class="queue-head"><span>Score</span><span>Client</span><span>Reason for review</span><span>RM follow-up</span><span></span></div>
-      ${queue.map((item) => `
-        <a class="queue-row priority-${item.priority.toLowerCase()}" href="${routeFor("client", item.client_id)}" data-open-client="${esc(item.client_id)}" aria-label="Open client review for ${esc(item.client_name)}">
-          <div class="score-ring" style="--score:${item.score}"><b>${item.score}</b></div>
-          <div class="client-cell"><strong>${esc(item.client_name)}</strong><span>${esc(item.client_id)} · ${esc(item.booking_centre)} · $${item.aum_usd_m}m</span></div>
-          <div class="cell-copy"><strong>${esc(item.tension)}</strong><span>${esc(item.evidence)}${item.ltv ? ` · ${esc(item.ltv)}` : ""}</span></div>
-    <div class="cell-copy"><span class="priority-chip ${item.complete ? "done" : item.priority.toLowerCase()}">${esc(followUpLabel(item))}</span><span>${esc(item.complete ? "All actions recorded" : item.next_step)}</span></div>
-          <span class="queue-row-arrow" aria-hidden="true">↗</span>
-        </a>`).join("")}
-    </div>
+    ${summaryHeaderHTML(counts, book.client_count)}
+    ${queueTableHTML(queue, nextUpId)}
+    <div class="all-clients-link-row"><button class="small-button event-list-link" data-view="all-clients">Open all clients →</button><span>${fullQueue.length - queue.length} more client${fullQueue.length - queue.length === 1 ? "" : "s"} on the all-clients page</span></div>
 
     <div class="section-head">
       <div><span class="section-kicker">PRIORITY CASES</span><h2>Reviews needing deeper preparation</h2></div>
       <p>Each case brings portfolio history, scenario sensitivities, suitability controls and an accountable decision record into one workflow.</p>
     </div>
     <div class="featured-grid">
-      ${Object.values(featured).map((client) => `
+      ${Object.values(state.data.featured_clients).map((client) => `
         <button class="featured-card" data-open-client="${esc(client.client_id)}">
           <small>${esc(client.client_id)} · ${esc(client.risk_profile)}</small>
           <h3>${esc(client.name)}</h3>
@@ -385,6 +491,19 @@ function renderBook() {
           <b>↗</b>
         </button>`).join("")}
     </div>`;
+}
+
+function renderAllClients() {
+  const queue = buildQueue();
+  const counts = queueCounts(queue);
+  const nextUpId = markNextUp(queue);
+  $("#all-clients-view").innerHTML = `
+    <section class="events-hero">
+      <div><span class="section-kicker">FULL BOOK</span><h1>All clients</h1><p>The complete follow-up queue, ranked by follow-up tier, time remaining and urgency score. Today’s page shows only the first five.</p></div>
+      <button class="back-link" data-view="book">← Back to today</button>
+    </section>
+    ${summaryHeaderHTML(counts, queue.length)}
+    ${queueTableHTML(queue, nextUpId)}`;
 }
 
 function renderMarketEvents() {
@@ -491,10 +610,12 @@ function decisionFor(clientId, index) {
 }
 
 function approvedActionRelief(clientId) {
-  const approvedCount = Object.values(state.decisions.effective).filter((decision) => (
-    decision.client_id === clientId && decision.action === "approved"
-  )).length;
-  return Math.min(24, approvedCount * 8);
+  const client = profiles()[clientId];
+  return Object.values(state.decisions.effective)
+    .filter((decision) => decision.client_id === clientId && decision.action === "approved")
+    .reduce((total, decision) => (
+      total + Number(client?.recommendations?.[decision.recommendation_index]?.urgency_impact?.points || 0)
+    ), 0);
 }
 
 function urgencyScore(item) {
@@ -710,6 +831,13 @@ function showApproveRecommendation(client, index) {
   openModal(`<span class="section-kicker">RM APPROVAL</span><h2>${esc(recommendation.title)}</h2><p>Record what you have done or will do for this client. Approval is written to the evidence ledger and does not place a trade.</p><form id="approve-action-form" data-index="${index}"><label class="form-field"><span>Action taken or agreed</span><textarea name="note" minlength="10" maxlength="1000" rows="6" required placeholder="Example: Confirmed the facility buffer with Credit and scheduled a client review before funding.">${esc(current?.note || "")}</textarea></label><div class="modal-actions"><button type="button" class="small-button" data-close-modal>Cancel</button><button type="submit" class="action-button approve">Approve and record</button></div></form>`);
 }
 
+function showDismissRecommendation(client, index) {
+  const recommendation = client.recommendations[index];
+  openModal(`<span class="section-kicker">DISMISS SUGGESTION</span><h2>${esc(recommendation.title)}</h2><p>Record why this action is being dismissed. The reason is written to the evidence ledger and shapes future suggestions for this client.</p><form id="dismiss-action-form" data-index="${index}"><div class="dismiss-reasons" role="radiogroup" aria-label="Dismiss reason">
+      ${[["Client declined the suggestion", "Saved as a client preference and steered away from"], ["Not now — revisit later", "Snoozed; it can return with a dated follow-up"], ["Suggestion is wrong", "Flagged for model/data review, not a client preference"], ["Already handled elsewhere", "Closes the topic and checks for stale data"]].map(([value, hint], reasonIndex) => `<label class="dismiss-reason"><input type="radio" name="reason" value="${esc(value)}" ${reasonIndex === 0 ? "checked" : ""} required><span><b>${esc(value)}</b><small>${esc(hint)}</small></span></label>`).join("")}
+    </div><label class="form-field"><span>Optional context</span><textarea name="note" maxlength="1000" rows="3" placeholder="Anything the ledger should capture — e.g. what the client actually said."></textarea></label><div class="modal-actions"><button type="button" class="small-button" data-close-modal>Cancel</button><button type="submit" class="action-button dismiss">Dismiss and record reason</button></div></form>`, "risk");
+}
+
 async function requestAlternativeRecommendation(client, dismissedIndex, dismissedTitle) {
   const response = await fetch("/api/recommendations/alternate", {
     method: "POST",
@@ -805,22 +933,13 @@ function bindEvents() {
         showEditRecommendation(client, index);
       } else if (action === "approved") {
         showApproveRecommendation(client, index);
+      } else if (action === "dismissed") {
+        showDismissRecommendation(client, index);
       } else {
         state.dismissedListOpen = action === "pending" && decisionButton.closest(".dismissed-list")?.open === true;
-        decisionButton.disabled = true;
         try {
           await persistDecision(client, index, action, decisionFor(client.client_id, index)?.note || "");
-          showToast(action === "dismissed" ? "Action dismissed. It can be restored from this review." : action === "approved" ? "Action approved and written to the decision ledger." : "Action restored to the active review.");
-          if (action === "dismissed") {
-            const dismissedTitle = client.recommendations[index].title;
-            try {
-              const replacement = await requestAlternativeRecommendation(client, index, dismissedTitle);
-              renderClient(state.currentClient);
-              showToast(`How about this instead? ${replacement.title}`);
-            } catch (replacementError) {
-              console.warn(replacementError);
-            }
-          }
+          showToast(action === "approved" ? "Action approved and written to the decision ledger." : "Action restored to the active review.");
         } catch (error) {
           decisionButton.disabled = false;
           showToast(error.message, "error");
@@ -918,16 +1037,56 @@ function bindEvents() {
       await sendChatQuestion(question);
       return;
     }
-    if (!event.target.matches("#edit-action-form, #approve-action-form")) return;
+    if (!event.target.matches("#edit-action-form, #approve-action-form, #dismiss-action-form")) return;
     event.preventDefault();
     const form = event.target;
+    const client = profiles()[state.currentClient];
     const submit = form.querySelector('[type="submit"]');
     submit.disabled = true;
     try {
-      const isApproval = form.matches("#approve-action-form");
-      await persistDecision(profiles()[state.currentClient], Number(form.dataset.index), isApproval ? "approved" : "edited", new FormData(form).get("note"));
+      let action = "edited";
+      let note = new FormData(form).get("note") || "";
+      if (form.matches("#approve-action-form")) {
+        action = "approved";
+      } else if (form.matches("#dismiss-action-form")) {
+        action = "dismissed";
+        const reason = String(new FormData(form).get("reason") || "");
+        note = note ? `Reason: ${reason}. ${note}` : `Reason: ${reason}`;
+        state.pendingDeclinedIndex = reason.startsWith("Client declined") ? Number(form.dataset.index) : null;
+      }
+      await persistDecision(profiles()[state.currentClient], Number(form.dataset.index), action, note);
       closeModal();
-      showToast(isApproval ? "Action approved with the RM action recorded." : "Revision saved to the decision ledger.");
+      showToast(action === "approved" ? "Action approved with the RM action recorded." : action === "dismissed" ? (state.pendingDeclinedIndex != null ? "Client preference recorded. Checking for one alternative." : "Dismissal recorded with its reason.") : "Revision saved to the decision ledger.");
+      if (action === "dismissed" && state.pendingDeclinedIndex != null) {
+        // Decline chain rule: a suggestion declined for the FIRST time always
+        // produces one new suggestion (A -> B -> C ...). Only re-dismissing a
+        // suggestion that was already declined before yields nothing, so the
+        // list can never flood no matter how often the RM cycles.
+        const dismissedIndex = state.pendingDeclinedIndex;
+        state.pendingDeclinedIndex = null;
+        const dismissedTitle = client.recommendations[dismissedIndex]?.title;
+        const justRecordedId = state.decisions.records.at(-1)?.id;
+        const declinedTitles = new Set(state.decisions.records
+          .filter((record) => (
+            record.id !== justRecordedId
+            && record.client_id === client.client_id
+            && record.action === "dismissed"
+            && String(record.note || "").startsWith("Reason: Client declined")
+          ))
+          .map((record) => record.recommendation_title));
+        if (dismissedTitle && !declinedTitles.has(dismissedTitle)) {
+          try {
+            const replacement = await requestAlternativeRecommendation(client, dismissedIndex, dismissedTitle);
+            renderClient(state.currentClient);
+            showToast(`How about this instead? ${replacement.title}`);
+          } catch (replacementError) {
+            console.warn("No alternative available:", replacementError);
+            showToast("No replacement suggestion is available for this action.", "error");
+          }
+        } else if (dismissedTitle) {
+          showToast("This suggestion was already declined before, so no duplicate replacement was created.");
+        }
+      }
     } catch (error) {
       submit.disabled = false;
       showToast(error.message, "error");
