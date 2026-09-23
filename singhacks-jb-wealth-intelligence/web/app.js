@@ -343,11 +343,14 @@ function followUpLabel(item) {
 const TIER_RANK = { now: 1, today: 2, soon: 3, monitor: 4, resolved: 5 };
 
 function hoursUntil(iso) {
-  // Anchored to the dataset's as_of date, not wall-clock time, so the demo
-  // tiers stay stable and escalate deterministically from the data.
   if (!iso) return Number.POSITIVE_INFINITY;
   const asOf = state.data ? state.data.meta.as_of : new Date().toISOString().slice(0, 10);
-  return (new Date(`${iso}T23:59:59`) - new Date(`${asOf}T00:00:00`)) / 3_600_000;
+  const now = new Date();
+  const localDate = [now.getFullYear(), now.getMonth() + 1, now.getDate()]
+    .map((part) => String(part).padStart(2, "0"))
+    .join("-");
+  const reviewDate = localDate > asOf ? localDate : asOf;
+  return (new Date(`${iso}T23:59:59`) - new Date(`${reviewDate}T00:00:00`)) / 3_600_000;
 }
 
 function countdown(hours) {
@@ -1103,32 +1106,54 @@ function bindEvents() {
   window.addEventListener("popstate", applyRoute);
 }
 
-async function loadIntelligence() {
+async function requestJson(url, options = {}, attempts = 2) {
+  let lastError;
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
+    try {
+      const response = await fetch(url, options);
+      if (response.ok) return response.json();
+      lastError = new Error(`${url} returned ${response.status}`);
+      if (response.status < 500 || attempt === attempts - 1) throw lastError;
+    } catch (error) {
+      lastError = error;
+      if (attempt === attempts - 1) throw error;
+    }
+    await new Promise((resolve) => window.setTimeout(resolve, 250));
+  }
+  throw lastError;
+}
+
+async function refreshMarketNewsInBackground() {
   try {
-    const newsResponse = await fetch("/api/market-news/refresh", {
+    const result = await requestJson("/api/market-news/refresh", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: "{}",
     });
-    if (newsResponse.ok) return (await newsResponse.json()).intelligence;
-    console.warn(`Market-news refresh returned ${newsResponse.status}`);
+    if (result.intelligence && state.data) {
+      state.data = result.intelligence;
+      $("#as-of").textContent = fullDate(state.data.meta.as_of);
+      renderBook();
+      renderGovernance();
+      applyRoute();
+    }
   } catch (error) {
     console.warn("Market-news refresh failed", error);
   }
-  const intelligenceResponse = await fetch("/api/intelligence");
-  if (!intelligenceResponse.ok) throw new Error(`Intelligence service returned ${intelligenceResponse.status}`);
-  return intelligenceResponse.json();
+}
+
+async function loadIntelligence() {
+  return requestJson("/api/intelligence");
 }
 
 async function init() {
   try {
     const [intelligence, decisionsResponse] = await Promise.all([
       loadIntelligence(),
-      fetch("/api/decisions"),
+      requestJson("/api/decisions"),
     ]);
-    if (!decisionsResponse.ok) throw new Error(`Decision ledger returned ${decisionsResponse.status}`);
     state.data = intelligence;
-    state.decisions = await decisionsResponse.json();
+    state.decisions = decisionsResponse;
     const focusClients = Object.keys(state.data.featured_clients);
     state.currentClient = focusClients[0] || Object.keys(profiles())[0];
     state.studioClient = focusClients.at(-1) || state.currentClient;
@@ -1144,6 +1169,7 @@ async function init() {
     $("#loading").remove();
     $("#app").hidden = false;
     applyRoute();
+    refreshMarketNewsInBackground();
   } catch (error) {
     $("#loading").innerHTML = `<p>Unable to load current portfolio records.</p><small>${esc(error.message)}</small><button class="ghost-button" onclick="window.location.reload()">Retry</button>`;
   }

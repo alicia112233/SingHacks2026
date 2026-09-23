@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import argparse
+import errno
 import json
 import os
+import sys
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -182,7 +184,17 @@ def main() -> None:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=5000)
     args = parser.parse_args()
-    server = ThreadingHTTPServer((args.host, args.port), TesseraHandler)
+    try:
+        server = ThreadingHTTPServer((args.host, args.port), TesseraHandler)
+    except OSError as error:
+        if error.errno == errno.EADDRINUSE:
+            print(
+                f"TESSERA could not start: port {args.port} is already in use. "
+                f"Stop the existing process or run with --port {args.port + 1}.",
+                file=sys.stderr,
+            )
+            return
+        raise
     if loaded_settings:
         print(f"Loaded {len(loaded_settings)} setting(s) from .env.local")
     print(f"TESSERA is ready at http://{args.host}:{args.port} (application API enabled)")
