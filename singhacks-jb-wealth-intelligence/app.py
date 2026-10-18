@@ -3,8 +3,10 @@
 from __future__ import annotations
 
 import argparse
+import errno
 import json
 import os
+import sys
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -14,6 +16,12 @@ from urllib.parse import urlparse
 from tessera.chat import answer_chat, chat_configuration_status
 from tessera.evaluation import evaluate_recommendation
 from tessera.market_news import refresh as refresh_market_news
+from tessera.notifications import (
+    TelegramNotificationError,
+    TelegramNotifier,
+    UrgencyAlertStore,
+    scan_urgency_alerts,
+)
 from tessera.retrieval import retrieval_configuration_status
 from tessera.services import (
     MAX_REQUEST_BYTES,
@@ -31,6 +39,7 @@ DECISION_FILE = RUNTIME / "decisions.json"
 INTELLIGENCE = IntelligenceService(ROOT / "data")
 DECISIONS = DecisionStore(DECISION_FILE)
 LIVE_EVENTS = RUNTIME / "live_events.json"
+URGENCY_ALERTS = UrgencyAlertStore(RUNTIME / "telegram_urgency_alerts.json")
 
 
 def load_local_environment(path: Path = ROOT / ".env.local") -> tuple[str, ...]:
@@ -102,6 +111,7 @@ class TesseraHandler(SimpleHTTPRequestHandler):
                     "service": "tessera",
                     "vector_search": retrieval_configuration_status()["status"],
                     "chat": chat_configuration_status()["status"],
+                    "telegram_notifications": TelegramNotifier().configuration_status(),
                 }
             )
             return
@@ -127,7 +137,7 @@ class TesseraHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self):  # noqa: N802 - required by BaseHTTPRequestHandler
         path = urlparse(self.path).path
-        if path not in {"/api/decisions", "/api/evaluations", "/api/chat", "/api/recommendations/alternate", "/api/market-news/refresh"}:
+        if path not in {"/api/decisions", "/api/evaluations", "/api/chat", "/api/recommendations/alternate", "/api/market-news/refresh", "/api/notifications/urgency/scan"}:
             self._send_json({"error": "Endpoint not found"}, HTTPStatus.NOT_FOUND)
             return
 
@@ -146,9 +156,16 @@ class TesseraHandler(SimpleHTTPRequestHandler):
                 try:
                     result = refresh_market_news(ROOT / "data", LIVE_EVENTS)
                     result["intelligence"] = INTELLIGENCE.get()
+                    result["urgency_alerts"] = scan_urgency_alerts(
+                        result["intelligence"], URGENCY_ALERTS
+                    )
                     self._send_json(result)
+                except TelegramNotificationError as error:
+                    self._send_json({"error": str(error)}, HTTPStatus.SERVICE_UNAVAILABLE)
                 except (OSError, RuntimeError):
                     self._send_json({"error": "Market news is temporarily unavailable"}, HTTPStatus.SERVICE_UNAVAILABLE)
+            elif path == "/api/notifications/urgency/scan":
+                self._send_json(scan_urgency_alerts(intelligence, URGENCY_ALERTS))
             elif path == "/api/chat":
                 self._send_json(answer_chat(intelligence, body))
             elif path == "/api/recommendations/alternate":
@@ -171,6 +188,8 @@ class TesseraHandler(SimpleHTTPRequestHandler):
                 self._send_json(DECISIONS.append(record), HTTPStatus.CREATED)
         except (json.JSONDecodeError, UnicodeDecodeError, TypeError, ValueError) as error:
             self._send_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
+        except TelegramNotificationError as error:
+            self._send_json({"error": str(error)}, HTTPStatus.SERVICE_UNAVAILABLE)
 
     def log_message(self, format, *args):  # noqa: A003
         print(f"TESSERA • {self.address_string()} • {format % args}")
@@ -182,7 +201,17 @@ def main() -> None:
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=5000)
     args = parser.parse_args()
-    server = ThreadingHTTPServer((args.host, args.port), TesseraHandler)
+    try:
+        server = ThreadingHTTPServer((args.host, args.port), TesseraHandler)
+    except OSError as error:
+        if error.errno == errno.EADDRINUSE:
+            print(
+                f"TESSERA could not start: port {args.port} is already in use. "
+                f"Stop the existing process or run with --port {args.port + 1}.",
+                file=sys.stderr,
+            )
+            return
+        raise
     if loaded_settings:
         print(f"Loaded {len(loaded_settings)} setting(s) from .env.local")
     print(f"TESSERA is ready at http://{args.host}:{args.port} (application API enabled)")

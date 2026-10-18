@@ -1,5 +1,7 @@
 from pathlib import Path
 import unittest
+import json
+import tempfile
 
 import pandas as pd
 
@@ -100,6 +102,12 @@ class IntelligenceEngineTests(unittest.TestCase):
                 self.assertIn(recommendation["suitability"], rationale["rm_checks"])
             self.assertGreaterEqual(len(profile["evidence_passport"]), 4)
 
+    def test_approved_action_impact_is_weighted_by_action_type(self):
+        recommendations = self.payload["featured_clients"]["CL-0012"]["recommendations"]
+        impacts = [recommendation["urgency_impact"]["points"] for recommendation in recommendations]
+        self.assertTrue(all(isinstance(value, int) and value > 0 for value in impacts))
+        self.assertGreater(len(set(impacts)), 1)
+
     def test_confidence_caps_surface_known_evidence_limits(self):
         cheung = self.payload["featured_clients"]["CL-0012"]
         lau = self.payload["featured_clients"]["CL-0014"]
@@ -113,6 +121,30 @@ class IntelligenceEngineTests(unittest.TestCase):
         queue = self.payload["book"]["priority_queue"]
         self.assertEqual(sum(row["priority"] == "Now" for row in queue), 5)
         self.assertEqual(queue, sorted(queue, key=lambda row: row["score"], reverse=True))
+
+    def test_relevant_live_signal_changes_pressure_without_creating_non_action(self):
+        with tempfile.TemporaryDirectory() as directory:
+            live_events = Path(directory) / "live_events.json"
+            live_events.write_text(json.dumps([{
+                "event_id": "rss:portfolio-impact",
+                "event_date": "2026-09-21",
+                "event_type": "Live market signal",
+                "region": "Global",
+                "description": "Shipping energy shock",
+                "primary_transmission": "Energy, shipping and risk assets",
+                "severity": "Severe",
+                "source": "https://example.test/portfolio-impact",
+                "source_type": "live_news",
+                "status": "approved",
+            }]), encoding="utf-8")
+            payload = build_intelligence_payload(ROOT / "data", live_events)
+
+        profile = payload["client_profiles"]["CL-0019"]
+        self.assertFalse(any("event impact" in recommendation["title"].lower()
+                             for recommendation in profile["recommendations"]))
+        updated_card = next(item for item in payload["book"]["priority_queue"]
+                            if item["client_id"] == "CL-0019")
+        self.assertEqual(updated_card["market_event_pressure"], 8)
 
 
 if __name__ == "__main__":

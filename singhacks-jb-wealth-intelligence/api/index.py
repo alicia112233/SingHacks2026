@@ -13,6 +13,12 @@ from flask import Flask, jsonify, request, send_from_directory
 from tessera.chat import answer_chat, chat_configuration_status
 from tessera.evaluation import evaluate_recommendation
 from tessera.market_news import refresh as refresh_market_news
+from tessera.notifications import (
+    TelegramNotificationError,
+    TelegramNotifier,
+    UrgencyAlertStore,
+    scan_urgency_alerts,
+)
 from tessera.retrieval import retrieval_configuration_status
 from tessera.services import (
     MAX_REQUEST_BYTES,
@@ -26,6 +32,9 @@ from tessera.services import (
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
 LIVE_EVENTS = Path(tempfile.gettempdir()) / f"tessera-live-events-{os.getpid()}.json"
+URGENCY_ALERTS = UrgencyAlertStore(
+    Path(tempfile.gettempdir()) / f"tessera-telegram-alerts-{os.getpid()}.json"
+)
 INTELLIGENCE = IntelligenceService(ROOT / "data", LIVE_EVENTS)
 app = Flask(__name__, static_folder=str(WEB), static_url_path="")
 app.config["MAX_CONTENT_LENGTH"] = MAX_REQUEST_BYTES
@@ -166,6 +175,7 @@ def health():
         decision_storage="configured" if os.environ.get("DATABASE_URL") else "not_configured",
         vector_search=retrieval_configuration_status()["status"],
         chat=chat_configuration_status()["status"],
+        telegram_notifications=TelegramNotifier().configuration_status(),
     )
 
 
@@ -174,7 +184,27 @@ def market_news_refresh():
     try:
         result = refresh_market_news(ROOT / "data", LIVE_EVENTS)
         result["intelligence"] = INTELLIGENCE.get()
+        result["urgency_alerts"] = scan_urgency_alerts(
+            result["intelligence"], URGENCY_ALERTS
+        )
         return jsonify(result)
+    except TelegramNotificationError as error:
+        return jsonify(error=str(error)), HTTPStatus.SERVICE_UNAVAILABLE
     except Exception:
         app.logger.exception("Market-news refresh failed")
         return jsonify(error="The market-news refresh could not be completed."), HTTPStatus.SERVICE_UNAVAILABLE
+
+
+@app.post("/api/notifications/urgency/scan")
+def urgency_notification_scan():
+    """Run the score threshold check on demand or from a scheduler."""
+
+    try:
+        return jsonify(scan_urgency_alerts(INTELLIGENCE.get(), URGENCY_ALERTS))
+    except TelegramNotificationError as error:
+        return jsonify(error=str(error)), HTTPStatus.SERVICE_UNAVAILABLE
+    except (TypeError, ValueError) as error:
+        return jsonify(error=str(error)), HTTPStatus.BAD_REQUEST
+    except Exception:
+        app.logger.exception("Urgency-notification scan failed")
+        return jsonify(error="Urgency notifications are temporarily unavailable."), HTTPStatus.SERVICE_UNAVAILABLE
