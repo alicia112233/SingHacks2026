@@ -493,6 +493,7 @@ def _linked_events(bundle: dict[str, Any], client_id: str) -> list[dict[str, Any
             source_type != "live_news" and any(channel.lower() in transmission for channel in channels)
         ):
             source_url = getattr(row, "source", None)
+            publisher = getattr(row, "publisher", None)
             selected.append(
                 {
                     "date": row.event_date,
@@ -500,8 +501,8 @@ def _linked_events(bundle: dict[str, Any], client_id: str) -> list[dict[str, Any
                     "description": row.description,
                     "transmission": row.primary_transmission,
                     "source": "live news" if source_type == "live_news" else f"event_log.csv • {row.event_date}",
-                    "source_url": source_url if source_type == "live_news" else None,
-                    "publisher": getattr(row, "publisher", None) if source_type == "live_news" else None,
+                    "source_url": source_url if source_type == "live_news" and pd.notna(source_url) else None,
+                    "publisher": publisher if source_type == "live_news" and pd.notna(publisher) else None,
                 }
             )
     selected.sort(key=lambda item: (
@@ -517,6 +518,7 @@ def _market_events(bundle: dict[str, Any]) -> list[dict[str, Any]]:
     for row in bundle["event_log"].sort_values("event_date", ascending=False).itertuples():
         source_type = getattr(row, "source_type", None)
         source_url = getattr(row, "source", None)
+        publisher = getattr(row, "publisher", None)
         events.append(
             {
                 "date": row.event_date,
@@ -526,8 +528,8 @@ def _market_events(bundle: dict[str, Any]) -> list[dict[str, Any]]:
                 "transmission": row.primary_transmission,
                 "severity": row.severity,
                 "source": "live news" if source_type == "live_news" else f"event_log.csv • {row.event_date}",
-                "source_url": source_url if source_type == "live_news" else None,
-                "publisher": getattr(row, "publisher", None) if source_type == "live_news" else None,
+                "source_url": source_url if source_type == "live_news" and pd.notna(source_url) else None,
+                "publisher": publisher if source_type == "live_news" and pd.notna(publisher) else None,
             }
         )
     return events

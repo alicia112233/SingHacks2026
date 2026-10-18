@@ -144,6 +144,7 @@ class MarketNewsTests(unittest.TestCase):
             with_news = build_intelligence_payload(data_dir, state)
         self.assertEqual(controlled["market_signal"]["date"], "2026-08-05")
         self.assertEqual(with_news["market_signal"]["date"], "2026-09-01")
+        json.dumps(with_news, allow_nan=False)
 
     def test_approved_live_event_adds_bounded_pressure_to_matching_client(self):
         baseline = build_intelligence_payload(ROOT / "data")
