@@ -24,12 +24,12 @@ Vercel AI Gateway key as `AI_GATEWAY_API_KEY` or a current
 edit the comma-separated `TESSERA_JUDGE_MODELS` value to use other supported
 models such as Claude Opus.
 
-Chroma Cloud can supplement that panel with source-labelled semantic evidence
-from controlled RM notes, events, mandates and instrument references. It uses a
-thin cloud client and explicit Vercel AI Gateway embeddings; exact portfolio and
-suitability calculations remain deterministic. See
-[`docs/CHROMA_CLOUD.md`](docs/CHROMA_CLOUD.md) for setup, indexing, cost and
-deployment instructions.
+Chroma Cloud retrieves source-labelled semantic evidence from controlled RM
+notes, events, mandates and instrument references. Retrieved excerpts are not
+sent to external judges: their packet contains only allowlisted numeric fields
+and controlled categories. Retrieval can support the evidence chat assistant.
+Exact portfolio and suitability calculations remain deterministic. See
+[`docs/CHROMA_CLOUD.md`](docs/CHROMA_CLOUD.md) for indexing and setup.
 
 The global **Ask TESSERA** assistant supports client-scoped questions with
 numbered source citations, microphone dictation and browser read-aloud. It works
@@ -74,8 +74,8 @@ The bundled records are controlled non-production data. They are not investment 
 
 ## Live market news
 
-Each website load calls `POST /api/market-news/refresh` before showing current
-intelligence. This fetches Yahoo Finance, CNBC, The Business Times, and the
+Each website load first renders the current `/api/review` response, then calls
+`POST /api/market-news/refresh` in the background. This fetches Yahoo Finance, CNBC, The Business Times, and the
 existing Google News RSS searches. These feeds do not need API keys. Set
 `TESSERA_LIVE_NEWS_ENABLED=false` to disable live news, or set
 `TESSERA_NEWS_FEEDS` to a comma-separated list of approved RSS URLs.
@@ -100,7 +100,7 @@ loading website. Durable hosted news history requires a shared event store.
 
 ## Risk Analysis
 
-The client view shows capacity, tolerance, horizon and their arithmetic average on a 1-5 scale. Lower overall means earlier attention **only within equal urgency**. Urgency values are unchanged. If any customer in an equal-urgency group has a missing dimension, the entire group's original order is preserved. Missing scores display "Insufficient data". This is a prioritisation indicator, not portfolio suitability advice.
+The client view shows capacity, tolerance, horizon and their arithmetic average on a 1-5 scale. The backend uses lower overall risk as a tie-breaker **within equal urgency**. The browser then sorts by review completion, follow-up tier, deadline and urgency; this can change that backend order. Urgency values are unchanged. If any customer in an equal-urgency group has a missing dimension, the entire group's original order is preserved. Missing scores display "Insufficient data". This is a prioritisation indicator, not portfolio suitability advice.
 
 Simple illustrative thresholds live in `tessera/risk_analysis.py` (`RiskThresholds`). Capacity averages available bank-held cash-buffer, daily-liquidity and recorded debt bands. Cash share upper bounds are 1%, 3%, 5%, 10%; daily-liquid share bounds are 20%, 40%, 60%, 80% (scores 1-5). Recorded debt uses the highest LTV/margin-call-trigger ratio: below 25%, 50%, 75%, 92%, then at least 92% (scores 5-1); 92% reuses the existing urgency warning boundary. An absent facility is omitted, never assumed to mean zero household debt. Capacity is rounded to one decimal before averaging dimensions; overall remains unrounded for tie-breaking and displays one decimal.
 

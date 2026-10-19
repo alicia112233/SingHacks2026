@@ -12,12 +12,14 @@ Built for SingHacks using controlled, non-production records. The application su
 
 | Step | What you do | What TESSERA provides |
 | --- | --- | --- |
-| Prioritise | Open the daily book review | Now, Next and Watch queues with urgency drivers |
+| Prioritise | Open the daily book review | A follow-up queue ranked by tier, deadline and urgency |
 | Investigate | Open a client review room | Portfolio history, cash needs, mandate exceptions and source evidence |
 | Explore | Adjust assumptions in Scenario Studio | Transparent portfolio sensitivities |
 | Evaluate | Inspect an action's risk rubric | Dimension scores, evidence, confidence caps and blockers |
 | Decide | Approve, edit, dismiss or restore | Version checks, approval gates and an append-only decision history |
 | Follow up | Review outstanding urgency | Optional Telegram alerts, reminders and escalation |
+
+Today shows the first five clients; **All clients** shows the complete queue. Follow-up labels are **Act now**, **Due today**, **Due by [date]**, **Monitor** and **Reviewed**, with **Overdue** shown for expired deadlines. Reviewed means the review was recorded, not that the underlying exposure disappeared.
 
 The **Ask TESSERA** assistant answers client-scoped questions with source citations. Local factual retrieval works without cloud credentials; semantic retrieval and model-written answers are optional. Dictation and read-aloud depend on browser support.
 
@@ -96,7 +98,7 @@ Vercel hosting uses the Python API and PostgreSQL-backed ledgers. Hosted review 
 
 Only `TESSERA_MODE=demo` is supported. Other modes reject intelligence preparation and dependent review operations. This is not authentication: anyone who can reach the demo can access its sample data. Real client use requires authenticated identities, client-level authorisation and a separate security review.
 
-Follow-up deadlines come from the controlled snapshot and may already be overdue. Hosted news history needs a shared store to be durable. Alert locking prevents concurrent duplicate sends, but a crash after Telegram accepts a message and before state is saved can still cause a repeat.
+Follow-up deadlines come from the controlled snapshot and may already be overdue. Hosted news history needs a shared store to be durable. The All clients view works through in-app navigation, but the hosted Flask entry point currently lacks a direct `/all-clients` route, so opening or refreshing that URL is not supported. Alert locking prevents concurrent duplicate sends, but a crash after Telegram accepts a message and before state is saved can still cause a repeat.
 
 ## Documentation
 
