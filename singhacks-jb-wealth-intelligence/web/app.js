@@ -684,6 +684,31 @@ function riskAnalysisHTML(risk = {}) {
   </section>`;
 }
 
+function urgencyAcknowledgementHTML(clientId) {
+  const queueItem = state.data.book.priority_queue.find((item) => item.client_id === clientId);
+  if (!queueItem || urgencyScore(queueItem) < 80) return "";
+  return `<section class="urgency-alert-control" aria-label="Urgency alert control">
+    <div><span class="section-kicker">TELEGRAM ALERT ACTIVE</span><strong>Urgency score ${urgencyScore(queueItem)}/100</strong><p>Acknowledge after you have seen the alert. This pauses reminders, but a material worsening will still trigger an escalation alert.</p></div>
+    <button class="action-button acknowledge-alert" data-urgency-acknowledge="${esc(clientId)}">Acknowledge alert</button>
+  </section>`;
+}
+
+async function acknowledgeUrgencyAlert(clientId, button) {
+  button.disabled = true;
+  try {
+    await requestJson("/api/notifications/urgency/acknowledge", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ client_id: clientId, note: "Acknowledged in TESSERA" }),
+    });
+    button.textContent = "Alert acknowledged";
+    showToast("Telegram reminders are paused for this case. A material worsening will still alert you.");
+  } catch (error) {
+    button.disabled = false;
+    showToast(error.message, "error");
+  }
+}
+
 function renderClient(clientId) {
   const client = profiles()[clientId];
   if (!client) return;
@@ -695,6 +720,7 @@ function renderClient(clientId) {
     </div>
     <div class="metric-rail">${client.headline_metrics.map((metric) => `<div><strong>${esc(metric.value)}</strong><span>${esc(metric.label)}</span></div>`).join("")}</div>
     ${riskAnalysisHTML(client.risk_analysis)}
+    ${urgencyAcknowledgementHTML(clientId)}
     <div class="tension-map">
       <div class="tension-item"><small>CLIENT POSITION</small><p>${esc(client.tension.client_says)}</p></div>
       <div class="tension-item"><small>PORTFOLIO POSITION</small><p>${esc(client.tension.portfolio_does)}</p></div>
@@ -948,6 +974,11 @@ function bindEvents() {
           showToast(error.message, "error");
         }
       }
+    }
+
+    const acknowledgeButton = event.target.closest("[data-urgency-acknowledge]");
+    if (acknowledgeButton) {
+      await acknowledgeUrgencyAlert(acknowledgeButton.dataset.urgencyAcknowledge, acknowledgeButton);
     }
 
     const riskButton = event.target.closest("[data-risk-index]");
