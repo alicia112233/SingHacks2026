@@ -15,12 +15,10 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Iterable
 
-# Cache of the most recent dataset bundle, reused to generate alternative
-# recommendations without rebuilding the payload.
-_LAST_BUNDLE: dict[str, Any] | None = None
-
 import pandas as pd
 
+from tessera.recommendation_validation import assess, validate_numbers, publish, RUBRIC_VERSION, fingerprint
+from tessera.review_state import action_version
 from tessera.risk_analysis import analyse_client, order_by_urgency
 
 
@@ -237,6 +235,9 @@ def _mandate_findings(bundle: dict[str, Any], client_id: str) -> list[dict[str, 
                 findings.append(
                     {
                         "type": "allocation",
+                        "min_pct": float(rule.min_pct),
+                        "max_pct": float(rule.max_pct),
+                        "source_id": f"{portfolio.mandate_code}:{rule.asset_class}",
                         "portfolio_id": portfolio.portfolio_id,
                         "label": f"{rule.asset_class} outside {float(rule.min_pct):g}–{float(rule.max_pct):g}% band",
                         "actual_pct": _round(actual, 1),
@@ -250,6 +251,8 @@ def _mandate_findings(bundle: dict[str, Any], client_id: str) -> list[dict[str, 
                 findings.append(
                     {
                         "type": "single_position",
+                        "max_pct": max_position,
+                        "source_id": f"{portfolio.mandate_code}:{holding.instrument_id}",
                         "portfolio_id": portfolio.portfolio_id,
                         "label": f"{holding.instrument_name} above {max_position:g}% position limit",
                         "actual_pct": _round(float(holding.weight_pct), 1),
@@ -579,6 +582,7 @@ def _position_delta(bundle: dict[str, Any], client_id: str) -> list[dict[str, An
     return [
         {
             "instrument": row.instrument_name,
+            "instrument_id": row.instrument_id,
             "start_usd_m": _round(row.market_value_usd_start / 1_000_000, 2),
             "end_usd_m": _round(row.market_value_usd_end / 1_000_000, 2),
             "delta_usd_m": _round(row.delta / 1_000_000, 2),
@@ -754,18 +758,21 @@ def _feature_profile(bundle: dict[str, Any], client_id: str) -> dict[str, Any]:
                 ],
                 "recommendations": [
                     {
+                        "assessment_kind": "liability",
                         "title": "Verify the liability before optimising the assets",
                         "detail": f"Confirm whether the current annual need remains {structured_need['currency']} {structured_need['amount_usd_m']:.2f}m; {draw_context}.",
                         "suitability": "Data clarification",
                         "reversible": True,
                     },
                     {
+                        "assessment_kind": "reserve",
                         "title": "Build a 24-month spending reserve",
                         "detail": "Model a cash-and-short-duration sleeve before discussing sales from loss positions.",
                         "suitability": "Within Income mandate, subject to instrument review",
                         "reversible": True,
                     },
                     {
+                        "assessment_kind": "duration",
                         "title": "Reframe duration as a life-horizon decision",
                         "detail": f"Compare maturity dates with the client’s {int(client.investment_horizon_years)}-year recorded horizon; involve the client in sequencing, not a binary sell/hold choice.",
                         "suitability": "RM judgement required",
@@ -852,18 +859,21 @@ def _feature_profile(bundle: dict[str, Any], client_id: str) -> dict[str, Any]:
                 ],
                 "recommendations": [
                     {
+                        "assessment_kind": "credit",
                         "title": "Protect the facility before funding the project",
                         "detail": f"Treat the {ltv['currency']} {ltv['lending_value_buffer_m']:.2f}m trigger buffer—not reported headroom—as the binding constraint.",
                         "suitability": "Credit review required",
                         "reversible": True,
                     },
                     {
+                    "assessment_kind": "lookthrough",
                     "title": "Separate conviction from multiple wrappers of one risk",
                         "detail": "Show a single look-through exposure spanning direct property, issuer equity, perpetual debt and the accumulator.",
                         "suitability": "Advisory account; client instruction remains possible",
                         "reversible": True,
                     },
                     {
+                        "assessment_kind": "reserve",
                         "title": "Ring-fence the redevelopment contribution",
                         "detail": "Stage a liquid funding sleeve and test it without assuming the accumulator can be exited at par.",
                         "suitability": "Mandate and credit checks required",
@@ -945,18 +955,21 @@ def _feature_profile(bundle: dict[str, Any], client_id: str) -> dict[str, Any]:
                 ],
                 "recommendations": [
                     {
+                        "assessment_kind": "reserve",
                         "title": "Ring-fence the family-office seed capital",
                         "detail": "Move from an implicit market-timing assumption to a dated funding sleeve.",
                         "suitability": "Advisory approval required",
                         "reversible": True,
                     },
                     {
+                        "assessment_kind": "outside_wealth",
                         "title": "Measure portfolio + operating business as one risk",
                         "detail": f"The {exposure:.1f}% bank-held portfolio figure is a floor because the outside operating business has no recorded valuation.",
                         "suitability": "External-wealth confirmation required",
                         "reversible": True,
                     },
                     {
+                        "assessment_kind": "scenario",
                         "title": "Rehearse both sides of the Strait thesis",
                         "detail": "Use symmetric scenarios so the discussion is not anchored to recent gains.",
                         "suitability": "Scenario assumptions visible to RM",
@@ -1024,6 +1037,7 @@ def _feature_profile(bundle: dict[str, Any], client_id: str) -> dict[str, Any]:
         if next_need:
             action_items.append(
                 {
+                    "assessment_kind": "funding",
                     "title": "Confirm the funding path and decision date",
                     "detail": (
                         f"Map liquid assets to the {next_need['currency']} "
@@ -1037,6 +1051,7 @@ def _feature_profile(bundle: dict[str, Any], client_id: str) -> dict[str, Any]:
         if primary_finding:
             action_items.append(
                 {
+                    "assessment_kind": "mandate",
                     "title": "Resolve the highest-priority portfolio exception",
                     "detail": f"Review {primary_finding['label'].lower()} and document whether it reflects drift or client instruction.",
                     "suitability": "Mandate review required",
@@ -1046,6 +1061,7 @@ def _feature_profile(bundle: dict[str, Any], client_id: str) -> dict[str, Any]:
         if largest_change:
             action_items.append(
                 {
+                    "assessment_kind": "movement",
                     "title": "Validate the largest position movement",
                     "detail": (
                         f"Reconcile the USD {largest_change['delta_usd_m']:+.2f}m change in "
@@ -1057,6 +1073,7 @@ def _feature_profile(bundle: dict[str, Any], client_id: str) -> dict[str, Any]:
             )
         action_items.append(
             {
+                "assessment_kind": "profile",
                 "title": "Reconfirm portfolio fit with the client",
                 "detail": "Use the current allocation, upcoming obligations and recorded objectives to confirm that the mandate remains appropriate.",
                 "suitability": "RM judgement required",
@@ -1114,6 +1131,7 @@ def _feature_profile(bundle: dict[str, Any], client_id: str) -> dict[str, Any]:
     if pressure_card["score"] >= 70:
         base["recommendations"].append(
             {
+                "assessment_kind": "pressure",
                 "title": "Address the highest-pressure portfolio driver",
                 "detail": (
                     f"Use the current {pressure_card['tension'].lower()} and evidence to agree "
@@ -1132,6 +1150,61 @@ def _feature_profile(bundle: dict[str, Any], client_id: str) -> dict[str, Any]:
         )
 
     return base
+
+
+def _action_numeric_evidence(bundle, profile, recommendation):
+    """Typed values from action-linked records; never scrape JSON or prose."""
+    facts = []
+    kind = recommendation.get("assessment_kind")
+    as_of = _as_of(bundle)
+    def add(value, unit, source, field):
+        if value is not None and math.isfinite(float(value)):
+            # UI templates display at one or two decimal places.
+            for rounded in set((float(value), round(float(value), 1), round(float(value), 2))):
+                facts.append({"value": rounded, "unit": unit, "source": source, "field": field, "as_of": as_of})
+    if kind in {"funding", "reserve", "liability", "credit", "currency", "pressure"}:
+        for need in profile.get("cash_needs", []):
+            source = "planned_cash_needs.csv:" + need["id"]
+            add(need["amount"] / 1_000_000, need["currency"] + " million", source, "amount")
+            add(need["amount_usd_m"], "USD million", source, "amount_usd_m")
+            add(int(need["due_from"][:4]), "number", source, "due_from.year")
+    if kind == "mandate":
+        wording = (recommendation.get("title", "") + " " + recommendation.get("detail", "")).casefold()
+        findings = [finding for finding in profile.get("mandate_findings", []) if finding["label"].casefold() in wording]
+        for finding in findings:
+            source = "mandates.csv:" + finding.get("source_id", finding["portfolio_id"])
+            for field in ("min_pct", "max_pct", "actual_pct"):
+                add(finding.get(field), "percent", source, field)
+    if kind == "movement":
+        for change in profile.get("position_changes", []):
+            source = "holdings.csv:" + change.get("instrument_id", change["instrument"])
+            add(change["delta_usd_m"], "USD million", source, "delta_usd_m")
+    if kind == "credit":
+        credit = profile.get("ltv") or {}
+        source = "credit_facilities.csv:" + str(credit.get("facility_id", "missing"))
+        for field in ("ltv_pct", "trigger_pct"):
+            add(credit.get(field), "percent", source, field)
+        add(credit.get("points_to_trigger"), "points", source, "points_to_trigger")
+        add(credit.get("lending_value_buffer_m"), str(credit.get("currency")) + " million", source, "lending_value_buffer_m")
+    if kind == "duration":
+        client = bundle["clients"][bundle["clients"].client_id == profile["client_id"]].iloc[0]
+        add(client.investment_horizon_years, "years", "clients.csv:" + profile["client_id"], "investment_horizon_years")
+    if kind == "outside_wealth":
+        holdings = bundle["holdings"]
+        current = holdings[(holdings.client_id == profile["client_id"]) & (holdings.snapshot_date == as_of)]
+        ids = CLIENT_RULES.get(profile["client_id"], {}).get("theme_ids", [])
+        if ids and current.market_value_usd.sum():
+            add(_theme_exposure(current, ids, float(current.market_value_usd.sum())), "percent", "holdings.csv+instruments.csv:" + profile["client_id"], "theme_exposure_pct")
+    if kind in {"mandate", "movement"}:
+        holdings = bundle["holdings"]
+        for row in holdings[holdings.client_id == profile["client_id"]].drop_duplicates("instrument_id").itertuples():
+            facts.append({"literal": row.instrument_name, "value": 0, "unit": "instrument", "source": "instruments.csv:" + row.instrument_id, "field": "instrument_name", "as_of": as_of})
+    # Bind movement quantities to the named position rather than another holding.
+    if kind == "movement":
+        named = [c for c in profile.get("position_changes", []) if c["instrument"].casefold() in recommendation.get("detail", "").casefold()]
+        sources = {"holdings.csv:" + c.get("instrument_id", c["instrument"]) for c in named}
+        facts = [f for f in facts if f.get("literal") or f["source"] in sources]
+    return facts
 
 
 def _recommendation_risk_validation(
@@ -1170,71 +1243,11 @@ def _recommendation_risk_validation(
         if bool(orphan_instruments.any() or orphan_portfolios.any()):
             blockers.append("Current positions fail reference-integrity checks")
 
-    grounding_fields = (
-        "evidence_passport",
-        "cash_needs",
-        "mandate_findings",
-        "ltv",
-        "scenarios",
-        "tension",
-        "headline_metrics",
-        "position_changes",
-        "linked_events",
-    )
-    grounding_context = json.dumps(
-        {field: profile.get(field) for field in grounding_fields}, default=str
-    )
-    number_pattern = r"(?<![A-Za-z])[-+]?\d+(?:\.\d+)?"
-    source_numbers = [float(value) for value in re.findall(number_pattern, grounding_context)]
-    recommendation_numbers = [
-        float(value)
-        for value in re.findall(number_pattern, str(recommendation.get("detail", "")))
-    ]
-    ungrounded_numbers = [
-        value
-        for value in recommendation_numbers
-        if not any(abs(value - source_value) < 0.005 for source_value in source_numbers)
-    ]
-    if ungrounded_numbers:
-        blockers.append("A numeric claim cannot be resolved to the recommendation evidence set")
-
-    status_weights = {
-        "Verified": 1.0,
-        "Authoritative": 1.0,
-        "Checked": 0.9,
-        "Structured": 0.85,
-        "RM record": 0.65,
-        "Review": 0.25,
-    }
+    numeric_evidence = _action_numeric_evidence(bundle, profile, recommendation)
+    resolved, unresolved = validate_numbers(str(recommendation.get("detail", "")), numeric_evidence)
+    blockers += [f"Unsupported numeric claim: {item['value']:g} {item['unit']}" for item in unresolved]
     passport = profile.get("evidence_passport", [])
-    evidence_ratio = (
-        sum(status_weights.get(item.get("status"), 0.4) for item in passport)
-        / len(passport)
-        if passport
-        else 0.0
-    )
-    evidence_score = round(25 * evidence_ratio)
-
-    suitability_text = str(recommendation.get("suitability", "")).lower()
-    suitability_score = 23 if "within" in suitability_text else 20
-
-    scenarios = profile.get("scenarios", [])
-    quantified_scenarios = sum(
-        1
-        for scenario in scenarios
-        if scenario.get("portfolio_impact_pct") is not None and scenario.get("factors")
-    )
-    predictive_score = min(14, 6 + quantified_scenarios * 4)
-
-    signal_count = sum(
-        (
-            bool(profile.get("cash_needs")),
-            bool(profile.get("mandate_findings")),
-            bool(profile.get("ltv")),
-            bool(profile.get("linked_events")),
-        )
-    )
-    signal_score = min(15, 8 + signal_count * 2)
+    dimensions, outside_relevant, conflict_relevant = assess(profile, recommendation)
 
     stale = current[
         pd.to_datetime(current.valuation_date) < pd.to_datetime(current.snapshot_date)
@@ -1251,55 +1264,10 @@ def _recommendation_risk_validation(
         freshness_score = 4
         freshness_reason = f"{len(stale)} current position(s) have stale valuation dates."
 
-    actionability_score = 0
-    actionability_score += 2 if recommendation.get("reversible") is True else 0
-    actionability_score += 2 if recommendation.get("suitability") else 0
-    actionability_score += 1 if recommendation.get("title") and recommendation.get("detail") else 0
-
-    dimensions = [
-        {
-            "name": "Evidence and lineage",
-            "score": evidence_score,
-            "max": 25,
-            "reason": (
-                f"{len(passport)} claim(s) are linked to controlled source records; "
-                f"{len(recommendation_numbers)} numeric claim(s) resolved."
-            ),
-        },
-        {
-            "name": "Suitability and policy",
-            "score": suitability_score,
-            "max": 25,
-            "reason": recommendation.get("suitability", "Suitability evidence missing"),
-        },
-        {
-            "name": "Analytical corroboration",
-            "score": predictive_score,
-            "max": 20,
-            "reason": (
-                f"{quantified_scenarios} quantified sensitivity case(s); "
-                "no calibrated outcome model is present."
-            ),
-        },
-        {
-            "name": "Signal relevance",
-            "score": signal_score,
-            "max": 15,
-            "reason": f"{signal_count} applicable client, product, policy or market signal group(s).",
-        },
-        {
-            "name": "Freshness and data quality",
-            "score": freshness_score,
-            "max": 10,
-            "reason": freshness_reason,
-        },
-        {
-            "name": "Actionability and reversibility",
-            "score": actionability_score,
-            "max": 5,
-            "reason": "Action has an owner-facing condition and remains reversible.",
-        },
-    ]
+    dimensions.insert(4, {
+        "name": "Freshness and data quality", "score": freshness_score, "max": 10,
+        "reason": f"Snapshot {as_of}: {freshness_reason} Shared portfolio valuation control.",
+    })
     raw_score = sum(item["score"] for item in dimensions)
     caps = [
         {
@@ -1307,7 +1275,7 @@ def _recommendation_risk_validation(
             "reason": "Predictive model is not calibrated on recommendation outcomes.",
         }
     ]
-    if any(item.get("status") == "Review" for item in passport):
+    if conflict_relevant and any(item.get("status") == "Review" for item in passport):
         caps.append(
             {"value": 59, "reason": "A source conflict or unquantified RM update must be verified."}
         )
@@ -1316,53 +1284,28 @@ def _recommendation_risk_validation(
             str(profile.get("confidence", {}).get("level", "")),
             str(profile.get("confidence", {}).get("reason", "")),
             str(recommendation.get("detail", "")),
-            suitability_text,
+            str(recommendation.get("suitability", "")),
         )
     ).lower()
-    if any(term in combined_text for term in ("outside", "external-wealth", "incomplete household")):
+    if outside_relevant and any(term in combined_text for term in ("outside", "external-wealth", "incomplete household")):
         caps.append(
             {"value": 79, "reason": "Relevant outside wealth is unrecorded or qualitative."}
         )
 
-    applied_cap = min((cap["value"] for cap in caps), default=100)
-    score = 0 if blockers else min(raw_score, applied_cap)
-    if blockers or score < 50:
-        band = "Blocked"
-        disposition = "Do not publish; resolve hard-stop controls"
-        residual_risk = "Very high"
-    elif score < 70:
-        band = "Verify first"
-        disposition = "RM must verify flagged inputs before use"
-        residual_risk = "High"
-    elif score < 85:
-        band = "Review ready"
-        disposition = "Supported for RM review; approval remains mandatory"
-        residual_risk = "Moderate"
-    else:
-        band = "Strong support"
-        disposition = "RM may approve after final suitability review"
-        residual_risk = "Low"
-
-    return {
-        "score": score,
+    return publish({
         "raw_score": raw_score,
-        "band": band,
-        "disposition": disposition,
-        "residual_hallucination_risk": residual_risk,
+        "assessed_detail": recommendation.get("detail", ""),
+        "source_blockers": list(blockers),
+        "rubric_version": RUBRIC_VERSION,
+        "as_of": as_of,
+        "numeric_evidence": numeric_evidence,
+        "resolved_claims": resolved,
         "score_meaning": "Evidence and control confidence; not return probability.",
-        "model_validation": {
-            "status": "Provisional",
-            "reason": "Scenario sensitivities corroborate direction and materiality, but are not a calibrated predictive model.",
-        },
-        "human_validation": {
-            "status": "Required",
-            "owner": "Relationship Manager",
-            "decision": "Approve, edit or dismiss with rationale",
-        },
+        "model_validation": {"status": "Provisional", "reason": "Only action-relevant diagnostics earn points; no calibrated outcome model is present."},
+        "human_validation": {"status": "Required", "owner": "Relationship Manager", "decision": "Approve, edit or dismiss with rationale"},
         "dimensions": dimensions,
-        "caps": [cap for cap in caps if cap["value"] <= raw_score],
-        "blockers": blockers,
-    }
+        "caps": caps,
+    }, blockers)
 
 
 def _alternative_recommendation_candidates(
@@ -1387,9 +1330,11 @@ def _alternative_recommendation_candidates(
     for need in profile.get("cash_needs", [])[:2]:
         candidates.append(
             {
-                "title": f"Stage funding for the {need['due_from'][:4]} {need['currency']} {need['amount_usd_m']:.2f}m need",
+                "assessment_kind": "funding",
+                "source_key": need["id"],
+                "title": f"Stage funding for the {need['due_from'][:4]} {need['currency']} {need['amount'] / 1_000_000:.2f}m need",
                 "detail": (
-                    f"Place the {need['currency']} {need['amount_usd_m']:.2f}m "
+                    f"Place the {need['currency']} {need['amount'] / 1_000_000:.2f}m "
                     f"requirement from {need['due_from'][:4]} in a dated sleeve "
                     f"instead of leaving it invested."
                 ),
@@ -1409,6 +1354,8 @@ def _alternative_recommendation_candidates(
         )
         candidates.append(
             {
+                "assessment_kind": "mandate",
+                "source_key": finding.get("source_id", finding["portfolio_id"]),
                 "title": f"Document the instruction behind: {label}",
                 "detail": detail,
                 "suitability": "Mandate review required",
@@ -1420,6 +1367,7 @@ def _alternative_recommendation_candidates(
     if ltv:
         candidates.append(
             {
+                "assessment_kind": "credit",
                 "title": "Schedule a facility headroom review",
                 "detail": (
                     f"Walk the client through the {ltv['points_to_trigger']:.2f} point "
@@ -1435,6 +1383,7 @@ def _alternative_recommendation_candidates(
         daily = float(current.loc[current.liquidity_tier == "Daily", "market_value_usd"].sum())
         candidates.append(
             {
+                "assessment_kind": "funding",
                 "title": "Review liquidity tiering against planned needs",
                 "detail": "Compare the daily-liquidity share of the portfolio with the dated obligations on record.",
                 "suitability": "RM judgement required",
@@ -1447,6 +1396,7 @@ def _alternative_recommendation_candidates(
     if len(currencies) >= 2:
         candidates.append(
             {
+                "assessment_kind": "currency",
                 "title": "Review currency mix against reporting and spending currency",
                 "detail": "Check whether the current currency mix still matches how the client reports and spends.",
                 "suitability": "RM judgement required",
@@ -1456,6 +1406,7 @@ def _alternative_recommendation_candidates(
 
     candidates.append(
         {
+            "assessment_kind": "followup",
             "title": "Set a dated follow-up review on the dismissed point",
             "detail": "Agree a specific review date so the dismissed topic returns with fresh evidence rather than being dropped.",
             "suitability": "RM judgement required",
@@ -1465,85 +1416,17 @@ def _alternative_recommendation_candidates(
     return candidates
 
 
-def _recommendation_urgency_impact(recommendation: dict[str, Any]) -> dict[str, Any]:
-    """Estimate how much an approved action can reduce the current urgency."""
-
-    text = f"{recommendation.get('title', '')} {recommendation.get('detail', '')}".lower()
-    if any(term in text for term in (
-        "protect", "ring-fence", "resolve", "stage funding", "build a",
-        "address the highest-pressure",
-    )):
-        return {"points": 14, "reason": "Directly reduces a documented portfolio or liquidity pressure."}
-    if any(term in text for term in (
-        "funding path", "liquidity", "facility", "currency mix", "separate",
-        "measure portfolio", "portfolio fit",
-    )):
-        return {"points": 10, "reason": "Can reduce or contain a specific portfolio, liquidity or credit exposure."}
-    return {"points": 4, "reason": "Primarily verifies, documents or frames the risk before a reduction decision."}
-
-
-def generate_alternative_recommendation(
-    intelligence: dict[str, Any],
-    client_id: str,
-    dismissed_index: int,
-    decision_records: list[dict[str, Any]] | None = None,
-) -> dict[str, Any]:
-    """Produce the next best unused action after an RM dismisses a suggestion.
-
-    The replacement is appended to the client profile so approve, edit and
-    dismiss keep working on it through the existing decision workflow.
-    Every title the RM has ever dismissed for this client is excluded, so
-    dismissing a replacement offers a genuinely different action instead of
-    cycling the same ones.
-    """
-
-    profiles = {
-        **intelligence.get("client_profiles", {}),
-        **intelligence.get("featured_clients", {}),
-    }
-    # Mutate the canonical profile object so both maps see the new action.
-    profile = intelligence.get("client_profiles", {}).get(client_id) or profiles.get(client_id)
-    if profile is None:
-        raise ValueError("Unknown client")
-    recommendations = profile["recommendations"]
-    if dismissed_index < 0 or dismissed_index >= len(recommendations):
+def generate_alternative_recommendation(intelligence, client_id, dismissed_index, decision_records=None):
+    """Select an unused candidate from this payload's own assessed source data."""
+    profile = intelligence.get("client_profiles", {}).get(client_id)
+    if not profile or not 0 <= dismissed_index < len(profile["recommendations"]):
         raise ValueError("Unknown recommendation")
-
-    # Reuse the bundle that produced this payload so the replacement stays
-    # grounded in the same controlled records.
-    bundle = _LAST_BUNDLE
-    if bundle is None:
-        raise ValueError("Intelligence payload is missing its source bundle")
-
-    used_titles = {str(item["title"]).strip().lower() for item in recommendations}
-    # Anything the RM has ever dismissed for this client is burned, including
-    # from earlier cycles restored then dismissed again.
-    burned_titles = {
-        str(record.get("recommendation_title", "")).strip().lower()
-        for record in decision_records or []
-        if record.get("client_id") == client_id and record.get("action") == "dismissed"
-    }
-    used_titles |= burned_titles
-    candidates = _alternative_recommendation_candidates(bundle, profile)
-    chosen = next((c for c in candidates if c["title"].strip().lower() not in used_titles), None)
+    used = {a["id"] for a in profile["recommendations"]}
+    used.update(r.get("recommendation_id") for r in decision_records or [] if r.get("client_id") == client_id)
+    chosen = next((a for a in profile.get("alternative_candidates", []) if a["id"] not in used), None)
     if chosen is None:
-        base = candidates[-1]
-        attempt = len(burned_titles) + 1
-        chosen = {
-            **base,
-            "title": f"{base['title']} (revisit {attempt})",
-            "detail": (
-                f"All {len(burned_titles)} alternative actions for this client have been "
-                "dismissed. Revisit the dismissed topics with fresh evidence, or "
-                "close the review."
-            ),
-        }
-
-    chosen["urgency_impact"] = _recommendation_urgency_impact(chosen)
-    chosen["risk_validation"] = _recommendation_risk_validation(bundle, profile, chosen)
-    chosen["decision_rationale"] = _recommendation_decision_rationale(profile, chosen)
-    recommendations.append(chosen)
-    return {"index": len(recommendations) - 1, "recommendation": chosen}
+        raise ValueError("No unused source-backed alternatives remain. Review the evidence before proposing another action.")
+    return {"index": len(profile["recommendations"]), "recommendation": dict(chosen)}
 
 
 def _recommendation_decision_rationale(
@@ -1674,8 +1557,9 @@ def build_intelligence_payload(
 ) -> dict[str, Any]:
     data_path = Path(data_dir)
     bundle = load_dataset(data_path, live_events_path)
-    global _LAST_BUNDLE
-    _LAST_BUNDLE = bundle
+    source_version = fingerprint({path.name: path.read_text(encoding="utf-8-sig") for path in sorted([*data_path.glob("*.csv"), *data_path.glob("*.json")])})
+    if live_events_path and live_events_path.exists():
+        source_version = fingerprint([source_version, live_events_path.read_text(encoding="utf-8")])
     as_of = _as_of(bundle)
     clients = bundle["clients"]
     priority = [_priority_card(bundle, row) for row in clients.itertuples()]
@@ -1704,14 +1588,18 @@ def build_intelligence_payload(
         profile["risk_analysis"] = risk_analysis[client_id]
 
     for profile in client_profiles.values():
-        for recommendation in profile["recommendations"]:
-            recommendation["urgency_impact"] = _recommendation_urgency_impact(recommendation)
+        profile["evidence_version"] = fingerprint([source_version, {k: v for k, v in profile.items() if k != "recommendations"}])
+        profile["alternative_candidates"] = _alternative_recommendation_candidates(bundle, profile)
+        for recommendation in profile["recommendations"] + profile["alternative_candidates"]:
+            recommendation["id"] = profile["client_id"] + ":" + fingerprint([recommendation["assessment_kind"], recommendation["title"], recommendation.get("source_key")])[:20]
+            recommendation["evidence_version"] = profile["evidence_version"]
             recommendation["risk_validation"] = _recommendation_risk_validation(
                 bundle, profile, recommendation
             )
             recommendation["decision_rationale"] = _recommendation_decision_rationale(
                 profile, recommendation
             )
+            recommendation["version"] = action_version(recommendation)
 
     focus_client_ids = ["CL-0012", "CL-0014", "CL-0019"]
 
@@ -1757,7 +1645,7 @@ def build_intelligence_payload(
         "governance": {
             "recommendation_state": "Draft — RM approval required",
             "confidence_rubric": {
-                "version": "1.0",
+                "version": RUBRIC_VERSION,
                 "meaning": "Evidence and control confidence, not probability of investment success.",
                 "bands": [
                     {"range": "85-100", "label": "Strong support", "action": "Final RM suitability review"},

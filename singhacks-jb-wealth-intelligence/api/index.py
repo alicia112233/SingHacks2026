@@ -11,7 +11,6 @@ from pathlib import Path
 from flask import Flask, jsonify, request, send_from_directory
 
 from tessera.chat import answer_chat, chat_configuration_status
-from tessera.evaluation import evaluate_recommendation
 from tessera.market_news import refresh as refresh_market_news
 from tessera.notifications import (
     TelegramNotificationError,
@@ -23,8 +22,11 @@ from tessera.retrieval import retrieval_configuration_status
 from tessera.services import (
     MAX_REQUEST_BYTES,
     IntelligenceService,
-    create_alternative_recommendation,
-    create_decision_record,
+    record_alternative,
+    record_decision,
+    record_evaluation,
+    reviewed_snapshot,
+    reviewed_intelligence,
     production_decision_store,
 )
 
@@ -43,6 +45,17 @@ app.config["MAX_CONTENT_LENGTH"] = MAX_REQUEST_BYTES
 @lru_cache(maxsize=1)
 def decision_store():
     return production_decision_store()
+
+
+def current_intelligence():
+    if not os.environ.get("DATABASE_URL"):
+        try:
+            store = decision_store()
+        except RuntimeError:
+            return INTELLIGENCE.get()
+    else:
+        store = decision_store()
+    return reviewed_intelligence(INTELLIGENCE.get(), store.snapshot())
 
 
 @app.after_request
@@ -74,7 +87,7 @@ def favicon():
 @app.get("/api/intelligence")
 def intelligence():
     try:
-        return jsonify(INTELLIGENCE.get())
+        return jsonify(current_intelligence())
     except Exception:
         return jsonify(error="Current portfolio intelligence could not be prepared."), HTTPStatus.INTERNAL_SERVER_ERROR
 
@@ -82,7 +95,7 @@ def intelligence():
 @app.get("/api/decisions")
 def get_decisions():
     try:
-        return jsonify(decision_store().snapshot())
+        return jsonify(reviewed_snapshot(decision_store().snapshot(), INTELLIGENCE.get()))
     except RuntimeError as error:
         return jsonify(error=str(error)), HTTPStatus.SERVICE_UNAVAILABLE
     except Exception:
@@ -97,8 +110,9 @@ def post_decision():
         body = request.get_json(silent=True)
         if body is None:
             raise ValueError("Request body must be valid JSON")
-        record = create_decision_record(body, INTELLIGENCE.get())
-        return jsonify(decision_store().append(record)), HTTPStatus.CREATED
+        intelligence = INTELLIGENCE.get()
+        store = decision_store()
+        return jsonify(record_decision(body, intelligence, store)), HTTPStatus.CREATED
     except (TypeError, ValueError) as error:
         return jsonify(error=str(error)), HTTPStatus.BAD_REQUEST
     except RuntimeError as error:
@@ -116,8 +130,8 @@ def post_alternate_recommendation():
         if body is None:
             raise ValueError("Request body must be valid JSON")
         return jsonify(
-            create_alternative_recommendation(
-                body, INTELLIGENCE.get(), _safe_decision_records()
+            record_alternative(
+                body, INTELLIGENCE.get(), decision_store()
             )
         )
     except (TypeError, ValueError) as error:
@@ -137,13 +151,8 @@ def post_evaluation():
             raise ValueError("Request body must be valid JSON")
         if not isinstance(body, dict):
             raise ValueError("Request body must be an object")
-        client_id = str(body.get("client_id", ""))
-        recommendation_index = int(body.get("recommendation_index", -1))
-        return jsonify(
-            evaluate_recommendation(
-                INTELLIGENCE.get(), client_id, recommendation_index
-            )
-        )
+        return jsonify(record_evaluation(body, INTELLIGENCE.get(), decision_store()))
+
     except (TypeError, ValueError) as error:
         return jsonify(error=str(error)), HTTPStatus.BAD_REQUEST
     except Exception:
@@ -183,7 +192,7 @@ def health():
 def market_news_refresh():
     try:
         result = refresh_market_news(ROOT / "data", LIVE_EVENTS)
-        result["intelligence"] = INTELLIGENCE.get()
+        result["intelligence"] = current_intelligence()
         result["urgency_alerts"] = scan_urgency_alerts(
             result["intelligence"], URGENCY_ALERTS
         )

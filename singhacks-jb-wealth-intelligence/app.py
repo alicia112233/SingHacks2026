@@ -14,7 +14,6 @@ from typing import Any
 from urllib.parse import urlparse
 
 from tessera.chat import answer_chat, chat_configuration_status
-from tessera.evaluation import evaluate_recommendation
 from tessera.market_news import refresh as refresh_market_news
 from tessera.notifications import (
     TelegramNotificationError,
@@ -27,8 +26,11 @@ from tessera.services import (
     MAX_REQUEST_BYTES,
     DecisionStore,
     IntelligenceService,
-    create_alternative_recommendation,
-    create_decision_record,
+    record_alternative,
+    record_decision,
+    record_evaluation,
+    reviewed_snapshot,
+    reviewed_intelligence,
 )
 
 
@@ -99,10 +101,10 @@ class TesseraHandler(SimpleHTTPRequestHandler):
     def do_GET(self):  # noqa: N802 - required by BaseHTTPRequestHandler
         path = urlparse(self.path).path
         if path == "/api/intelligence":
-            self._send_json(INTELLIGENCE.get())
+            self._send_json(reviewed_intelligence(INTELLIGENCE.get(), DECISIONS.snapshot()))
             return
         if path == "/api/decisions":
-            self._send_json(DECISIONS.snapshot())
+            self._send_json(reviewed_snapshot(DECISIONS.snapshot(), INTELLIGENCE.get()))
             return
         if path == "/health":
             self._send_json(
@@ -155,7 +157,7 @@ class TesseraHandler(SimpleHTTPRequestHandler):
             if path == "/api/market-news/refresh":
                 try:
                     result = refresh_market_news(ROOT / "data", LIVE_EVENTS)
-                    result["intelligence"] = INTELLIGENCE.get()
+                    result["intelligence"] = reviewed_intelligence(INTELLIGENCE.get(), DECISIONS.snapshot())
                     result["urgency_alerts"] = scan_urgency_alerts(
                         result["intelligence"], URGENCY_ALERTS
                     )
@@ -170,24 +172,18 @@ class TesseraHandler(SimpleHTTPRequestHandler):
                 self._send_json(answer_chat(intelligence, body))
             elif path == "/api/recommendations/alternate":
                 self._send_json(
-                    create_alternative_recommendation(
-                        body, intelligence, DECISIONS.snapshot()["records"]
+                    record_alternative(
+                        body, intelligence, DECISIONS
                     )
                 )
             elif path == "/api/evaluations":
-                if not isinstance(body, dict):
-                    raise ValueError("Request body must be an object")
-                evaluation = evaluate_recommendation(
-                    intelligence,
-                    str(body.get("client_id", "")),
-                    int(body.get("recommendation_index", -1)),
-                )
-                self._send_json(evaluation)
+                self._send_json(record_evaluation(body, intelligence, DECISIONS))
             else:
-                record = create_decision_record(body, intelligence)
-                self._send_json(DECISIONS.append(record), HTTPStatus.CREATED)
+                self._send_json(record_decision(body, intelligence, DECISIONS), HTTPStatus.CREATED)
         except (json.JSONDecodeError, UnicodeDecodeError, TypeError, ValueError) as error:
             self._send_json({"error": str(error)}, HTTPStatus.BAD_REQUEST)
+        except (OSError, RuntimeError) as error:
+            self._send_json({"error": "Review storage is unavailable; no action was approved."}, HTTPStatus.SERVICE_UNAVAILABLE)
         except TelegramNotificationError as error:
             self._send_json({"error": str(error)}, HTTPStatus.SERVICE_UNAVAILABLE)
 

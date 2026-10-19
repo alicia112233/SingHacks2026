@@ -339,7 +339,7 @@ function followUpLabel(item) {
 //   2 Due today    — under 24h to deadline
 //   3 Due by <date> — 24-48h to deadline (date shown, not "next 2 days")
 //   4 Monitor      — score under the action threshold, deadline > 48h away
-//   5 Resolved     — RM logged the action, risk cleared
+//   5 Resolved     — RM recorded the review; exposure remains monitored
 const TIER_RANK = { now: 1, today: 2, soon: 3, monitor: 4, resolved: 5 };
 
 function hoursUntil(iso) {
@@ -365,7 +365,7 @@ function countdown(hours) {
 }
 
 function followUpInfo(item) {
-  if (item.complete) return { key: "resolved", label: "Resolved · no action required", short: "Resolved" };
+  if (item.complete) return { key: "resolved", label: "Review recorded · continue monitoring", short: "Reviewed" };
   const hours = hoursUntil(item.deadline?.date);
   const deadline = item.deadline || {};
   if (hours <= 6 || item.score >= 70) return { key: "now", label: "ACT NOW", short: "Act now" };
@@ -438,7 +438,7 @@ function summaryHeaderHTML(counts, total) {
       <span class="queue-summary-item">·</span>
       <span class="queue-summary-item"><b>${counts.monitor}</b> monitoring</span>
       <span class="queue-summary-item">·</span>
-      <span class="queue-summary-item"><b>${counts.resolved}</b> resolved</span>
+      <span class="queue-summary-item"><b>${counts.resolved}</b> reviews recorded</span>
       <span class="queue-summary-total">of ${total} clients</span>
     </div>`;
 }
@@ -609,36 +609,50 @@ function scenarioHTML(client, index, scale = 100, adjustable = false) {
 }
 
 function decisionFor(clientId, index) {
-  return state.decisions.effective[`${clientId}:${index}`] || null;
-}
-
-function approvedActionRelief(clientId) {
+  const decision = state.decisions.effective[`${clientId}:${index}`];
   const client = profiles()[clientId];
-  return Object.values(state.decisions.effective)
-    .filter((decision) => decision.client_id === clientId && decision.action === "approved")
-    .reduce((total, decision) => (
-      total + Number(client?.recommendations?.[decision.recommendation_index]?.urgency_impact?.points || 0)
-    ), 0);
+  const action = client && reviewedRecommendation(client, index);
+  if (!decision || !action || decision.recommendation_id !== action.id) return null;
+  if (decision.action === "approved" && (decision.version !== action.version || approvalBlocked(action))) return null;
+  return decision;
 }
 
 function urgencyScore(item) {
-  return Math.max(0, item.score - approvedActionRelief(item.client_id));
+  return item.score;
+}
+
+function actionReference(client, index) {
+  const action = reviewedRecommendation(client, index);
+  return { recommendation_id: action.id, version: action.version };
+}
+
+function reviewedRecommendation(client, index) {
+  const original = client.recommendations[index];
+  const revision = state.decisions.reviews?.[`${client.client_id}:${index}`];
+  return revision && revision.id === original.id && revision.evidence_version === original.evidence_version ? { ...original, ...revision } : original;
+}
+
+function approvalBlocked(recommendation) {
+  const validation = recommendation.risk_validation;
+  return !validation || validation.band === "Blocked" || validation.score < 50 || Boolean(validation.blockers?.length);
 }
 
 function recommendationHTML(client, recommendation, index) {
   const decision = decisionFor(client.client_id, index);
-  const detail = decision?.action === "edited" && decision.note ? decision.note : recommendation.detail;
+  recommendation = reviewedRecommendation(client, index);
+  const detail = recommendation.detail;
   const status = decision?.action || "pending";
   const validation = recommendation.risk_validation;
-  const approvalBlocked = validation && (validation.band === "Blocked" || validation.blockers?.length);
+  const blocked = approvalBlocked(recommendation);
   const replacementChip = recommendation.replacement_for ? `<span class="replacement-chip" title="Generated after the RM dismissed: ${esc(recommendation.replacement_for)}">Replacement suggestion</span>` : "";
   return `<article class="recommendation" data-recommendation="${index}">
     <header><h4>${index + 1}. ${esc(recommendation.title)}</h4><div class="recommendation-badges">${replacementChip}${validation ? `<button class="confidence-chip ${validation.band.toLowerCase().replaceAll(" ", "-")}" data-risk-index="${index}" aria-label="Open confidence rubric for ${esc(recommendation.title)}"><b>${validation.score}</b><span>${esc(validation.band)}</span></button>` : ""}${status !== "pending" ? `<span class="decision-status ${status}">${esc(status)}</span>` : ""}</div></header>
     <p>${esc(detail)}</p>
+    ${blocked ? `<div class="validation-flags blocked"><strong>Needs correction</strong>${(validation?.blockers?.length ? validation.blockers : [validation?.disposition || "Validation is unavailable"]).map(reason => `<span>${esc(reason)}</span>`).join("")}</div>` : ""}
     ${recommendationRationaleHTML(recommendation)}
     <footer><span class="suitability">${esc(recommendation.suitability)}</span><div class="recommendation-actions">
       <button class="action-button" data-decision="edit" data-index="${index}">Edit</button>
-      ${status === "approved" ? `<button class="action-button" data-decision="pending" data-index="${index}">Reopen</button>` : approvalBlocked ? `<span class="action-tooltip" data-tooltip="Resolve hard-stop controls before approval" tabindex="0"><button class="action-button" disabled aria-label="Approval blocked">Blocked</button></span>` : `<button class="action-button approve" data-decision="approved" data-index="${index}">Approve</button>`}
+      ${status === "approved" && !blocked ? `<button class="action-button" data-decision="pending" data-index="${index}">Reopen</button>` : blocked ? `<span class="action-tooltip" data-tooltip="Correct the action and pass validation before approval" tabindex="0"><button class="action-button" disabled aria-label="Approval blocked">Blocked</button></span>` : `<button class="action-button approve" data-decision="approved" data-index="${index}">Approve</button>`}
       <button class="action-button dismiss" data-decision="dismissed" data-index="${index}">Dismiss</button>
     </div></footer>
   </article>`;
@@ -662,15 +676,17 @@ function recommendationRationaleHTML(recommendation) {
 }
 
 function recommendationsHTML(client) {
-  const active = [], dismissed = [];
+  const active = [], blocked = [], dismissed = [];
   client.recommendations.forEach((recommendation, index) => {
     const entry = { recommendation, index };
     if (decisionFor(client.client_id, index)?.action === "dismissed") dismissed.push(entry);
+    else if (approvalBlocked(reviewedRecommendation(client, index))) blocked.push(entry);
     else active.push(entry);
   });
   const dismissedOpen = state.dismissedListOpen && dismissed.length > 0;
   state.dismissedListOpen = false;
-  return `${active.length ? active.map(({ recommendation, index }) => recommendationHTML(client, recommendation, index)).join("") : `<div class="empty-state"><strong>No actions in the active list</strong><span>Restore a dismissed action below or return to the review queue.</span></div>`}
+  return `${active.length ? active.map(({ recommendation, index }) => recommendationHTML(client, recommendation, index)).join("") : `<div class="empty-state"><strong>No supported actions available</strong><span>Resolve the drafts below or return to the review queue.</span></div>`}
+    ${blocked.length ? `<section class="needs-correction" aria-label="Drafts needing correction"><div class="panel-title"><h3>Needs correction</h3><small>NOT SUPPORTED FOR APPROVAL</small></div>${blocked.map(({ recommendation, index }) => recommendationHTML(client, recommendation, index)).join("")}</section>` : ""}
     ${dismissed.length ? `<details class="dismissed-list"${dismissedOpen ? " open" : ""}><summary>${dismissed.length} dismissed action${dismissed.length > 1 ? "s" : ""}</summary>${dismissed.map(({ recommendation, index }) => `<div class="dismissed-row"><div><strong>${esc(recommendation.title)}</strong><span>${esc(decisionFor(client.client_id, index)?.note || "Dismissed from the active review")}</span></div><button class="action-button" data-decision="pending" data-index="${index}">Restore</button></div>`).join("")}</details>` : ""}`;
 }
 
@@ -743,7 +759,7 @@ function renderScenarioStudio() {
 function renderDecisionLedger() {
   const records = [...state.decisions.records].reverse().slice(0, 12);
   if (!records.length) return `<div class="empty-state ledger-empty"><strong>No decisions recorded</strong><span>Approvals, edits and dismissals from client reviews will appear here.</span></div>`;
-  return `<div class="ledger-list">${records.map((record) => `<article class="ledger-row"><span class="decision-status ${esc(record.action)}">${esc(record.action)}</span><div><strong>${esc(record.recommendation_title)}</strong><p>${esc(record.client_name)} · ${esc(record.actor)} · ${recordedDate(record.recorded_at)}</p>${record.note ? `<small>${esc(record.note)}</small>` : ""}</div></article>`).join("")}</div>`;
+  return `<div class="ledger-list">${records.map((record) => `<article class="ledger-row"><span class="decision-status ${esc(record.action)}">${esc(record.action)}</span><div><strong>${esc(record.recommendation_title)}</strong><p>${esc(record.client_name)} · ${esc(record.actor || "Review service")} · ${recordedDate(record.recorded_at)}</p>${record.note ? `<small>${esc(record.note)}</small>` : ""}</div></article>`).join("")}</div>`;
 }
 
 function renderGovernance() {
@@ -770,10 +786,15 @@ function showEvidence(client) {
 }
 
 function showRiskValidation(client, index) {
-  const recommendation = client.recommendations[index];
+  const recommendation = reviewedRecommendation(client, index);
   const validation = recommendation.risk_validation;
   if (!validation) return;
-  openModal(`<span class="section-kicker">RECOMMENDATION RISK RUBRIC</span><h2>${esc(recommendation.title)}</h2><div class="validation-summary"><strong>${validation.score}/100</strong><div><b>${esc(validation.band)}</b><span>${esc(validation.disposition)}</span></div></div><p>${esc(validation.score_meaning)} Residual hallucination risk: ${esc(validation.residual_hallucination_risk)}.</p><div class="validation-layers"><div><small>DETERMINISTIC VALIDATION</small><b>${esc(validation.model_validation.status)}</b><span>${esc(validation.model_validation.reason)}</span></div><div><small>HUMAN VALIDATION</small><b>${esc(validation.human_validation.status)}</b><span>${esc(validation.human_validation.owner)}: ${esc(validation.human_validation.decision)}</span></div></div><div class="dimension-list">${validation.dimensions.map((item) => `<div class="dimension-row"><div><strong>${esc(item.name)}</strong><span>${esc(item.reason)}</span></div><b>${item.score}/${item.max}</b></div>`).join("")}</div>${validation.caps.length ? `<div class="validation-flags"><strong>Applied confidence caps</strong>${validation.caps.map((item) => `<span>Maximum ${item.value}: ${esc(item.reason)}</span>`).join("")}</div>` : ""}${validation.blockers.length ? `<div class="validation-flags blocked"><strong>Hard stops</strong>${validation.blockers.map((item) => `<span>${esc(item)}</span>`).join("")}</div>` : ""}<div id="evaluation-panel" class="evaluation-panel evaluation-launch"><div><strong>Independent evaluation panel</strong><span>Compare deterministic controls, predictive probability readiness and judges from different model providers.</span></div><button class="action-button approve" data-run-evaluation="${index}">Run model panel</button></div>`, "risk");
+  openModal(`<span class="section-kicker">RECOMMENDATION RISK RUBRIC</span><h2>${esc(recommendation.title)}</h2><p>Rubric ${esc(validation.rubric_version)} &middot; Sources as of ${esc(validation.as_of)}</p><p>Raw ${validation.raw_score}/100 &rarr; ${validation.blockers.length ? "hard stop" : `cap ${Math.min(100, ...validation.caps.map(cap => cap.value))}`} &rarr; published ${validation.score}/100</p><div class="validation-summary"><strong>${validation.score}/100</strong><div><b>${esc(validation.band)}</b><span>${esc(validation.disposition)}</span></div></div><p>${esc(validation.score_meaning)} Residual hallucination risk: ${esc(validation.residual_hallucination_risk)}.</p><div class="validation-layers"><div><small>DETERMINISTIC VALIDATION</small><b>${esc(validation.model_validation.status)}</b><span>${esc(validation.model_validation.reason)}</span></div><div><small>HUMAN VALIDATION</small><b>${esc(validation.human_validation.status)}</b><span>${esc(validation.human_validation.owner)}: ${esc(validation.human_validation.decision)}</span></div></div><div class="dimension-list">${validation.dimensions.map((item) => `<div class="dimension-row"><div><strong>${esc(item.name)}</strong><span>${esc(item.reason)}</span><span>${item.max - item.score} points withheld.</span></div><b>${item.score}/${item.max}</b></div>`).join("")}</div>${validation.caps.length ? `<div class="validation-flags"><strong>Applied confidence caps</strong>${validation.caps.map((item) => `<span>Maximum ${item.value}: ${esc(item.reason)}</span>`).join("")}</div>` : ""}${validation.blockers.length ? `<div class="validation-flags blocked"><strong>Hard stops</strong>${validation.blockers.map((item) => `<span>${esc(item)}</span>`).join("")}</div>` : ""}${validation.resolved_claims?.length ? `<details><summary>Numeric claim sources</summary>${validation.resolved_claims.map(claim => `<p>${claim.value} ${esc(claim.unit)}: ${claim.sources.map(source => `${esc(source.source)} / ${esc(source.field)} (${esc(source.as_of)})`).join("; ")}</p>`).join("")}</details>` : ""}<div id="evaluation-panel" class="evaluation-panel evaluation-launch"><div><strong>Independent evaluation panel</strong><span>Compare deterministic controls, predictive probability readiness and judges from different model providers.</span></div><button class="action-button approve" data-run-evaluation="${index}">Run model panel</button></div>`, "risk");
+  if (recommendation.evaluation) {
+    const panel = $("#evaluation-panel");
+    panel.className = "evaluation-panel evaluation-results";
+    panel.innerHTML = evaluationPanelHTML(recommendation.evaluation, index);
+  }
 }
 
 function judgeFailureMessage(judge) {
@@ -794,20 +815,25 @@ function evaluationPanelHTML(evaluation, index) {
 }
 
 async function runIndependentEvaluation(client, index, button) {
+  const originalPanel = $("#evaluation-panel");
   button.disabled = true;
   button.textContent = "Evaluating…";
   try {
     const response = await fetch("/api/evaluations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ client_id: client.client_id, recommendation_index: index }),
+      body: JSON.stringify({ client_id: client.client_id, recommendation_index: index, ...actionReference(client, index) }),
     });
     const payload = await response.json().catch(() => ({ error: `Evaluation service returned ${response.status}` }));
     if (response.status === 404) {
       throw new Error("Evaluation API unavailable. Start the project with python app.py (not a static file server), then refresh.");
     }
     if (!response.ok) throw new Error(payload.error || `Request failed (${response.status})`);
+    state.decisions = payload.decisions;
+    renderBook();
+    if (state.currentView === "client") renderClient(state.currentClient);
     const panel = $("#evaluation-panel");
+    if (!panel || panel !== originalPanel) return;
     panel.className = "evaluation-panel evaluation-results";
     panel.innerHTML = evaluationPanelHTML(payload, index);
   } catch (error) {
@@ -822,20 +848,20 @@ function showMethod() {
 }
 
 function showEditRecommendation(client, index) {
-  const recommendation = client.recommendations[index];
+  const recommendation = reviewedRecommendation(client, index);
   const current = decisionFor(client.client_id, index);
-  const value = current?.note || recommendation.detail;
-  openModal(`<span class="section-kicker">EDIT ACTION</span><h2>${esc(recommendation.title)}</h2><p>Update the wording before approval. The original recommendation remains available in the evidence record.</p><form id="edit-action-form" data-index="${index}"><label class="form-field"><span>Revised action</span><textarea name="note" maxlength="1000" rows="7" required>${esc(value)}</textarea></label><div class="modal-actions"><button type="button" class="small-button" data-close-modal>Cancel</button><button type="submit" class="action-button approve">Save revision</button></div></form>`);
+  const value = recommendation.detail;
+  openModal(`<span class="section-kicker">EDIT ACTION</span><h2>${esc(recommendation.title)}</h2><p>Changed wording is saved as an unassessed draft and cannot be approved. Restore the source-backed wording or request a source-backed alternative. Only case, whitespace and dash formatting changes preserve the assessment.</p><form id="edit-action-form" data-index="${index}"><label class="form-field"><span>Revised action</span><textarea name="note" maxlength="1000" rows="7" required>${esc(value)}</textarea></label><div class="modal-actions"><button type="button" class="small-button" data-close-modal>Cancel</button><button type="submit" class="action-button approve">Save revision</button></div></form>`);
 }
 
 function showApproveRecommendation(client, index) {
-  const recommendation = client.recommendations[index];
+  const recommendation = reviewedRecommendation(client, index);
   const current = decisionFor(client.client_id, index);
   openModal(`<span class="section-kicker">RM APPROVAL</span><h2>${esc(recommendation.title)}</h2><p>Record what you have done or will do for this client. Approval is written to the evidence ledger and does not place a trade.</p><form id="approve-action-form" data-index="${index}"><label class="form-field"><span>Action taken or agreed</span><textarea name="note" minlength="10" maxlength="1000" rows="6" required placeholder="Example: Confirmed the facility buffer with Credit and scheduled a client review before funding.">${esc(current?.note || "")}</textarea></label><div class="modal-actions"><button type="button" class="small-button" data-close-modal>Cancel</button><button type="submit" class="action-button approve">Approve and record</button></div></form>`);
 }
 
 function showDismissRecommendation(client, index) {
-  const recommendation = client.recommendations[index];
+  const recommendation = reviewedRecommendation(client, index);
   openModal(`<span class="section-kicker">DISMISS SUGGESTION</span><h2>${esc(recommendation.title)}</h2><p>Record why this action is being dismissed. The reason is written to the evidence ledger and shapes future suggestions for this client.</p><form id="dismiss-action-form" data-index="${index}"><div class="dismiss-reasons" role="radiogroup" aria-label="Dismiss reason">
       ${[["Client declined the suggestion", "Saved as a client preference and steered away from"], ["Not now — revisit later", "Snoozed; it can return with a dated follow-up"], ["Suggestion is wrong", "Flagged for model/data review, not a client preference"], ["Already handled elsewhere", "Closes the topic and checks for stale data"]].map(([value, hint], reasonIndex) => `<label class="dismiss-reason"><input type="radio" name="reason" value="${esc(value)}" ${reasonIndex === 0 ? "checked" : ""} required><span><b>${esc(value)}</b><small>${esc(hint)}</small></span></label>`).join("")}
     </div><label class="form-field"><span>Optional context</span><textarea name="note" maxlength="1000" rows="3" placeholder="Anything the ledger should capture — e.g. what the client actually said."></textarea></label><div class="modal-actions"><button type="button" class="small-button" data-close-modal>Cancel</button><button type="submit" class="action-button dismiss">Dismiss and record reason</button></div></form>`, "risk");
@@ -845,12 +871,14 @@ async function requestAlternativeRecommendation(client, dismissedIndex, dismisse
   const response = await fetch("/api/recommendations/alternate", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ client_id: client.client_id, dismissed_index: dismissedIndex }),
+    body: JSON.stringify({ client_id: client.client_id, dismissed_index: dismissedIndex, ...actionReference(client, dismissedIndex) }),
   });
   const payload = await response.json().catch(() => ({ error: `Recommendation service returned ${response.status}` }));
   if (!response.ok) throw new Error(payload.error || `Request failed (${response.status})`);
   payload.recommendation.replacement_for = dismissedTitle;
-  client.recommendations.push(payload.recommendation);
+  state.decisions = payload.decisions;
+  const refreshed = await loadIntelligence();
+  state.data = refreshed;
   return payload.recommendation;
 }
 
@@ -858,11 +886,11 @@ async function persistDecision(client, index, action, note = "") {
   const response = await fetch("/api/decisions", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ client_id: client.client_id, recommendation_index: index, action, note }),
+    body: JSON.stringify({ client_id: client.client_id, recommendation_index: index, action, note, ...actionReference(client, index) }),
   });
   const payload = await response.json().catch(() => ({ error: `Decision service returned ${response.status}` }));
   if (!response.ok) throw new Error(payload.error || `Request failed (${response.status})`);
-  state.decisions = { records: payload.records, effective: payload.effective };
+  state.decisions = { records: payload.records, effective: payload.effective, reviews: payload.reviews || {} };
   renderBook();
   if (state.currentView === "client") renderClient(state.currentClient);
   if (state.currentView === "governance") renderGovernance();
@@ -1132,6 +1160,7 @@ async function refreshMarketNewsInBackground() {
     });
     if (result.intelligence && state.data) {
       state.data = result.intelligence;
+      state.decisions = await requestJson("/api/decisions");
       $("#as-of").textContent = fullDate(state.data.meta.as_of);
       renderBook();
       renderGovernance();

@@ -89,3 +89,19 @@ The client view shows capacity, tolerance, horizon and their arithmetic average 
 Simple illustrative thresholds live in `tessera/risk_analysis.py` (`RiskThresholds`). Capacity averages available bank-held cash-buffer, daily-liquidity and recorded debt bands. Cash share upper bounds are 1%, 3%, 5%, 10%; daily-liquid share bounds are 20%, 40%, 60%, 80% (scores 1-5). Recorded debt uses the highest LTV/margin-call-trigger ratio: below 25%, 50%, 75%, 92%, then at least 92% (scores 5-1); 92% reuses the existing urgency warning boundary. An absent facility is omitted, never assumed to mean zero household debt. Capacity is rounded to one decimal before averaging dimensions; overall remains unrounded for tie-breaking and displays one decimal.
 
 Existing tolerance scores 1-2, 3-4, 5-6, 7-8, 9-10 map to 1-5. Stated horizons up to 1, 3, 5, 10 and above 10 years map to 1-5; missing horizons fall back to the earliest confirmed one-off cash-need date. Stated horizons take precedence over individual goals. No inference uses age or risky holdings. Income stability, complete household liabilities, outside wealth and unencumbered cash are unavailable, so capacity is explicitly a limited bank-held estimate. It does not claim that daily-tradable assets are safe assets. No customer data is added.
+
+
+### Demo boundary
+
+TESSERA currently supports `TESSERA_MODE=demo` only (the default). Setting any
+other mode rejects intelligence preparation and its dependent review operations.
+This is a deployment boundary, not authentication: anyone who can reach the demo
+can access its controlled sample data. Do not load real client records or expose
+it as a production service. Production requires authenticated identities,
+client-level authorization and a separate security review.
+
+Review writes and model evaluations require durable decision storage. API clients
+must send the recommendation's `id` as `recommendation_id` and its current `version`.
+See [the risk rubric](docs/RECOMMENDATION_RISK_RUBRIC.md) for edit, panel and legacy
+ledger behavior. Hosted ledger schema changes are additive; they are created on
+first use by the existing schema setup path.

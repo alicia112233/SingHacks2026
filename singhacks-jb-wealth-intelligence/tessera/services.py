@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from tessera.engine import build_intelligence_payload, generate_alternative_recommendation
+from tessera.review_state import reviewed_snapshot, reviewed_intelligence, requested_action
 
 
 MAX_REQUEST_BYTES = 8_192
@@ -36,6 +37,8 @@ class IntelligenceService:
         )
 
     def get(self) -> dict[str, Any]:
+        if os.environ.get("TESSERA_MODE", "demo").strip().lower() != "demo":
+            raise RuntimeError("TESSERA supports demo mode only. Production use requires authenticated identities and client-level authorization.")
         signature = self._source_signature()
         with self._lock:
             if self._payload is None or signature != self._signature:
@@ -49,11 +52,13 @@ class DecisionStoreProtocol(Protocol):
 
     def append(self, record: dict[str, Any]) -> dict[str, Any]: ...
 
+    def transact(self, create_record): ...
+
 
 def effective_decisions(records: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
     """Resolve the most recently recorded state of each recommendation."""
 
-    return {record["recommendation_id"]: record for record in records}
+    return {record["recommendation_id"]: record for record in records if record.get("action") in ALLOWED_DECISIONS}
 
 
 class DecisionStore:
@@ -77,9 +82,13 @@ class DecisionStore:
             records = self._read_unlocked()
         return {"records": records, "effective": effective_decisions(records)}
 
-    def append(self, record: dict[str, Any]) -> dict[str, Any]:
+    def append(self, record):
+        return self.transact(lambda _records: record)
+
+    def transact(self, create_record):
         with self._lock:
             records = self._read_unlocked()
+            record = create_record(records)
             records.append(record)
             self.path.parent.mkdir(parents=True, exist_ok=True)
             temporary = self.path.with_suffix(".tmp")
@@ -134,6 +143,13 @@ class PostgresDecisionStore:
                     ON tessera_decision_events (recommendation_id, recorded_at, id)
                     """
                 )
+                cursor.execute("""
+                    CREATE TABLE IF NOT EXISTS tessera_review_events (
+                        id UUID PRIMARY KEY,
+                        payload JSONB NOT NULL,
+                        recorded_at TIMESTAMPTZ NOT NULL
+                    )
+                """)
             self._schema_ready = True
 
     @staticmethod
@@ -162,7 +178,10 @@ class PostgresDecisionStore:
                 ORDER BY recorded_at, id
                 """
             )
-            return [self._record(row) for row in cursor.fetchall()]
+            records = [self._record(row) for row in cursor.fetchall()]
+            cursor.execute("SELECT payload FROM tessera_review_events ORDER BY recorded_at, id")
+            records.extend(row[0] for row in cursor.fetchall())
+            return sorted(records, key=lambda r: (r["recorded_at"], r["id"]))
 
     def snapshot(self) -> dict[str, Any]:
         self._ensure_schema()
@@ -170,26 +189,24 @@ class PostgresDecisionStore:
             records = self._records(connection)
         return {"records": records, "effective": effective_decisions(records)}
 
-    def append(self, record: dict[str, Any]) -> dict[str, Any]:
+    def append(self, record):
+        return self.transact(lambda _records: record)
+
+    def transact(self, create_record):
+        from psycopg.types.json import Jsonb
+
         self._ensure_schema()
         with self._connect() as connection:
             with connection.cursor() as cursor:
+                # Serialize checks and writes across serverless workers.
+                cursor.execute("SELECT pg_advisory_xact_lock(81642017)")
+                records = self._records(connection)
+                record = create_record(records)
                 cursor.execute(
-                    """
-                    INSERT INTO tessera_decision_events (
-                        id, recommendation_id, client_id, client_name,
-                        recommendation_index, recommendation_title, action,
-                        note, actor, recorded_at
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    """,
-                    (
-                        record["id"], record["recommendation_id"], record["client_id"],
-                        record["client_name"], record["recommendation_index"],
-                        record["recommendation_title"], record["action"], record["note"],
-                        record["actor"], record["recorded_at"],
-                    ),
+                    "INSERT INTO tessera_review_events (id, payload, recorded_at) VALUES (%s, %s, %s)",
+                    (record["id"], Jsonb(record), record["recorded_at"]),
                 )
-            records = self._records(connection)
+                records.append(record)
         return {"record": record, "records": records, "effective": effective_decisions(records)}
 
 
@@ -204,74 +221,79 @@ def production_decision_store() -> PostgresDecisionStore:
     return PostgresDecisionStore(database_url)
 
 
-def create_decision_record(
-    body: Any, intelligence: dict[str, Any]
-) -> dict[str, Any]:
-    """Validate an action request against current source-backed recommendations."""
-
-    if not isinstance(body, dict):
-        raise ValueError("Request body must be an object")
-
-    client_id = str(body.get("client_id", ""))
-    try:
-        recommendation_index = int(body.get("recommendation_index", -1))
-    except (TypeError, ValueError) as error:
-        raise ValueError("Unknown recommendation") from error
-    action = str(body.get("action", "")).lower()
-    note = str(body.get("note", "")).strip()
-
-    # Decisions can be made from every review room, not only the three clients
-    # selected for the dashboard's featured section.
-    client = intelligence.get("client_profiles", {}).get(client_id)
-    if client is None:
-        client = intelligence.get("featured_clients", {}).get(client_id)
-    if client is None:
-        raise ValueError("Unknown client")
-    if recommendation_index < 0 or recommendation_index >= len(client["recommendations"]):
-        raise ValueError("Unknown recommendation")
-    if action not in ALLOWED_DECISIONS:
-        raise ValueError("Unsupported decision")
-    if len(note) > 1_000:
-        raise ValueError("Note must be 1,000 characters or fewer")
-    if action == "approved" and len(note) < 10:
-        raise ValueError("State the action taken before approving (at least 10 characters)")
-
-    recommendation = client["recommendations"][recommendation_index]
-    validation = recommendation.get("risk_validation", {})
-    if action == "approved" and (
-        validation.get("blockers") or int(validation.get("score", 100)) < 50
-    ):
-        raise ValueError(
-            "Blocked recommendations cannot be approved; resolve the hard-stop controls first"
-        )
+def _event(client, index, recommendation_data, action, **fields):
     return {
-        "id": str(uuid.uuid4()),
-        "recommendation_id": f"{client_id}:{recommendation_index}",
-        "client_id": client_id,
-        "client_name": client["name"],
-        "recommendation_index": recommendation_index,
-        "recommendation_title": recommendation["title"],
-        "action": action,
-        "note": note,
-        "actor": intelligence["meta"]["rm"],
-        "recorded_at": datetime.now(timezone.utc).isoformat(),
+        "id": str(uuid.uuid4()), "recommendation_id": recommendation_data["id"],
+        "version": recommendation_data["version"], "client_id": client["client_id"],
+        "client_name": client["name"], "recommendation_index": index,
+        "recommendation_title": recommendation_data["title"], "action": action,
+        "recorded_at": datetime.now(timezone.utc).isoformat(), **fields,
     }
 
 
-def create_alternative_recommendation(
-    body: Any,
-    intelligence: dict[str, Any],
-    decision_records: list[dict[str, Any]] | None = None,
-) -> dict[str, Any]:
-    """Generate the replacement action shown after an RM dismisses one."""
+def create_decision_record(body, intelligence, decision_records=None):
+    reviewed = reviewed_intelligence(intelligence, {"records": decision_records or []})
+    client, index, recommendation = requested_action(body, reviewed)
+    action = str(body.get("action", "")).lower()
+    note = str(body.get("note", "")).strip()
+    if action not in ALLOWED_DECISIONS:
+        raise ValueError("Unsupported decision")
+    if len(note) > 1000:
+        raise ValueError("Note must be 1,000 characters or fewer")
+    if action == "edited" and not note:
+        raise ValueError("Revised action wording is required")
+    if action == "approved":
+        if len(note) < 10:
+            raise ValueError("State the action taken before approving (at least 10 characters)")
+        validation = recommendation.get("risk_validation", {})
+        if validation.get("score", 0) < 50 or validation.get("blockers"):
+            raise ValueError("Blocked recommendations cannot be approved; resolve validation failures first")
+    return _event(client, index, recommendation, action, note=note, actor=intelligence["meta"]["rm"])
 
-    if not isinstance(body, dict):
-        raise ValueError("Request body must be an object")
-    client_id = str(body.get("client_id", ""))
-    try:
-        dismissed_index = int(body.get("dismissed_index", -1))
-    except (TypeError, ValueError) as error:
-        raise ValueError("Unknown recommendation") from error
-    return generate_alternative_recommendation(
-        intelligence, client_id, dismissed_index, decision_records
-    )
+
+def record_decision(body, intelligence, store):
+    snapshot = store.transact(lambda records: create_decision_record(body, intelligence, records))
+    return reviewed_snapshot(snapshot, intelligence)
+
+
+def create_alternative_recommendation(body, intelligence, decision_records=None):
+    reviewed = reviewed_intelligence(intelligence, {"records": decision_records or []})
+    client, index, _action = requested_action(body, reviewed, "dismissed_index")
+    return generate_alternative_recommendation(reviewed, client["client_id"], index, decision_records)
+
+
+def record_alternative(body, intelligence, store):
+    def create(records):
+        reviewed = reviewed_intelligence(intelligence, {"records": records})
+        client, index, original = requested_action(body, reviewed, "dismissed_index")
+        selected = generate_alternative_recommendation(reviewed, client["client_id"], index, records)
+        from tessera.review_state import action_version
+        action = selected["recommendation"]
+        action["version"] = action_version(action)
+        return _event(client, selected["index"], action, "alternative", recommendation=action, replacement_for=original["title"])
+    snapshot = store.transact(create)
+    event = snapshot["record"]
+    return {"index": event["recommendation_index"], "recommendation": event["recommendation"], "decisions": reviewed_snapshot(snapshot, intelligence)}
+
+
+def record_evaluation(body, intelligence, store):
+    from tessera.evaluation import evaluate_recommendation
+
+    snapshot = store.snapshot()
+    reviewed = reviewed_intelligence(intelligence, snapshot)
+    client, index, action = requested_action(body, reviewed)
+    # Evaluate this version's deterministic assessment, not a previous panel cap.
+    baseline_records = [r for r in snapshot["records"] if r.get("action") != "evaluated"]
+    baseline = reviewed_intelligence(intelligence, {"records": baseline_records})
+    evaluation = evaluate_recommendation(baseline, client["client_id"], index)
+    def create(records):
+        current = reviewed_intelligence(intelligence, {"records": records})
+        current_client, current_index, current_action = requested_action(body, current)
+        return _event(current_client, current_index, current_action, "evaluated", evaluation=evaluation)
+    saved = store.transact(create)
+    decisions = reviewed_snapshot(saved, intelligence)
+    applied = decisions["reviews"][f"{client['client_id']}:{index}"]["risk_validation"]
+    consensus = evaluation["consensus"]
+    if applied["score"] < consensus["score"]:
+        consensus = {**consensus, "score": applied["score"], "band": applied["band"], "rule": "An earlier persisted panel restriction remains in force. A retry without completed judges cannot clear it."}
+    return {**evaluation, "consensus": consensus, "decisions": decisions}

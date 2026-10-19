@@ -201,3 +201,85 @@ The API attaches `risk_validation` to every recommendation and the client review
 - no historical outcome labels or formal back-test are bundled;
 - selected production hard stops (product eligibility, sanctions, jurisdiction and claim-level LLM entailment) still require bank source systems;
 - RM approval remains mandatory for every band.
+
+
+## Version 1.1: action-specific demo assessment
+
+Actions carry explicit assessment kinds, independent of title and list order.
+`tessera/recommendation_validation.py` declares the evidence groups, pending
+controls, analytical method and outside-wealth relevance for each kind.
+
+- Evidence: 25 times the fraction of required action input groups present.
+  This is input coverage, not certification of every narrative claim.
+- Suitability: start at 25, withhold 3 for each pending action control and each
+  missing input group. A missing suitability condition still triggers a hard stop.
+- Analytical support: only relevant diagnostics earn points. Credit diagnostics
+  earn up to 10; mandate findings 8; snapshot deltas 4 with 6 reserved for completed
+  transaction attribution; dated liabilities 3 with 7 reserved for a tested funding
+  plan; look-through 5; scenario discussion up to 10; duration discussion up to 4.
+  Calibration, stability and outcome coverage remain unimplemented and earn 0/10.
+- Signal relevance: fraction of required action signal groups present, worth up
+  to 15. Profile/context availability alone is not a market signal. Timing and
+  materiality still need RM confirmation.
+- Freshness: the existing 10/7/4 portfolio valuation rule remains shared.
+- Actionability: reversibility earns 2; condition, wording and explicit decision
+  date earn 1 each. A liability date does not count as an agreed action date.
+
+These are provisional demo heuristics, not calibrated investment-success scores.
+Equal scores are allowed. The 84 cap remains universal; the 79 outside-wealth cap
+applies only to actions whose assessment contract depends on household wealth.
+Source-conflict caps apply to liability/funding and broader client-review actions,
+not unrelated bank transaction or mandate diagnostics.
+
+Numeric claims resolve to typed values with source keys, fields and snapshot dates.
+Mandate findings carry numeric min/max limits; currency quantities retain their
+currency and scale. Numbers embedded in exact source-backed instrument names are
+not reinterpreted as quantitative claims. The validator does not parse JSON text.
+Unsupported quantities still produce a zero score. This is not full semantic
+entailment: non-numeric assertions and changes in action intent need RM review.
+
+Blocked drafts are separated into Needs correction, with reasons and no approval.
+Saved revisions are rechecked against the current original action evidence on
+ledger reads and approval. They do not waive other hard stops, and both decision
+APIs reject blocked or missing validation. The ledger retains the original draft
+and edit notes. Changing an action's intent requires a newly assessed action, not
+merely passing the numeric check.
+
+
+## Version 1.2: approval and persistence boundary
+
+An edit cannot inherit an assessment of different wording. Only case, whitespace
+and typographic dash changes preserve the original assessment. Other edits remain
+saved drafts with a zero published score until the original source-backed wording
+is restored or a source-backed alternative is selected. This deterministic demo
+does not claim to assess arbitrary free-text intent.
+
+Range claims require ordered min/max fields from one mandate. Movement amounts
+are restricted to the named holding. Edited wording also has to match the assessed
+template, so swapping a subject, currency, quantity or condition cannot reuse the
+old score.
+
+Actions have stable IDs. Evidence versions cover the controlled source contents;
+requests carry both the action ID and version. Alternatives and panel results are
+append-only ledger events, restored after cache rebuilds and restarts. Local mode
+uses the JSON ledger in one server process. Hosted storage uses a JSONB review-event
+table alongside the existing decision table; existing records are preserved.
+Checks and appends are serialized using a local lock or a database transaction lock.
+Legacy approvals stay in the audit trail but require fresh approval under the
+versioned contract. Unmatched legacy action titles are not applied to other actions.
+
+Completed panel scores cap the published score and the server approval gate.
+A block cannot be cleared by a skipped, failed or more favourable retry on the same
+version. Changed evidence requires a completed review of the new version before
+approval. A missing durable ledger fails closed for evaluation and decision writes.
+
+External judges receive only allowlisted numeric metrics and the controlled action
+category. Names, IDs, free-text objectives, action wording, source references,
+evidence passports and retrieval excerpts are withheld. The panel therefore checks
+structured evidence only; it cannot certify the omitted wording or personal fit.
+Local evidence remains visible to the RM. External providers remain opt-in.
+
+Approval records workflow progress; it does not prove a trade, funding transfer or
+risk reduction occurred. Portfolio urgency remains evidence-based and uses the
+same source score in the browser and notification service. Review completion is
+labelled separately from risk resolution.

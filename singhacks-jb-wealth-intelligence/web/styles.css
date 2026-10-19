@@ -771,3 +771,5 @@ nav { display: grid; gap: 7px; }
 .dismiss-reason input { margin-top: 3px; accent-color: var(--teal); }
 .dismiss-reason b { display: block; font-size: 12px; }
 .dismiss-reason small { color: var(--muted); font-size: 10px; }
+
+.needs-correction { margin-top: 24px; padding-top: 24px; border-top: 2px solid #c87962; }

@@ -16,6 +16,17 @@ from api.index import app as vercel_app
 from tessera.services import create_decision_record
 
 
+def reference(client_id, index=0):
+    action = app_module.INTELLIGENCE.get()["client_profiles"][client_id]["recommendations"][index]
+    return {"recommendation_id": action["id"], "version": action["version"]}
+
+
+def hosted_reference(client_id, index=0):
+    from api.index import INTELLIGENCE
+    action = INTELLIGENCE.get()["client_profiles"][client_id]["recommendations"][index]
+    return {"recommendation_id": action["id"], "version": action["version"]}
+
+
 class DecisionStoreTests(unittest.TestCase):
     def test_local_environment_loader_keeps_existing_values(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -56,20 +67,20 @@ class DecisionStoreTests(unittest.TestCase):
         record = create_decision_record(
             {
                 "client_id": "CL-0012",
-                "recommendation_index": 0,
+                "recommendation_index": 0, **reference("CL-0012", 0),
                 "action": "dismissed",
                 "note": "Not suitable after review",
             },
             intelligence,
         )
-        self.assertEqual(record["recommendation_id"], "CL-0012:0")
+        self.assertEqual(record["recommendation_id"], reference("CL-0012")["recommendation_id"])
         self.assertEqual(record["action"], "dismissed")
         self.assertEqual(record["client_name"], intelligence["featured_clients"]["CL-0012"]["name"])
 
         full_book_record = create_decision_record(
             {
                 "client_id": "CL-0001",
-                "recommendation_index": 0,
+                "recommendation_index": 0, **reference("CL-0001", 0),
                 "action": "approved",
                 "note": "Funding discussion completed with the client",
             },
@@ -79,7 +90,7 @@ class DecisionStoreTests(unittest.TestCase):
 
         with self.assertRaisesRegex(ValueError, "State the action taken"):
             create_decision_record(
-                {"client_id": "CL-0012", "recommendation_index": 0, "action": "approved"},
+                {"client_id": "CL-0012", "recommendation_index": 0, **reference("CL-0012", 0), "action": "approved"},
                 intelligence,
             )
 
@@ -91,7 +102,7 @@ class DecisionStoreTests(unittest.TestCase):
             create_decision_record(
                 {
                     "client_id": "CL-0012",
-                    "recommendation_index": 0,
+                    "recommendation_index": 0, **reference("CL-0012", 0),
                     "action": "approved",
                     "note": "Attempted approval after a blocked validation",
                 },
@@ -174,7 +185,7 @@ class ApplicationRouteTests(unittest.TestCase):
             body = json.dumps(
                 {
                     "client_id": "CL-0012",
-                    "recommendation_index": 0,
+                    "recommendation_index": 0, **reference("CL-0012", 0),
                     "action": action,
                     "note": "Reviewed by automated test",
                 }
@@ -191,11 +202,11 @@ class ApplicationRouteTests(unittest.TestCase):
         with urlopen(f"{self.base_url}/api/decisions") as response:
             snapshot = json.load(response)
         self.assertEqual(snapshot["effective"]["CL-0012:0"]["action"], "pending")
-        self.assertEqual(len(snapshot["records"]), 2)
+        self.assertEqual(len([r for r in snapshot["records"] if r["action"] in {"dismissed", "pending"}]), 2)
 
     def test_local_evaluation_endpoint_returns_the_model_panel(self):
         body = json.dumps(
-            {"client_id": "CL-0014", "recommendation_index": 0}
+            {"client_id": "CL-0014", "recommendation_index": 0, **reference("CL-0014", 0)}
         ).encode("utf-8")
         request = Request(
             f"{self.base_url}/api/evaluations",
@@ -276,7 +287,7 @@ class VercelRouteTests(unittest.TestCase):
                     "/api/decisions",
                     json={
                         "client_id": "CL-0001",
-                        "recommendation_index": 0,
+                        "recommendation_index": 0, **hosted_reference("CL-0001", 0),
                         "action": "approved",
                         "note": "Confirmed the funding path with the client",
                     },
@@ -284,10 +295,10 @@ class VercelRouteTests(unittest.TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.get_json()["record"]["client_id"], "CL-0001")
 
-        with mock.patch.dict("os.environ", {"TESSERA_EXTERNAL_JUDGES_ENABLED": "false"}, clear=True):
+        with tempfile.TemporaryDirectory() as directory, mock.patch("api.index.decision_store", return_value=DecisionStore(Path(directory) / "reviews.json")), mock.patch.dict("os.environ", {"TESSERA_EXTERNAL_JUDGES_ENABLED": "false"}, clear=True):
             evaluation = self.client.post(
                 "/api/evaluations",
-                json={"client_id": "CL-0014", "recommendation_index": 0},
+                json={"client_id": "CL-0014", "recommendation_index": 0, **hosted_reference("CL-0014", 0)},
             )
         self.assertEqual(evaluation.status_code, 200)
         payload = evaluation.get_json()

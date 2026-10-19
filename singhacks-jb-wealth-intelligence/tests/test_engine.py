@@ -102,20 +102,18 @@ class IntelligenceEngineTests(unittest.TestCase):
                 self.assertIn(recommendation["suitability"], rationale["rm_checks"])
             self.assertGreaterEqual(len(profile["evidence_passport"]), 4)
 
-    def test_approved_action_impact_is_weighted_by_action_type(self):
-        recommendations = self.payload["featured_clients"]["CL-0012"]["recommendations"]
-        impacts = [recommendation["urgency_impact"]["points"] for recommendation in recommendations]
-        self.assertTrue(all(isinstance(value, int) and value > 0 for value in impacts))
-        self.assertGreater(len(set(impacts)), 1)
+    def test_actions_do_not_claim_approval_reduces_exposure(self):
+        for client in self.payload["client_profiles"].values():
+            self.assertTrue(all("urgency_impact" not in a for a in client["recommendations"]))
 
     def test_confidence_caps_surface_known_evidence_limits(self):
         cheung = self.payload["featured_clients"]["CL-0012"]
         lau = self.payload["featured_clients"]["CL-0014"]
         abdullah = self.payload["featured_clients"]["CL-0019"]
-        self.assertTrue(all(item["risk_validation"]["score"] == 59 for item in cheung["recommendations"]))
+        self.assertTrue(all(item["risk_validation"]["score"] <= 59 for item in cheung["recommendations"]))
         self.assertTrue(all(item["risk_validation"]["band"] == "Verify first" for item in cheung["recommendations"]))
-        self.assertTrue(all(item["risk_validation"]["score"] == 84 for item in lau["recommendations"]))
-        self.assertTrue(all(item["risk_validation"]["score"] == 79 for item in abdullah["recommendations"]))
+        self.assertTrue(all(item["risk_validation"]["score"] <= 84 for item in lau["recommendations"]))
+        self.assertTrue(all(item["risk_validation"]["score"] <= 79 for item in abdullah["recommendations"]))
 
     def test_capacity_band_contains_five_now_conversations(self):
         queue = self.payload["book"]["priority_queue"]

@@ -10,6 +10,7 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
+from tessera.recommendation_validation import finite, CONTRACTS
 from tessera.retrieval import retrieve_recommendation_evidence
 
 
@@ -67,35 +68,38 @@ def _evaluation_packet(
     recommendation: dict[str, Any],
     retrieved_evidence: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
-    """Return a purpose-limited packet without client name, ID or raw RM notes."""
+    """Only allowlisted numbers and controlled categories leave the application.
 
+    Narrative fields and retrieval excerpts can contain RM notes or identifiers,
+    including in nested values. They are intentionally not sent to providers.
+    """
+    def metrics(value, fields):
+        if not isinstance(value, dict):
+            return {}
+        return {key: value[key] for key in fields if finite(value.get(key))}
+
+    def rows(key, fields):
+        return [metrics(row, fields) for row in client.get(key, [])]
+
+    kind = recommendation.get("assessment_kind")
+    validation = recommendation.get("risk_validation", {})
     return {
-        "customer_dataset": {
-            "risk_profile": client.get("risk_profile"),
-            "objectives": client.get("objectives"),
-            "cash_needs": client.get("cash_needs", []),
-            "portfolio_position": client.get("tension", {}).get("portfolio_does"),
-            "upcoming_constraint": client.get("tension", {}).get("future_demands"),
-        },
+        "scope": "Structured evidence assessment only. Action wording, personal objectives, identifiers, source references and RM notes are withheld. Do not claim to have validated withheld content.",
+        "customer_dataset": {"cash_needs": rows("cash_needs", ("amount_usd_m",))},
         "product_dataset": {
-            "asset_mix": client.get("asset_mix", []),
-            "mandate_findings": client.get("mandate_findings", []),
-            "credit": client.get("ltv"),
-            "position_changes": client.get("position_changes", [])[:3],
+            "asset_mix": [{"asset_class": row["label"], **metrics(row, ("value",))}
+                          for row in client.get("asset_mix", [])
+                          if row.get("label") in {"Equity", "Fixed Income", "Cash", "Alternatives", "Structured Products", "Funds"}],
+            "mandate_findings": rows("mandate_findings", ("min_pct", "max_pct", "actual_pct")),
+            "credit": metrics(client.get("ltv"), ("ltv_pct", "trigger_pct", "points_to_trigger", "lending_value_buffer_m")),
+            "position_changes": rows("position_changes", ("delta_usd_m",)),
         },
-        "signal_dataset": {
-            "controlled_events": client.get("linked_events", [])[-3:],
-            "scenario_sensitivities": client.get("scenarios", []),
-        },
+        "signal_dataset": {"scenarios": rows("scenarios", ("portfolio_impact_pct",))},
         "recommendation": {
-            "title": recommendation.get("title"),
-            "detail": recommendation.get("detail"),
-            "suitability_condition": recommendation.get("suitability"),
-            "reversible": recommendation.get("reversible"),
+            "assessment_kind": kind if kind in CONTRACTS else "unknown",
+            "reversible": recommendation.get("reversible") is True,
         },
-        "evidence_passport": client.get("evidence_passport", []),
-        "retrieved_evidence": retrieved_evidence or [],
-        "deterministic_validation": recommendation.get("risk_validation", {}),
+        "deterministic_validation": metrics(validation, ("score", "raw_score")),
     }
 
 
@@ -404,7 +408,7 @@ def evaluate_recommendation(
             consensus_rule += " Any judge block verdict caps the result at 49."
 
     return {
-        "recommendation_id": f"{client_id}:{recommendation_index}",
+        "recommendation_id": recommendation["id"],
         "recommendation_title": recommendation.get("title"),
         "retrieval": retrieval,
         "datasets": dataset_lenses,
@@ -412,7 +416,7 @@ def evaluate_recommendation(
             "score": deterministic_score,
             "band": validation.get("band", _band(deterministic_score)),
             "blockers": validation.get("blockers", []),
-            "status": "Passed" if not validation.get("blockers") else "Blocked",
+            "status": "Passed" if deterministic_score >= 50 and not validation.get("blockers") else "Blocked",
         },
         "predictive": predictive,
         "judges": judges,
@@ -424,7 +428,7 @@ def evaluate_recommendation(
             "rm_decision_required": True,
         },
         "privacy": (
-            "Purpose-limited packet excludes client name, client ID and raw RM notes. "
+            "Only allowlisted numeric evidence and action category are sent. Action wording, personal objectives, identifiers, source references and all narrative excerpts are withheld; the panel cannot validate those omitted details. "
             "External evaluation remains opt-in."
         ),
     }
