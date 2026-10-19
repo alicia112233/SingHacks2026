@@ -2,10 +2,12 @@
 
 TESSERA turns portfolio, client, mandate, credit and market-event records into a prioritised Relationship Manager workflow. It is built to support an accountable human decision, not to place trades or obscure the source of a recommendation.
 
+For the feature overview and repository layout, see the [project README](../README.md).
+
 ## Quick start
 
 ```bash
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 python app.py
 ```
 
@@ -35,6 +37,20 @@ without cloud credentials using local factual retrieval, and can optionally
 combine Chroma semantic results with model-written answers. See
 [`docs/RAG_CHAT_ASSISTANT.md`](docs/RAG_CHAT_ASSISTANT.md). Its API endpoint is
 `POST /api/chat`.
+
+The template enables `TESSERA_RETRIEVAL_ENABLED`. Set it to `false` when
+running without Chroma configuration. Core calculations and local factual chat
+need no cloud credentials.
+
+## Telegram alerts
+
+Set `TELEGRAM_BOT_TOKEN` and `TELEGRAM_CHAT_ID` in `.env.local` to enable
+outbound alerts. With credentials configured, the local server starts its
+monitor automatically unless `TESSERA_URGENCY_MONITOR_ENABLED=false`.
+Defaults are an hourly scan, an urgency threshold of 80/100, and a 24-hour
+reminder interval. Escalation and acknowledgement state are persisted.
+See `.env.example` for policy settings and [deployment setup](DEPLOYMENT.md)
+for hosted scheduling. Configuring credentials enables real message delivery.
 
 ## Main routes
 
