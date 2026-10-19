@@ -105,3 +105,27 @@ must send the recommendation's `id` as `recommendation_id` and its current `vers
 See [the risk rubric](docs/RECOMMENDATION_RISK_RUBRIC.md) for edit, panel and legacy
 ledger behavior. Hosted ledger schema changes are additive; they are created on
 first use by the existing schema setup path.
+
+
+### Reliability checks
+
+Run `python -m unittest discover -s tests -q` from the application directory.
+Notification lifecycle and concurrency tests are included in standard discovery;
+they use mocked delivery. Browser logic checks use the existing Node runtime.
+
+News refresh and notification delivery have separate results. A notification
+failure returns `urgency_alerts.status = "unavailable"` without discarding refreshed
+intelligence. The browser loads actions and decisions together from `/api/review`
+and ignores superseded responses. Automatic HTTP retries apply only to reads.
+
+Follow-up deadlines retain their hour and Singapore timezone. They are derived
+from the controlled snapshot date, not a newly agreed client appointment; an old
+snapshot can therefore show an overdue follow-up. The countdown uses the current
+clock and refreshes every minute.
+
+Alert storage lives in `tessera/alert_store.py`; lifecycle and delivery rules live
+in `tessera/notifications.py`. Scans and acknowledgements serialize updates per
+local store or per client in Postgres. This prevents concurrent duplicate sends,
+but cannot guarantee exactly-once delivery if Telegram accepts a message and the
+process or database fails before the state is saved. Local JSON storage remains
+intended for a single server process; live Postgres delivery needs deployment QA.

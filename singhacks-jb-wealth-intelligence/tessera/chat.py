@@ -29,7 +29,7 @@ MAX_QUESTION_CHARS = 600
 MAX_HISTORY_MESSAGES = 6
 MAX_EVIDENCE = 6
 _TOKEN = re.compile(r"[a-z0-9]+(?:\.[0-9]+)?", re.IGNORECASE)
-_CITATION = re.compile(r"\[(\d+)\]")
+_CITATION = re.compile(r"\[(-?\d+)\]")
 _STOP_WORDS = {
     "a", "about", "and", "are", "as", "at", "be", "by", "can", "client",
     "do", "does", "for", "from", "how", "i", "in", "is", "it", "me",
@@ -463,7 +463,7 @@ def _model_answer(
         )
     answer = str(content).strip()
     citations = {int(value) for value in _CITATION.findall(answer)}
-    if not answer or not citations or any(value > len(evidence) for value in citations):
+    if not answer or not citations or not citations.issubset({item["citation"] for item in evidence}):
         raise ValueError("Model answer did not preserve evidence citations")
     return answer
 

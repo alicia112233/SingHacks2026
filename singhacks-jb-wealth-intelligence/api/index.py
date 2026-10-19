@@ -12,7 +12,6 @@ from pathlib import Path
 from flask import Flask, jsonify, request, send_from_directory
 
 from tessera.chat import answer_chat, chat_configuration_status
-from tessera.market_news import refresh as refresh_market_news
 from tessera.notifications import (
     TelegramNotificationError,
     TelegramNotifier,
@@ -23,6 +22,8 @@ from tessera.notifications import (
 from tessera.retrieval import retrieval_configuration_status
 from tessera.services import (
     MAX_REQUEST_BYTES,
+    review_context,
+    refresh_market_intelligence,
     IntelligenceService,
     record_alternative,
     record_decision,
@@ -94,6 +95,14 @@ def intelligence():
         return jsonify(current_intelligence())
     except Exception:
         return jsonify(error="Current portfolio intelligence could not be prepared."), HTTPStatus.INTERNAL_SERVER_ERROR
+
+
+@app.get("/api/review")
+def get_review():
+    try:
+        return jsonify(review_context(INTELLIGENCE.get(), decision_store()))
+    except Exception:
+        return jsonify(error="The current review could not be loaded."), HTTPStatus.SERVICE_UNAVAILABLE
 
 
 @app.get("/api/decisions")
@@ -195,14 +204,7 @@ def health():
 @app.post("/api/market-news/refresh")
 def market_news_refresh():
     try:
-        result = refresh_market_news(ROOT / "data", LIVE_EVENTS)
-        result["intelligence"] = current_intelligence()
-        result["urgency_alerts"] = scan_urgency_alerts(
-            result["intelligence"], urgency_alert_store()
-        )
-        return jsonify(result)
-    except TelegramNotificationError as error:
-        return jsonify(error=str(error)), HTTPStatus.SERVICE_UNAVAILABLE
+        return jsonify(refresh_market_intelligence(ROOT / "data", LIVE_EVENTS, current_intelligence, urgency_alert_store))
     except Exception:
         app.logger.exception("Market-news refresh failed")
         return jsonify(error="The market-news refresh could not be completed."), HTTPStatus.SERVICE_UNAVAILABLE

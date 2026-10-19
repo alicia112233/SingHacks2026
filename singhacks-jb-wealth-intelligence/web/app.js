@@ -1,5 +1,6 @@
 const state = {
   data: null,
+  reviewGeneration: 0,
   decisions: { records: [], effective: {} },
   currentView: "book",
   currentClient: null,
@@ -25,8 +26,8 @@ const esc = (value) => String(value ?? "")
   .replaceAll("'", "&#039;");
 
 function fullDate(iso) {
-  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", {
-    day: "2-digit", month: "short", year: "numeric", timeZone: "UTC",
+  return new Date(iso.length === 10 ? `${iso}T00:00:00+08:00` : iso).toLocaleDateString("en-GB", {
+    day: "2-digit", month: "short", year: "numeric", timeZone: "Asia/Singapore",
   }).toUpperCase();
 }
 
@@ -344,13 +345,9 @@ const TIER_RANK = { now: 1, today: 2, soon: 3, monitor: 4, resolved: 5 };
 
 function hoursUntil(iso) {
   if (!iso) return Number.POSITIVE_INFINITY;
-  const asOf = state.data ? state.data.meta.as_of : new Date().toISOString().slice(0, 10);
-  const now = new Date();
-  const localDate = [now.getFullYear(), now.getMonth() + 1, now.getDate()]
-    .map((part) => String(part).padStart(2, "0"))
-    .join("-");
-  const reviewDate = localDate > asOf ? localDate : asOf;
-  return (new Date(`${iso}T23:59:59`) - new Date(`${reviewDate}T00:00:00`)) / 3_600_000;
+  const due = Date.parse(iso.length === 10 ? `${iso}T23:59:59+08:00` : iso);
+  if (!Number.isFinite(due)) return Number.POSITIVE_INFINITY;
+  return (due - Date.now()) / 3_600_000;
 }
 
 function countdown(hours) {
@@ -368,6 +365,7 @@ function followUpInfo(item) {
   if (item.complete) return { key: "resolved", label: "Review recorded · continue monitoring", short: "Reviewed" };
   const hours = hoursUntil(item.deadline?.date);
   const deadline = item.deadline || {};
+  if (hours <= 0) return { key: "now", label: "OVERDUE", short: "Overdue" };
   if (hours <= 6 || item.score >= 70) return { key: "now", label: "ACT NOW", short: "Act now" };
   if (hours <= 24) return { key: "today", label: `DUE TODAY · ${countdown(hours)}`, short: `Due today · ${countdown(hours)}` };
   if (hours <= 48) return { key: "soon", label: `DUE BY ${fullDate(deadline.date)}`, short: `Due by ${fullDate(deadline.date)}` };
@@ -842,26 +840,29 @@ function evaluationPanelHTML(evaluation, index) {
 
 async function runIndependentEvaluation(client, index, button) {
   const originalPanel = $("#evaluation-panel");
+  const reference = actionReference(client, index);
   button.disabled = true;
   button.textContent = "Evaluating…";
   try {
     const response = await fetch("/api/evaluations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ client_id: client.client_id, recommendation_index: index, ...actionReference(client, index) }),
+      body: JSON.stringify({ client_id: client.client_id, recommendation_index: index, ...reference }),
     });
     const payload = await response.json().catch(() => ({ error: `Evaluation service returned ${response.status}` }));
     if (response.status === 404) {
       throw new Error("Evaluation API unavailable. Start the project with python app.py (not a static file server), then refresh.");
     }
     if (!response.ok) throw new Error(payload.error || `Request failed (${response.status})`);
-    state.decisions = payload.decisions;
+    if (!await loadReviewState()) return;
     renderBook();
     if (state.currentView === "client") renderClient(state.currentClient);
     const panel = $("#evaluation-panel");
-    if (!panel || panel !== originalPanel) return;
+    if (!panel || panel !== originalPanel || $("#modal").hidden) return;
+    const current = reviewedRecommendation(profiles()[client.client_id], index);
+    if (current.version !== reference.version) return;
     panel.className = "evaluation-panel evaluation-results";
-    panel.innerHTML = evaluationPanelHTML(payload, index);
+    panel.innerHTML = evaluationPanelHTML(current.evaluation || payload, index);
   } catch (error) {
     button.disabled = false;
     button.textContent = "Retry model panel";
@@ -882,7 +883,8 @@ function showEditRecommendation(client, index) {
 
 function showApproveRecommendation(client, index) {
   const recommendation = reviewedRecommendation(client, index);
-  const current = decisionFor(client.client_id, index);
+  const decision = decisionFor(client.client_id, index);
+  const current = decision?.action === "approved" ? decision : null;
   openModal(`<span class="section-kicker">RM APPROVAL</span><h2>${esc(recommendation.title)}</h2><p>Record what you have done or will do for this client. Approval is written to the evidence ledger and does not place a trade.</p><form id="approve-action-form" data-index="${index}"><label class="form-field"><span>Action taken or agreed</span><textarea name="note" minlength="10" maxlength="1000" rows="6" required placeholder="Example: Confirmed the facility buffer with Credit and scheduled a client review before funding.">${esc(current?.note || "")}</textarea></label><div class="modal-actions"><button type="button" class="small-button" data-close-modal>Cancel</button><button type="submit" class="action-button approve">Approve and record</button></div></form>`);
 }
 
@@ -902,9 +904,7 @@ async function requestAlternativeRecommendation(client, dismissedIndex, dismisse
   const payload = await response.json().catch(() => ({ error: `Recommendation service returned ${response.status}` }));
   if (!response.ok) throw new Error(payload.error || `Request failed (${response.status})`);
   payload.recommendation.replacement_for = dismissedTitle;
-  state.decisions = payload.decisions;
-  const refreshed = await loadIntelligence();
-  state.data = refreshed;
+  await loadReviewState();
   return payload.recommendation;
 }
 
@@ -916,7 +916,11 @@ async function persistDecision(client, index, action, note = "") {
   });
   const payload = await response.json().catch(() => ({ error: `Decision service returned ${response.status}` }));
   if (!response.ok) throw new Error(payload.error || `Request failed (${response.status})`);
-  state.decisions = { records: payload.records, effective: payload.effective, reviews: payload.reviews || {} };
+  try {
+    if (!await loadReviewState()) return;
+  } catch (error) {
+    throw new Error(`Decision saved, but the review could not reload. Refresh the page. ${error.message}`);
+  }
   renderBook();
   if (state.currentView === "client") renderClient(state.currentClient);
   if (state.currentView === "governance") renderGovernance();
@@ -1166,20 +1170,22 @@ function bindEvents() {
 }
 
 async function requestJson(url, options = {}, attempts = 2) {
-  let lastError;
-  for (let attempt = 0; attempt < attempts; attempt += 1) {
+  const canRetry = !options.method || options.method.toUpperCase() === "GET";
+  const limit = canRetry ? attempts : 1;
+  for (let attempt = 0; attempt < limit; attempt += 1) {
+    let response;
     try {
-      const response = await fetch(url, options);
-      if (response.ok) return response.json();
-      lastError = new Error(`${url} returned ${response.status}`);
-      if (response.status < 500 || attempt === attempts - 1) throw lastError;
+      response = await fetch(url, options);
     } catch (error) {
-      lastError = error;
-      if (attempt === attempts - 1) throw error;
+      if (attempt === limit - 1) throw error;
     }
-    await new Promise((resolve) => window.setTimeout(resolve, 250));
+    if (response?.ok) return response.json();
+    if (response && (response.status < 500 || attempt === limit - 1)) {
+      const payload = await response.json().catch(() => ({}));
+      throw new Error(payload.error || `${url} returned ${response.status}`);
+    }
+    await new Promise(resolve => window.setTimeout(resolve, 250));
   }
-  throw lastError;
 }
 
 async function refreshMarketNewsInBackground() {
@@ -1190,30 +1196,30 @@ async function refreshMarketNewsInBackground() {
       body: "{}",
     });
     if (result.intelligence && state.data) {
-      state.data = result.intelligence;
-      state.decisions = await requestJson("/api/decisions");
+      if (!await loadReviewState()) return;
       $("#as-of").textContent = fullDate(state.data.meta.as_of);
       renderBook();
       renderGovernance();
       applyRoute();
+      if (result.urgency_alerts?.status === "unavailable") showToast(result.urgency_alerts.reason, "error");
     }
   } catch (error) {
     console.warn("Market-news refresh failed", error);
   }
 }
 
-async function loadIntelligence() {
-  return requestJson("/api/intelligence");
+async function loadReviewState() {
+  const generation = ++state.reviewGeneration;
+  const context = await requestJson("/api/review");
+  if (generation !== state.reviewGeneration) return false;
+  state.data = context.intelligence;
+  state.decisions = context.decisions;
+  return true;
 }
 
 async function init() {
   try {
-    const [intelligence, decisionsResponse] = await Promise.all([
-      loadIntelligence(),
-      requestJson("/api/decisions"),
-    ]);
-    state.data = intelligence;
-    state.decisions = decisionsResponse;
+    await loadReviewState();
     const focusClients = Object.keys(state.data.featured_clients);
     state.currentClient = focusClients[0] || Object.keys(profiles())[0];
     state.studioClient = focusClients.at(-1) || state.currentClient;
@@ -1230,6 +1236,7 @@ async function init() {
     $("#app").hidden = false;
     applyRoute();
     refreshMarketNewsInBackground();
+    window.setInterval(() => { if (state.data) renderBook(); }, 60_000);
   } catch (error) {
     $("#loading").innerHTML = `<p>Unable to load current portfolio records.</p><small>${esc(error.message)}</small><button class="ghost-button" onclick="window.location.reload()">Retry</button>`;
   }

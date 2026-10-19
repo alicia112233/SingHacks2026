@@ -11,13 +11,13 @@ import math
 import os
 import re
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterable
 
 import pandas as pd
 
-from tessera.recommendation_validation import assess, validate_numbers, publish, RUBRIC_VERSION, fingerprint
+from tessera.recommendation_validation import assess, validate_numbers, publish, RUBRIC_VERSION, fingerprint, has_text
 from tessera.review_state import action_version
 from tessera.risk_analysis import analyse_client, order_by_urgency
 
@@ -126,6 +126,8 @@ def load_dataset(data_dir: Path, live_events_path: Path | None = None) -> dict[s
     bundle: dict[str, Any] = {
         name: pd.read_csv(data_dir / f"{name}.csv") for name in names
     }
+    for field in ("objectives", "risk_profile"):
+        bundle["clients"][field] = bundle["clients"][field].fillna("")
     live_path = live_events_path or data_dir.parent / "runtime" / "live_events.json"
     live_enabled = os.environ.get(
         "TESSERA_LIVE_NEWS_ENABLED", "true" if live_events_path else ""
@@ -156,22 +158,19 @@ def _market_value(bundle: dict[str, Any], series_id: str, snapshot: str) -> floa
 
 
 def _to_usd(bundle: dict[str, Any], amount: float, currency: str, snapshot: str) -> float:
-    currency = str(currency).upper()
+    currency = str(currency).strip().upper()
+    amount = float(amount)
+    if not math.isfinite(amount):
+        raise ValueError("Currency conversion requires a finite amount")
     if currency == "USD":
-        return float(amount)
-    if currency == "SGD":
-        return float(amount) / _market_value(bundle, "USDSGD", snapshot)
-    if currency == "HKD":
-        return float(amount) / _market_value(bundle, "USDHKD", snapshot)
-    if currency == "JPY":
-        return float(amount) / _market_value(bundle, "USDJPY", snapshot)
-    if currency == "CHF":
-        return float(amount) / _market_value(bundle, "USDCHF", snapshot)
-    if currency == "EUR":
-        return float(amount) * _market_value(bundle, "EURUSD", snapshot)
-    if currency == "GBP":
-        return float(amount) * _market_value(bundle, "GBPUSD", snapshot)
-    return float(amount)
+        return amount
+    pairs = {"SGD": "USDSGD", "HKD": "USDHKD", "JPY": "USDJPY", "CHF": "USDCHF", "EUR": "EURUSD", "GBP": "GBPUSD"}
+    if currency not in pairs:
+        raise ValueError(f"No supported USD conversion for {currency}")
+    rate = _market_value(bundle, pairs[currency], snapshot)
+    if not math.isfinite(rate) or rate <= 0:
+        raise ValueError(f"Invalid {pairs[currency]} rate for {snapshot}")
+    return amount * rate if currency in {"EUR", "GBP"} else amount / rate
 
 
 def _snapshot_path(bundle: dict[str, Any], client_id: str) -> list[dict[str, Any]]:
@@ -421,7 +420,7 @@ def _priority_card(bundle: dict[str, Any], client_row: Any) -> dict[str, Any]:
     # tiers escalate deterministically from the data. Urgent clients are due
     # within hours, mid-priority within 24-48h, and low-priority clients carry
     # no dated follow-up (they sit in Monitor).
-    as_of_dt = datetime.strptime(as_of, "%Y-%m-%d")
+    as_of_dt = datetime.strptime(as_of, "%Y-%m-%d").replace(tzinfo=timezone(timedelta(hours=8)))
     # Bands are chosen so the derived clock and the score always agree with
     # the frontend rubric:  Act now  = hours <= 6 OR score >= 70;
     # Due today = hours <= 24;  Due by <date> = hours <= 48;  else Monitor.
@@ -436,7 +435,7 @@ def _priority_card(bundle: dict[str, Any], client_row: Any) -> dict[str, Any]:
     if follow_hours is None:
         deadline_date, deadline_type = "", "No dated follow-up"
     else:
-        deadline_date = (as_of_dt + timedelta(hours=follow_hours)).date().isoformat()
+        deadline_date = (as_of_dt + timedelta(hours=follow_hours)).isoformat()
         deadline_type = "RM follow-up"
 
     if rule.get("theme_ids"):
@@ -1231,9 +1230,9 @@ def _recommendation_risk_validation(
     blockers: list[str] = []
     if current.empty:
         blockers.append("No current holding snapshot is available")
-    if not str(client.objectives).strip() or not str(client.risk_profile).strip():
+    if not has_text(client.objectives) or not has_text(client.risk_profile):
         blockers.append("Client objective or risk profile is missing")
-    if not str(recommendation.get("suitability", "")).strip():
+    if not has_text(recommendation.get("suitability")):
         blockers.append("No suitability condition is attached")
     if recommendation.get("reversible") is not True:
         blockers.append("The proposed action is not explicitly reversible")

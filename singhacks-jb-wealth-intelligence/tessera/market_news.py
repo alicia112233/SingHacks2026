@@ -86,6 +86,12 @@ def _event_date(value: str) -> str:
         return datetime.now(timezone.utc).date().isoformat()
 
 
+def _contains_keyword(text: str, keyword: str) -> bool:
+    plural = {"equity": "equities", "crisis": "crises"}.get(keyword, keyword + "s")
+    pattern = "(?:" + re.escape(keyword) + "|" + re.escape(plural) + ")"
+    return re.search(r"(?<!\w)" + pattern + r"(?!\w)", text, flags=re.I) is not None
+
+
 def _approved_event(item: ElementTree.Element, feed_publisher: str = "") -> dict[str, str] | None:
     raw_title = _text(item, "title")
     raw_summary = _text(item, "description")
@@ -94,16 +100,16 @@ def _approved_event(item: ElementTree.Element, feed_publisher: str = "") -> dict
     if source_name and title.endswith(f" - {source_name}"):
         title = title[: -len(source_name) - 3].rstrip()
     link = _text(item, "link")
-    text = f"{title} {raw_title} {raw_summary}".lower()
-    matched = [keyword for keywords in TRANSMISSION_KEYWORDS.values() for keyword in keywords if keyword in text]
+    text = f"{title} {_clean_fragment(raw_title)} {_clean_fragment(raw_summary)}".lower()
+    matched = [keyword for keywords in TRANSMISSION_KEYWORDS.values() for keyword in keywords if _contains_keyword(text, keyword)]
     if len(set(matched)) < 2:
         return None
     severity = next(
-        (level for level, keywords in SEVERITY_KEYWORDS.items() if any(keyword in text for keyword in keywords)),
+        (level for level, keywords in SEVERITY_KEYWORDS.items() if any(_contains_keyword(text, keyword) for keyword in keywords)),
         "Low",
     )
     transmission = next(
-        label for label, keywords in TRANSMISSION_KEYWORDS.items() if any(keyword in text for keyword in keywords)
+        label for label, keywords in TRANSMISSION_KEYWORDS.items() if any(_contains_keyword(text, keyword) for keyword in keywords)
     )
     guid = _text(item, "guid") or link or title
     return {

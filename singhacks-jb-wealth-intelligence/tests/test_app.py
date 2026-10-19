@@ -148,7 +148,7 @@ class ApplicationRouteTests(unittest.TestCase):
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        with mock.patch("app.refresh_market_news", return_value={"status": "refreshed", "added": 1, "events": []}) as refresh_news:
+        with mock.patch("tessera.services.refresh_market_news", return_value={"status": "refreshed", "added": 1, "events": []}) as refresh_news, mock.patch("tessera.services.scan_urgency_alerts", return_value={"status": "completed"}):
             for _ in range(2):
                 with urlopen(request) as response:
                     payload = json.load(response)
@@ -162,12 +162,26 @@ class ApplicationRouteTests(unittest.TestCase):
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        with mock.patch("app.refresh_market_news", side_effect=RuntimeError("feeds unavailable")):
+        with mock.patch("tessera.services.refresh_market_news", side_effect=RuntimeError("feeds unavailable")):
             with self.assertRaises(HTTPError) as error:
                 urlopen(request)
         self.assertEqual(error.exception.code, 503)
         with urlopen(f"{self.base_url}/api/intelligence") as response:
             self.assertEqual(response.status, 200)
+
+    def test_local_review_context_and_notification_outage(self):
+        with urlopen(f"{self.base_url}/api/review") as response:
+            context = json.load(response)
+        action = context["intelligence"]["client_profiles"]["CL-0011"]["recommendations"][1]
+        self.assertEqual(action["version"], context["decisions"]["reviews"]["CL-0011:1"]["version"])
+        request = Request(f"{self.base_url}/api/market-news/refresh", data=b"{}", headers={"Content-Type": "application/json"}, method="POST")
+        with mock.patch("tessera.services.refresh_market_news", return_value={"status": "refreshed", "added": 1}), mock.patch("tessera.services.scan_urgency_alerts", side_effect=RuntimeError("notification storage offline")), self.assertLogs("tessera.services", level="WARNING"):
+            with urlopen(request) as response:
+                self.assertEqual(response.status, 200)
+                payload = json.load(response)
+        self.assertEqual(payload["added"], 1)
+        self.assertIn("intelligence", payload)
+        self.assertEqual(payload["urgency_alerts"]["status"], "unavailable")
 
     def test_health_and_favicon_do_not_return_404(self):
         with urlopen(f"{self.base_url}/health") as response:
@@ -258,7 +272,7 @@ class VercelRouteTests(unittest.TestCase):
         self.assertEqual(health.get_json()["status"], "ok")
 
     def test_hosted_refresh_returns_current_intelligence(self):
-        with mock.patch("api.index.refresh_market_news", return_value={"status": "refreshed", "added": 0, "events": []}) as refresh_news:
+        with mock.patch("tessera.services.refresh_market_news", return_value={"status": "refreshed", "added": 0, "events": []}) as refresh_news, mock.patch("tessera.services.scan_urgency_alerts", return_value={"status": "completed"}), mock.patch("api.index.urgency_alert_store", return_value=object()):
             response = self.client.post("/api/market-news/refresh")
         self.assertEqual(response.status_code, 200)
         self.assertIn("meta", response.get_json()["intelligence"])

@@ -15,7 +15,6 @@ from typing import Any
 from urllib.parse import urlparse
 
 from tessera.chat import answer_chat, chat_configuration_status
-from tessera.market_news import refresh as refresh_market_news
 from tessera.notifications import (
     TelegramNotificationError,
     TelegramNotifier,
@@ -26,6 +25,8 @@ from tessera.notifications import (
 from tessera.retrieval import retrieval_configuration_status
 from tessera.services import (
     MAX_REQUEST_BYTES,
+    review_context,
+    refresh_market_intelligence,
     DecisionStore,
     IntelligenceService,
     record_alternative,
@@ -106,6 +107,12 @@ class TesseraHandler(SimpleHTTPRequestHandler):
         if path == "/api/intelligence":
             self._send_json(reviewed_intelligence(INTELLIGENCE.get(), DECISIONS.snapshot()))
             return
+        if path == "/api/review":
+            try:
+                self._send_json(review_context(INTELLIGENCE.get(), DECISIONS))
+            except (OSError, RuntimeError, ValueError):
+                self._send_json({"error": "The current review could not be loaded."}, HTTPStatus.SERVICE_UNAVAILABLE)
+            return
         if path == "/api/decisions":
             self._send_json(reviewed_snapshot(DECISIONS.snapshot(), INTELLIGENCE.get()))
             return
@@ -159,14 +166,11 @@ class TesseraHandler(SimpleHTTPRequestHandler):
             body = json.loads(self.rfile.read(length).decode("utf-8"))
             if path == "/api/market-news/refresh":
                 try:
-                    result = refresh_market_news(ROOT / "data", LIVE_EVENTS)
-                    result["intelligence"] = reviewed_intelligence(INTELLIGENCE.get(), DECISIONS.snapshot())
-                    result["urgency_alerts"] = scan_urgency_alerts(
-                        result["intelligence"], URGENCY_ALERTS
-                    )
-                    self._send_json(result)
-                except TelegramNotificationError as error:
-                    self._send_json({"error": str(error)}, HTTPStatus.SERVICE_UNAVAILABLE)
+                    self._send_json(refresh_market_intelligence(
+                        ROOT / "data", LIVE_EVENTS,
+                        lambda: reviewed_intelligence(INTELLIGENCE.get(), DECISIONS.snapshot()),
+                        lambda: URGENCY_ALERTS,
+                    ))
                 except (OSError, RuntimeError):
                     self._send_json({"error": "Market news is temporarily unavailable"}, HTTPStatus.SERVICE_UNAVAILABLE)
             elif path == "/api/notifications/urgency/scan":

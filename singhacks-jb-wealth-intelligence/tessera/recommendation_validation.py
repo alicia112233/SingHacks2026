@@ -28,11 +28,15 @@ def finite(value):
     return isinstance(value, (int, float)) and not isinstance(value, bool) and math.isfinite(value)
 
 
+def has_text(value):
+    return isinstance(value, str) and bool(value.strip()) and value.strip().casefold() not in {"nan", "none", "null"}
+
+
 def assess(profile, action):
     kind = action.get("assessment_kind", "unknown")
     groups, checks, method, outside = CONTRACTS.get(kind, (("action_evidence",), ("Action classification",), "unknown", True))
     inputs = dict(profile)
-    inputs["client_profile"] = profile.get("objectives") and profile.get("risk_profile")
+    inputs["client_profile"] = has_text(profile.get("objectives")) and has_text(profile.get("risk_profile"))
     inputs["rm_context"] = [x for x in profile.get("evidence_passport", []) if "rm_notes" in x.get("source", "")]
     inputs["lookthrough"] = [x for x in profile.get("evidence_passport", []) if "instruments.csv" in x.get("source", "")]
     inputs["pressure_driver"] = [x for x in profile.get("evidence_passport", []) if "portfolio intelligence" in x.get("source", "")]
@@ -40,7 +44,7 @@ def assess(profile, action):
     missing = [key for key in groups if not inputs.get(key)]
     evidence = round(25 * len(present) / len(groups))
     # Pending prerequisites withhold points; a condition is not completed approval.
-    suitability = max(0, 25 - 3 * len(checks) - 3 * len(missing)) if action.get("suitability") else 0
+    suitability = max(0, 25 - 3 * len(checks) - 3 * len(missing)) if has_text(action.get("suitability")) else 0
     analytical, explanation = 0, "No completed action-specific analytical test."
     if method == "credit":
         credit = profile.get("ltv") or {}

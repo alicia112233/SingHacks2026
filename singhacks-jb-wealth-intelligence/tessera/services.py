@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import threading
 import uuid
@@ -11,6 +12,8 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from tessera.engine import build_intelligence_payload, generate_alternative_recommendation
+from tessera.market_news import refresh as refresh_market_news
+from tessera.notifications import scan_urgency_alerts
 from tessera.review_state import reviewed_snapshot, reviewed_intelligence, requested_action
 
 
@@ -297,3 +300,22 @@ def record_evaluation(body, intelligence, store):
     if applied["score"] < consensus["score"]:
         consensus = {**consensus, "score": applied["score"], "band": applied["band"], "rule": "An earlier persisted panel restriction remains in force. A retry without completed judges cannot clear it."}
     return {**evaluation, "consensus": consensus, "decisions": decisions}
+
+
+def review_context(intelligence, store):
+    """Read one ledger snapshot for the displayed actions and their decisions."""
+    snapshot = store.snapshot()
+    return {"intelligence": reviewed_intelligence(intelligence, snapshot),
+            "decisions": reviewed_snapshot(snapshot, intelligence)}
+
+
+def refresh_market_intelligence(data_dir, live_events_path, intelligence_provider, alert_store_factory):
+    """Return refreshed evidence even when the independent notification step fails."""
+    result = refresh_market_news(data_dir, live_events_path)
+    result["intelligence"] = intelligence_provider()
+    try:
+        result["urgency_alerts"] = scan_urgency_alerts(result["intelligence"], alert_store_factory())
+    except Exception:
+        logging.getLogger(__name__).warning("News refreshed, but urgency notifications are unavailable", exc_info=True)
+        result["urgency_alerts"] = {"status": "unavailable", "reason": "News refreshed successfully; urgency notification delivery could not be confirmed."}
+    return result
