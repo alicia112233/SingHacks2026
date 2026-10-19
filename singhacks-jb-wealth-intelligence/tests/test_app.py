@@ -273,6 +273,39 @@ class VercelRouteTests(unittest.TestCase):
         self.assertEqual(self.client.get("/app.js").status_code, 200)
         self.assertEqual(self.client.get("/styles.css").status_code, 200)
 
+    def test_cron_requires_secret_before_scanning(self):
+        with mock.patch.dict("os.environ", {"CRON_SECRET": "test-secret"}), mock.patch("api.index.scan_urgency_alerts", return_value={"status": "completed"}) as scan, mock.patch("api.index.urgency_alert_store", return_value=object()):
+            for headers in ({}, {"Authorization": "Bearer wrong"}):
+                self.assertEqual(self.client.get("/api/cron/urgency-alerts", headers=headers).status_code, 401)
+            scan.assert_not_called()
+            response = self.client.get("/api/cron/urgency-alerts", headers={"Authorization": "Bearer test-secret"})
+            self.assertEqual(response.status_code, 200)
+            scan.assert_called_once()
+
+    def test_acknowledgement_preserves_evidence_urgency_and_approval_gate(self):
+        from api.index import INTELLIGENCE
+        from tessera.notifications import UrgencyAlertStore
+        payload = INTELLIGENCE.get()
+        client_id = "CL-0011"
+        action = payload["client_profiles"][client_id]["recommendations"][1]
+        before = next(item["score"] for item in payload["book"]["priority_queue"] if item["client_id"] == client_id)
+        with tempfile.TemporaryDirectory() as directory:
+            alerts = UrgencyAlertStore(Path(directory) / "alerts.json")
+            alerts.save(client_id, {"client_id": client_id, "status": "open", "last_score": before})
+            decisions = DecisionStore(Path(directory) / "decisions.json")
+            with mock.patch("api.index.urgency_alert_store", return_value=alerts), mock.patch("api.index.decision_store", return_value=decisions):
+                response = self.client.post("/api/notifications/urgency/acknowledge", json={"client_id": client_id, "note": "Review booked"})
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(alerts.get(client_id)["status"], "acknowledged")
+                body = {"client_id": client_id, "recommendation_index": 1, "recommendation_id": action["id"], "version": action["version"]}
+                edit = self.client.post("/api/decisions", json={**body, "action": "edited", "note": "Buy an unapproved product immediately"})
+                self.assertEqual(edit.status_code, 201)
+                body["version"] = edit.json["reviews"][f"{client_id}:1"]["version"]
+                approval = self.client.post("/api/decisions", json={**body, "action": "approved", "note": "Alert acknowledgement does not waive validation"})
+                self.assertEqual(approval.status_code, 400)
+                after = self.client.get("/api/intelligence").json
+                self.assertEqual(next(item["score"] for item in after["book"]["priority_queue"] if item["client_id"] == client_id), before)
+
     def test_unconfigured_hosted_ledger_fails_clearly(self):
         with mock.patch.dict("os.environ", {}, clear=True):
             response = self.client.get("/api/decisions")

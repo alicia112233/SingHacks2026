@@ -1,6 +1,12 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "outputDirectory": "web",
+  "crons": [
+    {
+      "path": "/api/cron/urgency-alerts",
+      "schedule": "0 1 * * *"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",

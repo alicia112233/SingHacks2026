@@ -7,6 +7,7 @@ import errno
 import json
 import os
 import sys
+import threading
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -19,6 +20,7 @@ from tessera.notifications import (
     TelegramNotificationError,
     TelegramNotifier,
     UrgencyAlertStore,
+    acknowledge_urgency_alert,
     scan_urgency_alerts,
 )
 from tessera.retrieval import retrieval_configuration_status
@@ -42,6 +44,7 @@ INTELLIGENCE = IntelligenceService(ROOT / "data")
 DECISIONS = DecisionStore(DECISION_FILE)
 LIVE_EVENTS = RUNTIME / "live_events.json"
 URGENCY_ALERTS = UrgencyAlertStore(RUNTIME / "telegram_urgency_alerts.json")
+URGENCY_MONITOR_STOP = threading.Event()
 
 
 def load_local_environment(path: Path = ROOT / ".env.local") -> tuple[str, ...]:
@@ -139,7 +142,7 @@ class TesseraHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self):  # noqa: N802 - required by BaseHTTPRequestHandler
         path = urlparse(self.path).path
-        if path not in {"/api/decisions", "/api/evaluations", "/api/chat", "/api/recommendations/alternate", "/api/market-news/refresh", "/api/notifications/urgency/scan"}:
+        if path not in {"/api/decisions", "/api/evaluations", "/api/chat", "/api/recommendations/alternate", "/api/market-news/refresh", "/api/notifications/urgency/scan", "/api/notifications/urgency/acknowledge"}:
             self._send_json({"error": "Endpoint not found"}, HTTPStatus.NOT_FOUND)
             return
 
@@ -168,6 +171,16 @@ class TesseraHandler(SimpleHTTPRequestHandler):
                     self._send_json({"error": "Market news is temporarily unavailable"}, HTTPStatus.SERVICE_UNAVAILABLE)
             elif path == "/api/notifications/urgency/scan":
                 self._send_json(scan_urgency_alerts(intelligence, URGENCY_ALERTS))
+            elif path == "/api/notifications/urgency/acknowledge":
+                if not isinstance(body, dict):
+                    raise ValueError("Request body must be an object")
+                client_id = str(body.get("client_id", "")).strip()
+                if not client_id:
+                    raise ValueError("client_id is required")
+                state = acknowledge_urgency_alert(
+                    URGENCY_ALERTS, client_id, str(body.get("note", "")).strip()
+                )
+                self._send_json({"status": "acknowledged", "alert": state})
             elif path == "/api/chat":
                 self._send_json(answer_chat(intelligence, body))
             elif path == "/api/recommendations/alternate":
@@ -210,13 +223,46 @@ def main() -> None:
         raise
     if loaded_settings:
         print(f"Loaded {len(loaded_settings)} setting(s) from .env.local")
+    monitor_thread = _start_urgency_monitor()
     print(f"TESSERA is ready at http://{args.host}:{args.port} (application API enabled)")
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         print("\nStopping TESSERA")
     finally:
+        URGENCY_MONITOR_STOP.set()
+        if monitor_thread is not None:
+            monitor_thread.join(timeout=1)
         server.server_close()
+
+
+def _start_urgency_monitor() -> threading.Thread | None:
+    """Check urgent cases hourly while the local demo server is running."""
+
+    enabled = os.environ.get("TESSERA_URGENCY_MONITOR_ENABLED", "true").lower()
+    if enabled not in {"1", "true", "yes", "on"} or TelegramNotifier().configuration_status() != "configured":
+        return None
+    try:
+        interval = max(60, int(os.environ.get("TESSERA_URGENCY_SCAN_INTERVAL_SECONDS", "3600")))
+    except ValueError:
+        interval = 3600
+
+    def monitor() -> None:
+        while not URGENCY_MONITOR_STOP.is_set():
+            try:
+                result = scan_urgency_alerts(INTELLIGENCE.get(), URGENCY_ALERTS)
+                sent = result["initial"] + result["reminded"] + result["escalated"]
+                if sent:
+                    print(f"TESSERA • sent urgency alerts for {', '.join(sent)}")
+            except TelegramNotificationError as error:
+                print(f"TESSERA • urgency monitor: {error}", file=sys.stderr)
+            except Exception as error:  # Keep the web server running if a scan fails.
+                print(f"TESSERA • urgency monitor failed: {error}", file=sys.stderr)
+            URGENCY_MONITOR_STOP.wait(interval)
+
+    thread = threading.Thread(target=monitor, name="tessera-urgency-monitor", daemon=True)
+    thread.start()
+    return thread
 
 
 if __name__ == "__main__":

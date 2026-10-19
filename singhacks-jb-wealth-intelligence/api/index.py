@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hmac
 import os
 import tempfile
 from functools import lru_cache
@@ -15,7 +16,8 @@ from tessera.market_news import refresh as refresh_market_news
 from tessera.notifications import (
     TelegramNotificationError,
     TelegramNotifier,
-    UrgencyAlertStore,
+    acknowledge_urgency_alert,
+    production_urgency_alert_store,
     scan_urgency_alerts,
 )
 from tessera.retrieval import retrieval_configuration_status
@@ -34,9 +36,6 @@ from tessera.services import (
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
 LIVE_EVENTS = Path(tempfile.gettempdir()) / f"tessera-live-events-{os.getpid()}.json"
-URGENCY_ALERTS = UrgencyAlertStore(
-    Path(tempfile.gettempdir()) / f"tessera-telegram-alerts-{os.getpid()}.json"
-)
 INTELLIGENCE = IntelligenceService(ROOT / "data", LIVE_EVENTS)
 app = Flask(__name__, static_folder=str(WEB), static_url_path="")
 app.config["MAX_CONTENT_LENGTH"] = MAX_REQUEST_BYTES
@@ -56,6 +55,11 @@ def current_intelligence():
     else:
         store = decision_store()
     return reviewed_intelligence(INTELLIGENCE.get(), store.snapshot())
+
+
+@lru_cache(maxsize=1)
+def urgency_alert_store():
+    return production_urgency_alert_store()
 
 
 @app.after_request
@@ -194,7 +198,7 @@ def market_news_refresh():
         result = refresh_market_news(ROOT / "data", LIVE_EVENTS)
         result["intelligence"] = current_intelligence()
         result["urgency_alerts"] = scan_urgency_alerts(
-            result["intelligence"], URGENCY_ALERTS
+            result["intelligence"], urgency_alert_store()
         )
         return jsonify(result)
     except TelegramNotificationError as error:
@@ -209,7 +213,7 @@ def urgency_notification_scan():
     """Run the score threshold check on demand or from a scheduler."""
 
     try:
-        return jsonify(scan_urgency_alerts(INTELLIGENCE.get(), URGENCY_ALERTS))
+        return jsonify(scan_urgency_alerts(INTELLIGENCE.get(), urgency_alert_store()))
     except TelegramNotificationError as error:
         return jsonify(error=str(error)), HTTPStatus.SERVICE_UNAVAILABLE
     except (TypeError, ValueError) as error:
@@ -217,3 +221,42 @@ def urgency_notification_scan():
     except Exception:
         app.logger.exception("Urgency-notification scan failed")
         return jsonify(error="Urgency notifications are temporarily unavailable."), HTTPStatus.SERVICE_UNAVAILABLE
+
+
+@app.post("/api/notifications/urgency/acknowledge")
+def acknowledge_urgency_notification():
+    if not request.is_json:
+        return jsonify(error="Content-Type must be application/json"), HTTPStatus.UNSUPPORTED_MEDIA_TYPE
+    try:
+        body = request.get_json(silent=True)
+        if not isinstance(body, dict):
+            raise ValueError("Request body must be an object")
+        client_id = str(body.get("client_id", "")).strip()
+        if not client_id:
+            raise ValueError("client_id is required")
+        state = acknowledge_urgency_alert(
+            urgency_alert_store(), client_id, str(body.get("note", "")).strip()
+        )
+        return jsonify(status="acknowledged", alert=state)
+    except (TypeError, ValueError) as error:
+        return jsonify(error=str(error)), HTTPStatus.BAD_REQUEST
+    except Exception:
+        app.logger.exception("Urgency acknowledgement failed")
+        return jsonify(error="The urgency acknowledgement could not be saved."), HTTPStatus.SERVICE_UNAVAILABLE
+
+
+@app.get("/api/cron/urgency-alerts")
+def scheduled_urgency_scan():
+    """Vercel Cron entrypoint: one daily reminder/escalation scan."""
+
+    secret = os.environ.get("CRON_SECRET", "")
+    expected = f"Bearer {secret}"
+    if not secret or not hmac.compare_digest(request.headers.get("Authorization", ""), expected):
+        return jsonify(error="Unauthorized"), HTTPStatus.UNAUTHORIZED
+    try:
+        return jsonify(scan_urgency_alerts(INTELLIGENCE.get(), urgency_alert_store()))
+    except TelegramNotificationError as error:
+        return jsonify(error=str(error)), HTTPStatus.SERVICE_UNAVAILABLE
+    except Exception:
+        app.logger.exception("Scheduled urgency scan failed")
+        return jsonify(error="Scheduled urgency scan is temporarily unavailable."), HTTPStatus.SERVICE_UNAVAILABLE

@@ -352,6 +352,11 @@ nav { display: grid; gap: 7px; }
 .rationale-section ul { margin: 0; padding-left: 17px; color: var(--ink); font-size: 10px; line-height: 1.5; }
 .recommendation .rationale-method { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 9px; }
 .suitability { color: var(--teal); font-size: 9px; }
+.urgency-alert-control { display: flex; justify-content: space-between; gap: 18px; align-items: center; margin: 18px 0; padding: 16px 18px; border: 1px solid #d9b5a3; background: var(--coral-soft); }
+.urgency-alert-control strong, .urgency-alert-control p { display: block; }
+.urgency-alert-control strong { font-size: 13px; }
+.urgency-alert-control p { max-width: 680px; margin: 5px 0 0; color: var(--muted); font-size: 10px; line-height: 1.45; }
+.action-button.acknowledge-alert { color: white; border-color: var(--coral); background: var(--coral); white-space: nowrap; }
 .action-button { padding: 7px 10px; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
 .action-button.approve { color: white; border-color: var(--teal); background: var(--teal); }
 .action-button.dismiss { color: var(--coral); }
