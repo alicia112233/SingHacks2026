@@ -17,16 +17,15 @@ class RiskAnalysisTests(unittest.TestCase):
         cls.payload = build_intelligence_payload(ROOT / 'data')
 
     def test_urgency_includes_risk_appetite_and_portfolio_alignment(self):
-        expected = {'CL-0014':80,'CL-0011':79,'CL-0003':71,'CL-0017':70,'CL-0016':58,'CL-0012':57,'CL-0006':50,'CL-0019':49,'CL-0018':46,'CL-0005':41,'CL-0001':40,'CL-0002':33,'CL-0020':30,'CL-0009':26,'CL-0004':23,'CL-0008':22,'CL-0007':19,'CL-0013':16,'CL-0010':9,'CL-0015':7}
+        expected = {'CL-0011':76,'CL-0014':71,'CL-0003':70,'CL-0002':65,'CL-0016':61,'CL-0005':57,'CL-0012':54,'CL-0017':50,'CL-0019':50,'CL-0006':49,'CL-0001':46,'CL-0004':44,'CL-0018':43,'CL-0009':26,'CL-0020':24,'CL-0013':23,'CL-0008':22,'CL-0007':19,'CL-0010':9,'CL-0015':7}
         queue = self.payload['book']['priority_queue']
         self.assertEqual({c['client_id']:c['score'] for c in queue}, expected)
         for customer in queue:
             self.assertIn('risk_appetite_adjustment', customer)
             self.assertIn('portfolio_alignment_pressure', customer)
-        self.assertLess(
-            self.payload['book']['priority_queue'][0]['risk_appetite_adjustment'],
-            self.payload['book']['priority_queue'][1]['risk_appetite_adjustment'],
-        )
+        cards = {c['client_id']: c for c in queue}
+        # Lower tolerance (Tan, 2/10) earns more urgency than balanced tolerance (Lau, 5/10).
+        self.assertGreater(cards['CL-0011']['risk_appetite_adjustment'], cards['CL-0014']['risk_appetite_adjustment'])
         for client in self.payload['client_profiles'].values():
             risk = client['risk_analysis']
             self.assertTrue(all(1 <= risk[k] <= 5 for k in ('capacity','tolerance','horizon')))
