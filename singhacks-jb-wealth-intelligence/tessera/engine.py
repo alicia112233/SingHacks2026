@@ -18,7 +18,7 @@ from typing import Any, Iterable
 import pandas as pd
 
 from tessera.contradictions import detect
-from tessera.escalation import NEWS_TOPICS, assess as assess_escalation
+from tessera.escalation import NEWS_TOPICS, assess as assess_escalation, recent_live_news
 from tessera.recommendation_validation import assess, validate_numbers, publish, RUBRIC_VERSION, fingerprint, has_text
 from tessera.review_state import action_version
 from tessera.risk_analysis import analyse_client, order_by_urgency
@@ -332,14 +332,11 @@ def _live_event_pressure(bundle: dict[str, Any], client_id: str, as_of: str) -> 
     story = _client_story_exposure(bundle, client_id)
     if not story:
         return 0
-    events = bundle["event_log"]
-    if "source_type" not in events:
-        return 0
     pressure = 0
-    for row in events[events.source_type == "live_news"].itertuples():
+    for row in recent_live_news(bundle["event_log"], as_of).itertuples():
         # Relevance 2 means a specific topic (oil, shipping, property, rates...)
         # matched the story; 1 is a generic market headline and does not score.
-        if str(row.event_date) >= as_of and _live_event_relevance(str(row.description), story) == 2:
+        if _live_event_relevance(str(row.description), story) == 2:
             pressure = max(pressure, {"Severe": 8, "High": 5, "Medium": 2}.get(row.severity, 1))
     return pressure
 
@@ -1009,9 +1006,23 @@ def _feature_profile(bundle: dict[str, Any], client_id: str) -> dict[str, Any]:
             if next_need
             else f"KYC review is due {client.kyc_review_due}; no dated cash need is recorded."
         )
+        exceptions = (
+            f"{len(mandates)} mandate or concentration exception{'s' if len(mandates) != 1 else ''} "
+            f"require{'' if len(mandates) != 1 else 's'} review."
+        )
+        # Lead with the detected contradiction so the client page tells the same
+        # story as the queue card.
+        detected = priority["detections"][0] if priority["detections"] else None
         portfolio_position = (
-            f"{top_asset['value']:.1f}% is allocated to {top_asset['label']}; "
-            f"{len(mandates)} mandate or concentration exception{'s' if len(mandates) != 1 else ''} require review."
+            f"{detected['evidence']}. {exceptions}"
+            if detected
+            else f"{top_asset['value']:.1f}% is allocated to {top_asset['label']}; {exceptions}"
+        )
+        detection = _detection(bundle, client_id)
+        lead_metric = (
+            {"value": f"{detection['theme_exposure_pct']:.1f}%", "label": f"linked to {detection['theme']}"}
+            if detection["theme"] and (detection["theme_exposure_pct"] or 0) >= 10
+            else {"value": f"{top_asset['value']:.1f}%", "label": top_asset["label"]}
         )
         action_items = []
         if next_need:
@@ -1069,7 +1080,7 @@ def _feature_profile(bundle: dict[str, Any], client_id: str) -> dict[str, Any]:
                     "future_demands": future_demand,
                 },
                 "headline_metrics": [
-                    {"value": f"{top_asset['value']:.1f}%", "label": top_asset["label"]},
+                    lead_metric,
                     {"value": f"{daily_value / aum * 100:.1f}%", "label": "daily liquidity"},
                     {"value": str(len(mandates)), "label": "portfolio exceptions"},
                 ],
@@ -1089,7 +1100,11 @@ def _feature_profile(bundle: dict[str, Any], client_id: str) -> dict[str, Any]:
                 ],
                 "recommendations": action_items,
                 "conversation": {
-                    "open": f"I would like to review whether the current portfolio still fits your priority: {client.objectives}",
+                    "open": (
+                        f"Your plan and your portfolio pull in different directions on one point: {detected['label'].lower()}."
+                        if detected
+                        else f"I would like to review whether the current portfolio still fits your priority: {client.objectives}"
+                    ),
                     "show": "The current allocation, the largest position changes and any dated obligations.",
                     "ask": "Have your priorities, liquidity requirements or assets held elsewhere changed since our last review?",
                     "avoid": "Do not present scenario sensitivities as forecasts or recommend action before confirming the client record.",
@@ -1654,11 +1669,12 @@ def build_intelligence_payload(
                 "calibration": "Provisional: confidence is capped at 84 until a predictive model is back-tested on recommendation outcomes.",
             },
             "principles": [
-                "Authoritative events only: market-event claims come from the controlled event register.",
+                "Sourced events only: every event shows where it came from, the controlled register or filtered live news. News can raise a breach alert, and the RM confirms or dismisses it.",
+                "Detected, not hand-written: contradictions come from each client's own objectives, source of wealth and RM notes, and the fields used are cited.",
                 "Suitability checks first: mandates and exclusions run before a client brief is prepared.",
-                "Purpose-limited access: each brief uses only the records needed for that review.",
+                "Need-to-know: each brief uses only the records required for that review.",
                 "Conflicts become questions: contradictory records lower confidence instead of being averaged away.",
-                "Human accountability: approve, edit, reject and rationale are logged.",
+                "Human accountability: approvals, edits, dismissals, breach reviews and their rationale are logged.",
             ],
         },
         "data_quality": _data_quality(bundle),

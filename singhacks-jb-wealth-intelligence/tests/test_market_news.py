@@ -299,6 +299,27 @@ class MarketNewsTests(unittest.TestCase):
         # A breach review never counts as a recommendation decision.
         self.assertEqual(result["decisions"]["effective"], {})
 
+    def test_old_headlines_expire_from_scoring_and_breach_alerts(self):
+        with tempfile.TemporaryDirectory() as directory, mock.patch.dict(
+            "os.environ", {"TESSERA_LIVE_NEWS_ENABLED": "true"}, clear=True
+        ):
+            state = Path(directory) / "live_events.json"
+            events = [
+                ("rss:old", "2026-09-04", "Hong Kong property market softens", "Medium"),
+                ("rss:new", "2026-10-20", "Global markets edge lower", "Medium"),
+            ]
+            state.write_text(json.dumps([{
+                "event_id": eid, "event_date": day, "event_type": "Live market signal", "region": "Global",
+                "description": text, "primary_transmission": "Global risk assets", "severity": severity,
+                "source": f"https://example.test/{eid}", "source_type": "live_news", "status": "approved",
+            } for eid, day, text, severity in events]), encoding="utf-8")
+            payload = build_intelligence_payload(ROOT / "data", state)
+        lau = next(c for c in payload["book"]["priority_queue"] if c["client_id"] == "CL-0014")
+        # Six weeks older than the newest headline: still in the register, but no longer scores or escalates.
+        self.assertIsNone(lau["escalation"])
+        self.assertEqual(lau["market_event_pressure"], 0)
+        self.assertIn("Hong Kong property market softens", {e["description"] for e in payload["market_events"]})
+
     def test_generic_headline_escalates_no_one(self):
         cards = self._payload_with_headline("All three major indices fell as global markets slid", "Severe")
         self.assertFalse(any(card["escalation"] for card in cards.values()))

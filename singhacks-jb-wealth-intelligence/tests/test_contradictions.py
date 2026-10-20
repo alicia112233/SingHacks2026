@@ -55,6 +55,13 @@ class ContradictionDetectionTests(unittest.TestCase):
                 self.assertTrue(card["detected_from"])
                 self.assertEqual(card["tension"], card["detections"][0]["label"])
 
+    def test_client_page_tells_the_same_story_as_the_queue(self):
+        ravi = self.payload["client_profiles"]["CL-0002"]
+        card = self.queue["CL-0002"]
+        self.assertTrue(ravi["tension"]["portfolio_does"].startswith(card["detections"][0]["evidence"]))
+        self.assertEqual(ravi["headline_metrics"][0]["label"], "linked to technology")
+        self.assertIn(card["tension"].lower(), ravi["conversation"]["open"])
+
     def test_a_new_client_is_detected_without_a_rule(self):
         instruments = self.bundle["instruments"]
         client = SimpleNamespace(

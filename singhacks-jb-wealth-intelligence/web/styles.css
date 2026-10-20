@@ -369,6 +369,8 @@ nav { display: grid; gap: 7px; }
 .decision-status.approved { color: var(--teal); background: var(--teal-soft); }
 .decision-status.dismissed { color: var(--coral); background: var(--coral-soft); }
 .decision-status.edited { color: var(--next); background: var(--next-soft); }
+.decision-status.escalation_confirmed { color: var(--now); background: var(--now-soft); }
+.decision-status.escalation_dismissed { color: var(--muted); background: #e9e5de; }
 .dismissed-list { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
 .dismissed-list summary { color: var(--muted); font-size: 10px; cursor: pointer; }
 .dismissed-row { padding: 12px 0 0 14px; display: grid; grid-template-columns: 1fr auto; gap: 15px; align-items: center; }
@@ -793,3 +795,8 @@ nav { display: grid; gap: 7px; }
 .breach-actions { display: flex; gap: 8px; flex-shrink: 0; }
 .breach-status { font-weight: 600; }
 @media (max-width: 760px) { .breach-panel { flex-direction: column; align-items: flex-start; padding-left: 16px; } }
+.client-breach { margin: 0 0 18px; }
+.client-breach .section-kicker { display: block; margin: 0 0 6px; color: var(--now); }
+.client-breach .breach-panel { padding-left: 20px; }
+.detected-from { margin: -6px 0 22px; font-size: 13px; color: var(--muted); }
+.detected-from strong { color: var(--ink, inherit); }

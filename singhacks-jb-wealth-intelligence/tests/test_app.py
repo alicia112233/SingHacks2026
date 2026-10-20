@@ -279,7 +279,7 @@ class VercelRouteTests(unittest.TestCase):
         refresh_news.assert_called_once()
 
     def test_frontend_and_direct_application_routes(self):
-        for path in ["/", "/clients/CL-0012", "/scenario-studio", "/evidence-ledger"]:
+        for path in ["/", "/clients/CL-0012", "/all-clients", "/scenario-studio", "/evidence-ledger"]:
             with self.subTest(path=path):
                 response = self.client.get(path)
                 self.assertEqual(response.status_code, 200)

@@ -77,6 +77,7 @@ def application_shell():
 
 
 @app.get("/clients/<path:client_id>")
+@app.get("/all-clients")
 @app.get("/market-events")
 @app.get("/scenario-studio")
 @app.get("/evidence-ledger")
