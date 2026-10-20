@@ -271,6 +271,34 @@ class MarketNewsTests(unittest.TestCase):
         self.assertEqual(cards["CL-0014"]["escalation"]["kind"], "margin_call")
         self.assertIn("margin-call trigger", cards["CL-0014"]["escalation"]["reason"])
 
+    def test_rm_confirms_or_dismisses_a_breach_in_the_ledger(self):
+        from tessera.services import DecisionStore, record_escalation_review
+
+        with tempfile.TemporaryDirectory() as directory, mock.patch.dict(
+            "os.environ", {"TESSERA_LIVE_NEWS_ENABLED": "true"}, clear=True
+        ):
+            state = Path(directory) / "live_events.json"
+            state.write_text(json.dumps([{
+                "event_id": "rss:review", "event_date": "2026-09-21", "event_type": "Live market signal",
+                "region": "Global", "description": "Hong Kong property market softens",
+                "primary_transmission": "Global risk assets", "severity": "Medium",
+                "source": "https://example.test/review", "source_type": "live_news", "status": "approved",
+            }]), encoding="utf-8")
+            intelligence = build_intelligence_payload(ROOT / "data", state)
+            store = DecisionStore(Path(directory) / "decisions.json")
+            alert = next(c for c in intelligence["book"]["priority_queue"] if c["client_id"] == "CL-0014")["escalation"]
+
+            with self.assertRaises(ValueError):
+                record_escalation_review({"client_id": "CL-0014", "escalation_id": "stale", "decision": "dismissed"}, intelligence, store)
+            result = record_escalation_review({"client_id": "CL-0014", "escalation_id": alert["id"], "decision": "dismissed"}, intelligence, store)
+
+        self.assertEqual(result["record"]["action"], "escalation_dismissed")
+        self.assertEqual(result["record"]["headline"], "Hong Kong property market softens")
+        card = next(c for c in result["intelligence"]["book"]["priority_queue"] if c["client_id"] == "CL-0014")
+        self.assertEqual(card["escalation"]["review"]["status"], "dismissed")
+        # A breach review never counts as a recommendation decision.
+        self.assertEqual(result["decisions"]["effective"], {})
+
     def test_generic_headline_escalates_no_one(self):
         cards = self._payload_with_headline("All three major indices fell as global markets slid", "Severe")
         self.assertFalse(any(card["escalation"] for card in cards.values()))

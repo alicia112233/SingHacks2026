@@ -319,11 +319,10 @@ function isClientReviewComplete(clientId) {
 }
 
 function conversationsRequiringAttention() {
-  // Aligned with the follow-up rubric: an active client "needs attention now"
-  // when its tier is Act now (deadline under 6h, or urgency score >= 70).
+  // A client needs attention today when they carry an open breach alert or score 70+.
   return state.data.book.priority_queue.filter((item) => {
     if (isClientReviewComplete(item.client_id)) return false;
-    return followUpInfo({ ...item, score: urgencyScore(item) }).key === "now";
+    return ["breach", "now"].includes(followUpInfo({ ...item, score: urgencyScore(item) }).key);
   }).length;
 }
 
@@ -335,54 +334,39 @@ function followUpLabel(item) {
   return followUpInfo(item).label;
 }
 
-// Follow-up tiers follow the fixed rubric:
-//   1 Act now      — hard trigger (deadline under 6h) or score ≥ 70
-//   2 Due today    — under 24h to deadline
-//   3 Due by <date> — 24-48h to deadline (date shown, not "next 2 days")
-//   4 Monitor      — score under the action threshold, deadline > 48h away
-//   5 Resolved     — RM recorded the review; exposure remains monitored
-const TIER_RANK = { now: 1, today: 2, soon: 3, monitor: 4, resolved: 5 };
+// Queue lanes. A breach alert answers "did something just happen that could
+// break this portfolio?"; the score answers "whose pressure has built up most?".
+//   0 Breach alerts - live news stress crosses a hard line; RM confirms or dismisses
+//   1 Act now       - urgency score 70+
+//   2 This week     - urgency score 45-69
+//   3 Monitor       - urgency score under 45
+//   4 Reviewed      - RM recorded the review; exposure remains monitored
+// Inside each lane the highest score comes first.
+const TIER_RANK = { breach: 0, now: 1, week: 2, monitor: 3, resolved: 4 };
+const LANES = {
+  breach: { title: "Breach alerts", note: "Live news crosses a hard line. Confirm or dismiss each alert." },
+  now: { title: "Act now", note: "Urgency score 70 or above" },
+  week: { title: "This week", note: "Urgency score 45 to 69" },
+  monitor: { title: "Monitor", note: "Urgency score below 45" },
+  resolved: { title: "Reviewed", note: "Review recorded; exposure still monitored" },
+};
 
-function hoursUntil(iso) {
-  if (!iso) return Number.POSITIVE_INFINITY;
-  const due = Date.parse(iso.length === 10 ? `${iso}T23:59:59+08:00` : iso);
-  if (!Number.isFinite(due)) return Number.POSITIVE_INFINITY;
-  return (due - Date.now()) / 3_600_000;
-}
-
-function countdown(hours) {
-  const total = Math.max(1, Math.ceil(hours));
-  if (total >= 48) return `due in ${Math.round(total / 24)}d`;
-  if (total >= 24) {
-    const days = Math.floor(total / 24);
-    const rest = total % 24;
-    return rest ? `due in ${days}d ${rest}h` : `due in ${days}d`;
-  }
-  return `due in ${total}h`;
+function openBreach(item) {
+  return item.escalation && item.escalation.review?.status !== "dismissed" ? item.escalation : null;
 }
 
 function followUpInfo(item) {
   if (item.complete) return { key: "resolved", label: "Review recorded · continue monitoring", short: "Reviewed" };
-  // A news breach escalates regardless of score or deadline.
-  if (item.escalation) return { key: "now", label: "ESCALATED", short: "Escalated" };
-  const hours = hoursUntil(item.deadline?.date);
-  const deadline = item.deadline || {};
-  if (hours <= 0) return { key: "now", label: "OVERDUE", short: "Overdue" };
-  if (hours <= 6 || item.score >= 70) return { key: "now", label: "ACT NOW", short: "Act now" };
-  if (hours <= 24) return { key: "today", label: `DUE TODAY · ${countdown(hours)}`, short: `Due today · ${countdown(hours)}` };
-  if (hours <= 48) return { key: "soon", label: `DUE BY ${fullDate(deadline.date)}`, short: `Due by ${fullDate(deadline.date)}` };
+  const breach = openBreach(item);
+  if (breach) return { key: "breach", label: "BREACH ALERT", short: breach.review?.status === "confirmed" ? "Breach · confirmed" : "Breach alert" };
+  if (item.score >= 70) return { key: "now", label: "ACT NOW", short: "Act now" };
+  if (item.score >= 45) return { key: "week", label: "THIS WEEK", short: "This week" };
   return { key: "monitor", label: "MONITOR", short: "Monitor" };
 }
 
 function queueCounts(rows) {
-  const counts = { now: 0, within48: 0, monitor: 0, resolved: 0 };
-  rows.forEach((item) => {
-    const tier = followUpInfo(item).key;
-    if (tier === "now") counts.now += 1;
-    else if (tier === "today" || tier === "soon") counts.within48 += 1;
-    else if (tier === "monitor") counts.monitor += 1;
-    else counts.resolved += 1;
-  });
+  const counts = { breach: 0, now: 0, week: 0, monitor: 0, resolved: 0 };
+  rows.forEach((item) => { counts[followUpInfo(item).key] += 1; });
   return counts;
 }
 
@@ -392,50 +376,75 @@ function buildQueue() {
     score: urgencyScore(item),
     complete: isClientReviewComplete(item.client_id),
   })).map((item) => ({ ...item, tier: followUpInfo(item) }))
-    .sort((left, right) => (
-      Number(left.complete) - Number(right.complete)
-      || Number(Boolean(right.escalation)) - Number(Boolean(left.escalation))
-      || TIER_RANK[left.tier.key] - TIER_RANK[right.tier.key]
-      || hoursUntil(left.deadline?.date) - hoursUntil(right.deadline?.date)
-      || right.score - left.score
-    ));
+    .sort((left, right) => right.score - left.score)
+    .map((item, index) => ({ ...item, rank: index + 1 }))
+    .sort((left, right) => TIER_RANK[left.tier.key] - TIER_RANK[right.tier.key] || left.rank - right.rank);
 }
 
 // "Next up" shows where the queue continues when nothing is urgent, so clearing
 // the immediate items reveals work rather than an empty page.
 function markNextUp(queue) {
   const active = queue.filter((item) => !item.complete);
-  const urgent = active.some((item) => item.tier.key === "now");
+  const urgent = active.some((item) => ["breach", "now"].includes(item.tier.key));
   if (urgent) return null;
   return active[0]?.client_id || null;
 }
 
+function breachPanelHTML(item) {
+  const escalation = item.escalation;
+  if (!escalation || item.complete) return "";
+  const status = escalation.review?.status;
+  if (status === "dismissed") {
+    return `<div class="breach-panel dismissed">Breach alert dismissed by the RM as not relevant: “${esc(escalation.headline)}”</div>`;
+  }
+  const actions = status === "confirmed"
+    ? `<span class="breach-status">Confirmed by the RM · recorded in the ledger</span>`
+    : `<button class="small-button" data-escalation-review="confirmed" data-client="${esc(item.client_id)}" data-escalation="${esc(escalation.id)}">Confirm</button>
+       <button class="small-button" data-escalation-review="dismissed" data-client="${esc(item.client_id)}" data-escalation="${esc(escalation.id)}">Not relevant</button>`;
+  return `
+    <div class="breach-panel">
+      <div><strong>${esc(escalation.reason)}.</strong><span>Headline: “${esc(escalation.headline)}” · ${esc(escalation.severity)} · ${fullDate(escalation.date)}${escalation.source_url ? ` · <a href="${esc(escalation.source_url)}" target="_blank" rel="noopener noreferrer">Open source ↗</a>` : ""}</span></div>
+      <div class="breach-actions">${actions}</div>
+    </div>`;
+}
+
 function queueRowHTML(item, nextUpId) {
   const nextUp = item.client_id === nextUpId;
+  const chip = item.tier.key === "breach" || item.tier.key === "now" ? "now" : item.tier.key === "week" ? "next" : item.tier.key === "resolved" ? "done" : item.tier.key;
   return `
     <a class="queue-row tier-${item.tier.key}" href="${routeFor("client", item.client_id)}" data-open-client="${esc(item.client_id)}" aria-label="Open client review for ${esc(item.client_name)}">
       <div class="score-ring" style="--score:${item.score}"><b>${item.score}</b></div>
-      <div class="client-cell"><strong>${esc(item.client_name)}${nextUp ? '<span class="next-up-tag">Next up</span>' : ""}</strong><span>${esc(item.client_id)} · ${esc(item.booking_centre)} · $${item.aum_usd_m}m</span></div>
-      <div class="cell-copy"><strong>${esc(item.tension)}</strong><span>${esc(item.evidence)}${item.ltv ? ` · ${esc(item.ltv)}` : ""}</span>${item.escalation && !item.complete ? `<span class="escalation-note">Escalated by news: ${esc(item.escalation.reason)}. Headline: “${esc(item.escalation.headline)}” · RM to confirm relevance</span>` : ""}</div>
-      <div class="cell-copy"><span class="priority-chip ${item.tier.key === "soon" ? "next" : item.tier.key === "now" ? "now" : item.tier.key === "resolved" ? "done" : item.tier.key}">${esc(item.tier.short)}</span><span>${esc(item.complete ? "All actions recorded" : item.next_step)}</span></div>
+      <div class="client-cell"><strong>${esc(item.client_name)}${nextUp ? '<span class="next-up-tag">Next up</span>' : ""}</strong><span>#${item.rank} by score · ${esc(item.client_id)} · ${esc(item.booking_centre)} · $${item.aum_usd_m}m</span></div>
+      <div class="cell-copy"><strong>${esc(item.tension)}</strong><span>${esc(item.evidence)}${item.ltv ? ` · ${esc(item.ltv)}` : ""}</span></div>
+      <div class="cell-copy"><span class="priority-chip ${chip}">${esc(item.tier.short)}</span><span>${esc(item.complete ? "All actions recorded" : item.next_step)}</span></div>
       <span class="queue-row-arrow" aria-hidden="true">↗</span>
-    </a>`;
+    </a>${breachPanelHTML(item)}`;
 }
 
 function queueTableHTML(queue, nextUpId) {
+  let lane = null;
+  const rows = queue.map((item) => {
+    const header = item.tier.key !== lane
+      ? `<div class="queue-lane lane-${item.tier.key}"><strong>${LANES[item.tier.key].title}</strong><span>${LANES[item.tier.key].note}</span></div>`
+      : "";
+    lane = item.tier.key;
+    return header + queueRowHTML(item, nextUpId);
+  });
   return `
     <div class="queue">
       <div class="queue-head"><span>Score</span><span>Client</span><span>Reason for review</span><span>RM follow-up</span><span></span></div>
-      ${queue.map((item) => queueRowHTML(item, nextUpId)).join("")}
+      ${rows.join("")}
     </div>`;
 }
 
 function summaryHeaderHTML(counts, total) {
   return `
     <div class="queue-summary" aria-label="Follow-up summary">
-      <span class="queue-summary-item urgent"><b>${counts.now}</b> need${counts.now === 1 ? "s" : ""} action now</span>
+      <span class="queue-summary-item urgent"><b>${counts.breach}</b> breach alert${counts.breach === 1 ? "" : "s"}</span>
       <span class="queue-summary-item">·</span>
-      <span class="queue-summary-item"><b>${counts.within48}</b> due within 48h</span>
+      <span class="queue-summary-item urgent"><b>${counts.now}</b> act now</span>
+      <span class="queue-summary-item">·</span>
+      <span class="queue-summary-item"><b>${counts.week}</b> this week</span>
       <span class="queue-summary-item">·</span>
       <span class="queue-summary-item"><b>${counts.monitor}</b> monitoring</span>
       <span class="queue-summary-item">·</span>
@@ -450,14 +459,14 @@ function renderBook() {
   const counts = queueCounts(fullQueue);
   const nextUpId = markNextUp(fullQueue);
   const queue = fullQueue.slice(0, 5); // Today shows the first five; the rest live on the All clients page
-  const attentionCount = counts.now;
+  const attentionCount = counts.breach + counts.now;
   updateTodayCount(attentionCount);
   $("#book-view").innerHTML = `
     <div class="hero-grid">
       <article class="hero-panel">
         <span class="section-kicker">DAILY BOOK REVIEW</span>
         <h1>${attentionCount} client review${attentionCount === 1 ? "" : "s"} require RM attention today.</h1>
-        <p>Follow-up tiers are set by time remaining: “due by <date>” items escalate to “due today” and then “act now” as the clock runs down. Every score can be traced to its source records.</p>
+        <p>Breach alerts come first: live news whose stress test crosses a hard line for that portfolio. Then clients are ranked by urgency score. News nudges the queue; a breach breaks it. Every score can be traced to its source records.</p>
         <div class="hero-stats">
           <div><strong>${book.client_count}</strong><small>clients monitored</small></div>
           <div><strong>$${book.aum_usd_m}m</strong><small>book AUM</small></div>
@@ -476,7 +485,7 @@ function renderBook() {
 
     <div class="section-head">
       <div><span class="section-kicker">REVIEW QUEUE</span><h2>Prioritised client follow-up</h2></div>
-      <p>Act-now items first, then the countdown queue. Clearing urgent work reveals the next clients in line.</p>
+      <p>Breach alerts first, then lanes by urgency score, highest first inside each lane. Clearing urgent work reveals the next clients in line.</p>
     </div>
     ${summaryHeaderHTML(counts, book.client_count)}
     ${queueTableHTML(queue, nextUpId)}
@@ -503,7 +512,7 @@ function renderAllClients() {
   const nextUpId = markNextUp(queue);
   $("#all-clients-view").innerHTML = `
     <section class="events-hero">
-      <div><span class="section-kicker">FULL BOOK</span><h1>All clients</h1><p>The complete follow-up queue, ranked by follow-up tier, time remaining and urgency score. Today’s page shows only the first five.</p></div>
+      <div><span class="section-kicker">FULL BOOK</span><h1>All clients</h1><p>The complete queue: breach alerts first, then lanes by urgency score, highest first inside each lane. Today’s page shows only the first five.</p></div>
       <button class="back-link" data-view="book">← Back to today</button>
     </section>
     ${summaryHeaderHTML(counts, queue.length)}
@@ -951,6 +960,27 @@ function bindEvents() {
     if (event.target.closest("#chat-mic")) startDictation();
     const speak = event.target.closest("[data-speak-message]");
     if (speak) speakAnswer(speak.closest(".chat-message").querySelector("p").textContent);
+    const breachReview = event.target.closest("[data-escalation-review]");
+    if (breachReview) {
+      event.preventDefault();
+      breachReview.disabled = true;
+      try {
+        await requestJson("/api/escalations/review", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ client_id: breachReview.dataset.client, escalation_id: breachReview.dataset.escalation, decision: breachReview.dataset.escalationReview }),
+        });
+        if (await loadReviewState()) {
+          renderBook();
+          applyRoute();
+        }
+        showToast(breachReview.dataset.escalationReview === "confirmed" ? "Breach alert confirmed and recorded" : "Breach alert dismissed and recorded");
+      } catch (error) {
+        breachReview.disabled = false;
+        showToast(error.message, "error");
+      }
+      return;
+    }
     const nav = event.target.closest("[data-view]");
     if (nav) showView(nav.dataset.view, nav.dataset.client);
     const open = event.target.closest("[data-open-client]");

@@ -46,6 +46,19 @@ Stop. Make eye contact. Invite questions.
 
 ## Likely Q&A
 
+### How is a breach alert different from "Act now"? Didn't you rank strictly by score?
+
+They answer two different questions, so the queue has two lanes.
+
+- **Act now (score 70+)** answers "whose situation has built up the most pressure?" Many signals add up slowly: contradiction, liquidity, mandate breaches, deadlines and risk fit. It is a score out of 99.
+- **Breach alert** answers "did something just happen that could break this portfolio?" One headline's downside stress crosses a hard line: the margin-call trigger, a 12-month funding gap or a 5% loss of bank-held assets. It is yes or no, and a low-scoring client can get one (Abdullah at 58 escalates on a severe Hormuz headline).
+
+Hospital analogy: Act now is the patient with several chronic conditions; a breach alert is the patient whose vitals just crashed, wherever they were in the queue.
+
+Why not score alone: news is capped at 8 points so daily noise cannot dominate, which means a catastrophe for one portfolio could never reach the top. The alert lane is the exception path and shows why someone jumped the line. A client who qualifies for both sits under Breach alerts, and their score rank stays visible. The RM confirms or dismisses each alert, and both outcomes are written to the decision ledger.
+
+Line to use: "News nudges the queue. A breach breaks it."
+
 ### What is genuinely unique?
 
 Most copilots begin with a prompt. TESSERA begins with a governed decision gap: client intent × look-through risk × future needs × policy. Deterministic calculations establish the facts; scoped retrieval adds relevant institutional context; every output carries an evidence passport and remains subject to RM approval.

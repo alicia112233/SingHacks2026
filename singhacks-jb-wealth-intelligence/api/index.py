@@ -27,6 +27,7 @@ from tessera.services import (
     IntelligenceService,
     record_alternative,
     record_decision,
+    record_escalation_review,
     record_evaluation,
     reviewed_snapshot,
     reviewed_intelligence,
@@ -132,6 +133,23 @@ def post_decision():
         return jsonify(error=str(error)), HTTPStatus.SERVICE_UNAVAILABLE
     except Exception:
         return jsonify(error="The decision could not be recorded."), HTTPStatus.SERVICE_UNAVAILABLE
+
+
+@app.post("/api/escalations/review")
+def post_escalation_review():
+    if not request.is_json:
+        return jsonify(error="Content-Type must be application/json"), HTTPStatus.UNSUPPORTED_MEDIA_TYPE
+    try:
+        body = request.get_json(silent=True)
+        if body is None:
+            raise ValueError("Request body must be valid JSON")
+        return jsonify(record_escalation_review(body, INTELLIGENCE.get(), decision_store())), HTTPStatus.CREATED
+    except (TypeError, ValueError) as error:
+        return jsonify(error=str(error)), HTTPStatus.BAD_REQUEST
+    except RuntimeError as error:
+        return jsonify(error=str(error)), HTTPStatus.SERVICE_UNAVAILABLE
+    except Exception:
+        return jsonify(error="The breach review could not be recorded."), HTTPStatus.SERVICE_UNAVAILABLE
 
 
 @app.post("/api/recommendations/alternate")

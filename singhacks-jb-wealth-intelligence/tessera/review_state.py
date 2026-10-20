@@ -55,7 +55,25 @@ def reviewed_intelligence(intelligence, snapshot):
             elif evaluations:
                 action["risk_validation"] = publish(validation, [*validation["blockers"], "Action or evidence changed after model review; run the panel on this version before approval."])
     result["featured_clients"] = {key: result["client_profiles"][key] for key in intelligence.get("featured_clients", {})}
+    apply_escalation_reviews(result, records)
     return result
+
+
+ESCALATION_REVIEWS = {"escalation_confirmed": "confirmed", "escalation_dismissed": "dismissed"}
+
+
+def apply_escalation_reviews(result, records):
+    """Attach the latest RM confirm or dismiss to each queue card's breach alert."""
+    for card in result.get("book", {}).get("priority_queue", []):
+        escalation = card.get("escalation")
+        if not escalation:
+            continue
+        history = [r for r in records if r.get("action") in ESCALATION_REVIEWS
+                   and r.get("client_id") == card["client_id"] and r.get("escalation_id") == escalation.get("id")]
+        if history:
+            latest = history[-1]
+            escalation["review"] = {"status": ESCALATION_REVIEWS[latest["action"]], "recorded_at": latest["recorded_at"],
+                                    "actor": latest.get("actor"), "note": latest.get("note", "")}
 
 
 def reviewed_snapshot(snapshot, intelligence):

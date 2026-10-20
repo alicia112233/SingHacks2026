@@ -302,6 +302,35 @@ def record_evaluation(body, intelligence, store):
     return {**evaluation, "consensus": consensus, "decisions": decisions}
 
 
+def create_escalation_review(body, intelligence):
+    if not isinstance(body, dict):
+        raise ValueError("Request body must be an object")
+    decision = str(body.get("decision", "")).lower()
+    if decision not in {"confirmed", "dismissed"}:
+        raise ValueError("Decision must be confirmed or dismissed")
+    card = next((c for c in intelligence["book"]["priority_queue"] if c["client_id"] == str(body.get("client_id", ""))), None)
+    if not card:
+        raise ValueError("Unknown client")
+    escalation = card.get("escalation")
+    if not escalation or escalation.get("id") != body.get("escalation_id"):
+        raise ValueError("This breach alert has changed. Refresh the review before continuing.")
+    note = str(body.get("note", "")).strip()
+    if len(note) > 1000:
+        raise ValueError("Note must be 1,000 characters or fewer")
+    return {
+        "id": str(uuid.uuid4()), "action": f"escalation_{decision}", "client_id": card["client_id"],
+        "client_name": card["client_name"], "escalation_id": escalation["id"], "kind": escalation["kind"],
+        "headline": escalation["headline"], "reason": escalation["reason"], "note": note,
+        "actor": intelligence["meta"]["rm"], "recorded_at": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+def record_escalation_review(body, intelligence, store):
+    """Record whether the RM confirmed or dismissed a news breach alert."""
+    snapshot = store.transact(lambda _records: create_escalation_review(body, intelligence))
+    return {"record": snapshot["record"], **review_context(intelligence, store)}
+
+
 def review_context(intelligence, store):
     """Read one ledger snapshot for the displayed actions and their decisions."""
     snapshot = store.snapshot()
