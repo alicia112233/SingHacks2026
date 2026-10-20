@@ -107,9 +107,10 @@ const fs=require('fs'),vm=require('vm'),assert=require('assert');
 const context=vm.createContext({console,window:{setTimeout:fn=>fn()}});
 vm.runInContext(fs.readFileSync('web/app.js','utf8').replace(/init\(\);\s*$/, ''),context);
 (async()=>{
- context.Date=class extends Date {static now(){return Date.parse('2026-10-19T10:30:00+08:00')}};
- assert.equal(vm.runInContext("hoursUntil('2026-10-19T12:00:00+08:00')",context),1.5);
- assert.equal(vm.runInContext("followUpInfo({score:50,deadline:{date:'2026-10-19T10:00:00+08:00'}}).short",context),'Overdue');
+ assert.equal(vm.runInContext("followUpInfo({score:50,deadline:{date:'2026-10-19T10:00:00+08:00'}}).short",context),'This week');
+ assert.equal(vm.runInContext("followUpInfo({score:40,escalation:{id:'x'}}).key",context),'breach');
+ assert.equal(vm.runInContext("followUpInfo({score:72,escalation:{id:'x',review:{status:'dismissed'}}}).key",context),'now');
+ assert.equal(vm.runInContext("followUpInfo({score:40,escalation:{id:'x',review:{status:'confirmed'}}}).short",context),'Breach · confirmed');
  assert(!vm.runInContext("fullDate('2026-10-19T12:00:00+08:00')",context).includes('INVALID'));
  let calls=0;
  context.fetch=async()=>{calls++;return {ok:false,status:400,json:async()=>({error:'Bad input'})}};
@@ -123,7 +124,7 @@ vm.runInContext(fs.readFileSync('web/app.js','utf8').replace(/init\(\);\s*$/, ''
  pending[1]({ok:true,json:async()=>({intelligence:{revision:2},decisions:{revision:2}})});await second;
  pending[0]({ok:true,json:async()=>({intelligence:{revision:1},decisions:{revision:1}})});assert.equal(await first,false);
  assert.equal(vm.runInContext('state.data.revision',context),2);assert.equal(vm.runInContext('state.decisions.revision',context),2);
- console.log('PASS: clock, safe retries and out-of-order reads');
+ console.log('PASS: queue lanes, safe retries and out-of-order reads');
 })().catch(error=>{console.error(error);process.exitCode=1});
 """
         result = subprocess.run(["node", "-e", script], cwd=ROOT, text=True, capture_output=True)

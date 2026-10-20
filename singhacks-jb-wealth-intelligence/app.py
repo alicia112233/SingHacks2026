@@ -31,6 +31,7 @@ from tessera.services import (
     IntelligenceService,
     record_alternative,
     record_decision,
+    record_escalation_review,
     record_evaluation,
     reviewed_snapshot,
     reviewed_intelligence,
@@ -149,7 +150,7 @@ class TesseraHandler(SimpleHTTPRequestHandler):
 
     def do_POST(self):  # noqa: N802 - required by BaseHTTPRequestHandler
         path = urlparse(self.path).path
-        if path not in {"/api/decisions", "/api/evaluations", "/api/chat", "/api/recommendations/alternate", "/api/market-news/refresh", "/api/notifications/urgency/scan", "/api/notifications/urgency/acknowledge"}:
+        if path not in {"/api/decisions", "/api/evaluations", "/api/chat", "/api/recommendations/alternate", "/api/market-news/refresh", "/api/notifications/urgency/scan", "/api/notifications/urgency/acknowledge", "/api/escalations/review"}:
             self._send_json({"error": "Endpoint not found"}, HTTPStatus.NOT_FOUND)
             return
 
@@ -195,6 +196,8 @@ class TesseraHandler(SimpleHTTPRequestHandler):
                 )
             elif path == "/api/evaluations":
                 self._send_json(record_evaluation(body, intelligence, DECISIONS))
+            elif path == "/api/escalations/review":
+                self._send_json(record_escalation_review(body, intelligence, DECISIONS), HTTPStatus.CREATED)
             else:
                 self._send_json(record_decision(body, intelligence, DECISIONS), HTTPStatus.CREATED)
         except (json.JSONDecodeError, UnicodeDecodeError, TypeError, ValueError) as error:

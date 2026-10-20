@@ -10,6 +10,7 @@ the headline really applies.
 
 from __future__ import annotations
 
+import hashlib
 import re
 from typing import Any
 
@@ -122,4 +123,7 @@ def assess(
             }))
     if not found:
         return None
-    return max(found, key=lambda item: (item[0], item[1]))[2]
+    best = max(found, key=lambda item: (item[0], item[1]))[2]
+    # Stable per breach and headline, so an RM review stays attached to it.
+    best["id"] = hashlib.sha1(f"{best['kind']}|{best['date']}|{best['headline']}".encode("utf-8")).hexdigest()[:16]
+    return best

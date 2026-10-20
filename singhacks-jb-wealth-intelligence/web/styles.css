@@ -779,13 +779,17 @@ nav { display: grid; gap: 7px; }
 
 .needs-correction { margin-top: 24px; padding-top: 24px; border-top: 2px solid #c87962; }
 
-.escalation-note {
-  display: block;
-  margin-top: 6px;
-  padding: 6px 8px;
-  border-left: 3px solid var(--now);
-  background: var(--now-soft);
-  color: var(--now);
-  font-size: 0.78rem;
-  line-height: 1.35;
-}
+.queue-row.tier-breach { --priority-color: var(--now); border-left-color: var(--now); }
+.queue-row.tier-week { --priority-color: var(--next); }
+.queue-lane { display: flex; align-items: baseline; gap: 12px; padding: 10px 20px; background: #f4f0e8; border-top: 1px solid var(--line); font-size: 12px; }
+.queue-lane strong { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
+.queue-lane span { color: var(--muted); }
+.queue-lane.lane-breach { background: var(--now-soft); color: var(--now); }
+.queue-lane.lane-breach span { color: var(--now); }
+.breach-panel { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 10px 20px 12px 104px; background: var(--now-soft); color: var(--now); font-size: 12px; line-height: 1.4; border-left: 3px solid var(--now); }
+.breach-panel strong { display: block; }
+.breach-panel a { color: inherit; }
+.breach-panel.dismissed { background: transparent; color: var(--muted); border-left-color: transparent; }
+.breach-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.breach-status { font-weight: 600; }
+@media (max-width: 760px) { .breach-panel { flex-direction: column; align-items: flex-start; padding-left: 16px; } }
