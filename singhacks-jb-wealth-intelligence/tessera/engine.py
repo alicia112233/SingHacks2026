@@ -18,6 +18,7 @@ from typing import Any, Iterable
 import pandas as pd
 
 from tessera.contradictions import detect
+from tessera.escalation import NEWS_TOPICS, assess as assess_escalation
 from tessera.recommendation_validation import assess, validate_numbers, publish, RUBRIC_VERSION, fingerprint, has_text
 from tessera.review_state import action_version
 from tessera.risk_analysis import analyse_client, order_by_urgency
@@ -302,16 +303,7 @@ def _live_event_relevance(description: str, exposure: str) -> int:
     headline = description.lower()
     if re.search(r"\b(?:heloc|mortgage|savings interest rates?|savings accounts?|credit card)\b", headline):
         return 0
-    topics = (
-        (r"\b(?:oil|crude|petroleum|energy|natural gas|lng)\b", ("energy", "coal")),
-        (r"\b(?:shipping|tanker|freight|logistics)\b", ("shipping", "logistics")),
-        (r"\b(?:gold|bullion)\b", ("gold", "xau")),
-        (r"\b(?:ai|technology|tech|semiconductor|chip|cloud)\b", ("technology", "semiconductor", "cloud")),
-        (r"\b(?:healthcare|pharma|biotech)\b", ("health care", "pharma")),
-        (r"\b(?:property|real estate|reit|housing)\b", ("real estate", "property", "reit")),
-        (r"\b(?:rate|rates|yield|yields|fed|treasury|bond|bonds|inflation|central bank|credit)\b", ("fixed income", "credit", "bond", "treasury")),
-    )
-    matched = [terms for pattern, terms in topics if re.search(pattern, headline)]
+    matched = [terms for _, pattern, terms, _ in NEWS_TOPICS if re.search(pattern, headline)]
     if matched:
         return 2 if any(term in exposure for terms in matched for term in terms) else 0
     return 1 if re.search(r"\b(?:market|markets|equities)\b", headline) and "equity" in exposure else 0
@@ -395,6 +387,15 @@ def _priority_card(bundle: dict[str, Any], client_row: Any) -> dict[str, Any]:
         client_row, current, aum
     )
     market_event_pressure = _live_event_pressure(bundle, client_id, as_of)
+    escalation = assess_escalation(
+        current,
+        bundle["instruments"],
+        bundle["event_log"],
+        as_of,
+        needs,
+        _ltv_trigger_buffer(bundle, client_id),
+        None if facility.empty else str(facility.iloc[0].collateral_portfolio_id),
+    )
     score = min(
         99,
         max(
@@ -448,6 +449,7 @@ def _priority_card(bundle: dict[str, Any], client_row: Any) -> dict[str, Any]:
         "risk_appetite_adjustment": appetite_adjustment,
         "portfolio_alignment_pressure": alignment_pressure,
         "market_event_pressure": market_event_pressure,
+        "escalation": escalation,
         "risk_asset_share": _round(risk_share * 100, 1),
         "target_risk_share": _round(target_risk_share * 100, 1),
         "priority": "Now" if score >= 70 else "Next" if score >= 45 else "Watch",
@@ -1547,8 +1549,10 @@ def build_intelligence_payload(
     priority = order_by_urgency(priority)
     # The queue is capacity-aware: one RM gets five "Now" slots, then a second
     # review band. The underlying numeric score remains visible and inspectable.
+    # An escalated client is "Now" regardless of capacity: news nudges the
+    # queue, a breach breaks it.
     for index, item in enumerate(priority):
-        item["priority"] = "Now" if index < 5 else "Next" if index < 12 else "Watch"
+        item["priority"] = "Now" if index < 5 or item["escalation"] else "Next" if index < 12 else "Watch"
 
     latest_event = (
         bundle["event_log"].sort_values("event_date", ascending=False).iloc[0]

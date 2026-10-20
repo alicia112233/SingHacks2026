@@ -363,6 +363,8 @@ function countdown(hours) {
 
 function followUpInfo(item) {
   if (item.complete) return { key: "resolved", label: "Review recorded · continue monitoring", short: "Reviewed" };
+  // A news breach escalates regardless of score or deadline.
+  if (item.escalation) return { key: "now", label: "ESCALATED", short: "Escalated" };
   const hours = hoursUntil(item.deadline?.date);
   const deadline = item.deadline || {};
   if (hours <= 0) return { key: "now", label: "OVERDUE", short: "Overdue" };
@@ -392,6 +394,7 @@ function buildQueue() {
   })).map((item) => ({ ...item, tier: followUpInfo(item) }))
     .sort((left, right) => (
       Number(left.complete) - Number(right.complete)
+      || Number(Boolean(right.escalation)) - Number(Boolean(left.escalation))
       || TIER_RANK[left.tier.key] - TIER_RANK[right.tier.key]
       || hoursUntil(left.deadline?.date) - hoursUntil(right.deadline?.date)
       || right.score - left.score
@@ -413,7 +416,7 @@ function queueRowHTML(item, nextUpId) {
     <a class="queue-row tier-${item.tier.key}" href="${routeFor("client", item.client_id)}" data-open-client="${esc(item.client_id)}" aria-label="Open client review for ${esc(item.client_name)}">
       <div class="score-ring" style="--score:${item.score}"><b>${item.score}</b></div>
       <div class="client-cell"><strong>${esc(item.client_name)}${nextUp ? '<span class="next-up-tag">Next up</span>' : ""}</strong><span>${esc(item.client_id)} · ${esc(item.booking_centre)} · $${item.aum_usd_m}m</span></div>
-      <div class="cell-copy"><strong>${esc(item.tension)}</strong><span>${esc(item.evidence)}${item.ltv ? ` · ${esc(item.ltv)}` : ""}</span></div>
+      <div class="cell-copy"><strong>${esc(item.tension)}</strong><span>${esc(item.evidence)}${item.ltv ? ` · ${esc(item.ltv)}` : ""}</span>${item.escalation && !item.complete ? `<span class="escalation-note">Escalated by news: ${esc(item.escalation.reason)}. Headline: “${esc(item.escalation.headline)}” · RM to confirm relevance</span>` : ""}</div>
       <div class="cell-copy"><span class="priority-chip ${item.tier.key === "soon" ? "next" : item.tier.key === "now" ? "now" : item.tier.key === "resolved" ? "done" : item.tier.key}">${esc(item.tier.short)}</span><span>${esc(item.complete ? "All actions recorded" : item.next_step)}</span></div>
       <span class="queue-row-arrow" aria-hidden="true">↗</span>
     </a>`;
