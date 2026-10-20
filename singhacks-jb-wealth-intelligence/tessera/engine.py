@@ -1108,6 +1108,8 @@ def _feature_profile(bundle: dict[str, Any], client_id: str) -> dict[str, Any]:
             }
         )
     pressure_card = _priority_card(bundle, client)
+    # Featured deep cases skip the generic branch; the chat assistant still needs their priority.
+    base.setdefault("priority", pressure_card)
     if pressure_card["score"] >= 70:
         base["recommendations"].append(
             {
