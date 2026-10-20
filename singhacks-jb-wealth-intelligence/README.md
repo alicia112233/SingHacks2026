@@ -83,9 +83,16 @@ If the feeds are unavailable, the dashboard loads its last available intelligenc
 Only exposure-relevant headlines pass the deterministic filter; unrelated
 stories are discarded and repeated stories are deduplicated. Approved signals
 are stored separately in `runtime/live_events.json` and merged into the next
-intelligence calculation. Matching clients receive bounded market-event
-pressure of 2, 5 or 8 points for Medium, High or Severe signals. This is a
-review trigger, not an investment forecast or an automatic trade instruction.
+intelligence calculation. A headline adds bounded market-event pressure of 2,
+5 or 8 points (Medium, High or Severe) only when a specific topic, such as oil,
+shipping, property or rates, hits the holdings behind the client's detected
+contradiction. Generic "markets fell" headlines stay visible in the event
+register but do not change urgency. This is a review trigger, not an
+investment forecast or an automatic trade instruction.
+
+For a demo, set `TESSERA_NEWS_FROZEN=true` after a rehearsal: the stored
+register keeps feeding scores, but no new headlines are fetched, so the
+queue on stage matches the rehearsed queue.
 
 The dashboard's latest-event panel links to `/market-events`. Relationship
 Managers can filter the event register with `From` and `To` calendar fields,
