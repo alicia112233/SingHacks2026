@@ -735,6 +735,36 @@ async function acknowledgeUrgencyAlert(clientId, button) {
   }
 }
 
+function queueCard(clientId) {
+  return state.data.book.priority_queue.find((item) => item.client_id === clientId);
+}
+
+// The same breach alert as the queue, so the client page never tells a different story.
+function clientBreachHTML(clientId) {
+  const card = queueCard(clientId);
+  if (!card?.escalation) return "";
+  return `<div class="client-breach"><span class="section-kicker">BREACH ALERT</span>${breachPanelHTML({ ...card, complete: isClientReviewComplete(clientId) })}</div>`;
+}
+
+function detectedFromHTML(clientId) {
+  const card = queueCard(clientId);
+  if (!card?.detections?.length) return "";
+  const names = {
+    "clients.csv: source_of_wealth": "source of wealth",
+    "clients.csv: objectives": "stated objectives",
+    "clients.csv: liquidity_needs": "stated liquidity need",
+    "clients.csv: risk_profile": "risk profile",
+    "holdings.csv: liquidity_tier": "holding liquidity",
+    "holdings.csv: asset_class": "asset mix",
+    "holdings.csv: instrument_ccy": "holding currencies",
+    "holdings.csv: maturities": "bond maturities",
+    "planned_cash_needs.csv": "planned cash needs",
+    "commitments.csv": "fund commitments",
+  };
+  const sources = card.detected_from.map((source) => names[source] || source.replace("rm_notes.json: ", "RM note "));
+  return `<p class="detected-from"><strong>Why this client is flagged:</strong> ${esc(card.tension)}. Detected from ${esc(sources.join(", "))}.</p>`;
+}
+
 function renderClient(clientId) {
   const client = profiles()[clientId];
   if (!client) return;
@@ -745,6 +775,7 @@ function renderClient(clientId) {
       <div><div class="profile-tags"><span>${esc(client.risk_profile)}</span><span>${esc(client.reporting_language)}</span><span>${esc(client.booking_centre)}</span></div><div class="client-aum"><strong>$${client.aum_usd_m}m</strong><small>CURRENT BANK-HELD AUM</small></div></div>
     </div>
     <div class="metric-rail">${client.headline_metrics.map((metric) => `<div><strong>${esc(metric.value)}</strong><span>${esc(metric.label)}</span></div>`).join("")}</div>
+    ${clientBreachHTML(clientId)}
     ${riskAnalysisHTML(client.risk_analysis)}
     ${urgencyAcknowledgementHTML(clientId)}
     <div class="tension-map">
@@ -752,6 +783,7 @@ function renderClient(clientId) {
       <div class="tension-item"><small>PORTFOLIO POSITION</small><p>${esc(client.tension.portfolio_does)}</p></div>
       <div class="tension-item"><small>UPCOMING CONSTRAINT</small><p>${esc(client.tension.future_demands)}</p></div>
     </div>
+    ${detectedFromHTML(clientId)}
 
     <div class="analysis-grid">
       <section class="panel">
@@ -792,10 +824,26 @@ function renderScenarioStudio() {
     </div>`;
 }
 
+const LEDGER_LABELS = {
+  approved: "Approved",
+  edited: "Edited",
+  dismissed: "Dismissed",
+  pending: "Restored",
+  evaluated: "Model review",
+  alternative: "Alternative",
+  escalation_confirmed: "Breach confirmed",
+  escalation_dismissed: "Breach dismissed",
+};
+
 function renderDecisionLedger() {
   const records = [...state.decisions.records].reverse().slice(0, 12);
-  if (!records.length) return `<div class="empty-state ledger-empty"><strong>No decisions recorded</strong><span>Approvals, edits and dismissals from client reviews will appear here.</span></div>`;
-  return `<div class="ledger-list">${records.map((record) => `<article class="ledger-row"><span class="decision-status ${esc(record.action)}">${esc(record.action)}</span><div><strong>${esc(record.recommendation_title)}</strong><p>${esc(record.client_name)} · ${esc(record.actor || "Review service")} · ${recordedDate(record.recorded_at)}</p>${record.note ? `<small>${esc(record.note)}</small>` : ""}</div></article>`).join("")}</div>`;
+  if (!records.length) return `<div class="empty-state ledger-empty"><strong>No decisions recorded</strong><span>Approvals, edits, dismissals and breach alert reviews will appear here.</span></div>`;
+  return `<div class="ledger-list">${records.map((record) => {
+    const breach = record.action?.startsWith("escalation_");
+    const title = breach ? `Breach alert: ${record.headline}` : record.recommendation_title;
+    const detail = breach ? record.reason : record.note;
+    return `<article class="ledger-row"><span class="decision-status ${esc(record.action)}">${esc(LEDGER_LABELS[record.action] || record.action)}</span><div><strong>${esc(title)}</strong><p>${esc(record.client_name)} · ${esc(record.actor || "Review service")} · ${recordedDate(record.recorded_at)}</p>${detail ? `<small>${esc(detail)}</small>` : ""}</div></article>`;
+  }).join("")}</div>`;
 }
 
 function renderGovernance() {
@@ -805,13 +853,13 @@ function renderGovernance() {
     ["01", "Bank records", "Dated positions, portfolios, facilities, needs and RM notes"],
     ["02", "Temporal joins", "As-of views preserve valuation dates and surface stale marks"],
     ["03", "Deterministic gate", "Mandates, exclusions, concentration and source integrity"],
-    ["04", "Three data lenses", "Customer, product and signal evidence stay separately visible"],
-    ["05", "Independent panel", "Predictive readiness and opt-in judges from different providers"],
-    ["06", "RM decision", "Action taken is required before approval and retained in the ledger"],
+    ["04", "Contradiction detection", "Client words compared with look-through holdings, sources cited"],
+    ["05", "News and breach check", "Recent headlines nudge scores; a stress breach raises an alert"],
+    ["06", "RM decision", "Approvals and breach reviews are recorded in the ledger"],
   ];
   $("#governance-view").innerHTML = `
-    <section class="governance-hero"><span class="section-kicker">CONTROLLED BY DESIGN</span><h1>Every review point has an owner, a source and a recorded outcome.</h1><p>TESSERA separates deterministic controls, predictive probability readiness and independent model opinions. Relationship Managers remain accountable for the action taken and the rationale behind it.</p></section>
-    <section class="architecture"><div class="panel-title"><h3>Operating architecture</h3><small>EXTERNAL JUDGES ARE PURPOSE-LIMITED AND OPT-IN</small></div><div class="architecture-flow">${nodes.map((node) => `<div class="architecture-node"><b>${node[0]}</b><strong>${node[1]}</strong><span>${node[2]}</span></div>`).join("")}</div></section>
+    <section class="governance-hero"><span class="section-kicker">CONTROLLED BY DESIGN</span><h1>Every review point has an owner, a source and a recorded outcome.</h1><p>TESSERA keeps three things apart: calculations done by deterministic code, signals read from client records and news, and optional model opinions, which are off by default and can only lower a score. Relationship Managers stay accountable for every action and the reason behind it.</p></section>
+    <section class="architecture"><div class="panel-title"><h3>Operating architecture</h3><small>OPTIONAL MODEL REVIEW IS OFF BY DEFAULT</small></div><div class="architecture-flow">${nodes.map((node) => `<div class="architecture-node"><b>${node[0]}</b><strong>${node[1]}</strong><span>${node[2]}</span></div>`).join("")}</div></section>
     <div class="governance-grid"><section class="panel"><div class="panel-title"><h3>Control framework</h3><small>${esc(governance.recommendation_state)}</small></div><div class="principle-list">${governance.principles.map((principle, index) => `<div class="principle-item"><b>${index + 1}</b><p>${esc(principle)}</p></div>`).join("")}</div></section><section class="panel"><div class="panel-title"><h3>Data fitness before advice</h3><small>${esc(quality.overall)}</small></div><div class="quality-list">${quality.checks.map((item) => `<div class="quality-item"><div><strong>${esc(item.name)}</strong><span>${esc(item.evidence)}</span></div><b class="quality-status ${esc(item.status)}">${esc(item.status)}</b></div>`).join("")}</div></section></div>
     ${rubric ? `<section class="panel confidence-rubric"><div class="panel-title"><div><h3>Recommendation confidence rubric</h3><p>${esc(rubric.meaning)}</p></div><small>VERSION ${esc(rubric.version)} · ${esc(rubric.calibration)}</small></div><div class="rubric-layout"><div class="rubric-weights">${rubric.weights.map((item) => `<div><span>${esc(item.name)}</span><b>${item.weight} pts</b></div>`).join("")}</div><div class="rubric-bands">${rubric.bands.map((item) => `<div><b>${esc(item.range)}</b><strong>${esc(item.label)}</strong><span>${esc(item.action)}</span></div>`).join("")}</div></div></section>` : ""}
     <section class="panel decision-ledger"><div class="panel-title"><h3>Decision ledger</h3><small>${state.decisions.records.length} RECORDED EVENT${state.decisions.records.length === 1 ? "" : "S"}</small></div>${renderDecisionLedger()}</section>`;

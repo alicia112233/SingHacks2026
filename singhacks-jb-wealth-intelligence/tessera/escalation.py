@@ -33,6 +33,23 @@ SEVERITY_FACTOR = {"Severe": 1.0, "High": 0.5, "Medium": 0.25, "Low": 0.1}
 # Hard lines. Crossing any of them escalates regardless of urgency score.
 PORTFOLIO_LOSS_PCT = 5.0
 FUNDING_WINDOW_DAYS = 365
+# Only recent headlines can score or escalate. Age is measured against the
+# newest stored headline, not the wall clock, so a frozen demo register stays
+# identical between rehearsal and stage.
+NEWS_WINDOW_DAYS = 7
+
+
+def recent_live_news(events: pd.DataFrame, as_of: str) -> pd.DataFrame:
+    """Live headlines after the data snapshot and within the news window."""
+
+    if "source_type" not in events:
+        return events.iloc[0:0]
+    news = events[(events.source_type == "live_news") & (events.event_date.astype(str) >= as_of)]
+    if news.empty:
+        return news
+    newest = pd.Timestamp(str(news.event_date.astype(str).max()))
+    cutoff = (newest - pd.Timedelta(days=NEWS_WINDOW_DAYS)).date().isoformat()
+    return news[news.event_date.astype(str) >= cutoff]
 
 
 def _holding_text(current: pd.DataFrame, instruments: pd.DataFrame) -> pd.Series:
@@ -69,9 +86,9 @@ def assess(
     """Return the most serious escalation triggered by post-snapshot live news."""
 
     aum = float(current.market_value_usd.sum())
-    if not aum or "source_type" not in events:
+    if not aum:
         return None
-    news = events[(events.source_type == "live_news") & (events.event_date.astype(str) >= as_of)]
+    news = recent_live_news(events, as_of)
     if news.empty:
         return None
     texts = _holding_text(current, instruments)
