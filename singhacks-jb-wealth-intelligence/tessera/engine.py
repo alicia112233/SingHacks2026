@@ -17,6 +17,7 @@ from typing import Any, Iterable
 
 import pandas as pd
 
+from tessera.contradictions import detect
 from tessera.recommendation_validation import assess, validate_numbers, publish, RUBRIC_VERSION, fingerprint, has_text
 from tessera.review_state import action_version
 from tessera.risk_analysis import analyse_client, order_by_urgency
@@ -24,58 +25,25 @@ from tessera.risk_analysis import analyse_client, order_by_urgency
 
 SEVERITY_ORDER = {"Severe": 3, "High": 2, "Medium": 1, "Low": 0}
 
-CLIENT_RULES: dict[str, dict[str, Any]] = {
-    "CL-0001": {
-        "label": "Diversification promise vs energy exposure",
-        "theme_ids": ["SYN-ST-0101", "SYN-EQ-0008", "SYN-SP-0505"],
-        "theme": "coal, energy and shipping",
-        "goal_points": 34,
-    },
-    "CL-0003": {
-        "label": "Conservative identity vs inherited risk",
-        "goal_points": 38,
-    },
-    "CL-0006": {
-        "label": "USD obligations vs SGD liquidity",
-        "goal_points": 35,
-    },
-    "CL-0011": {
-        "label": "Succession deadline vs illiquid estate",
-        "goal_points": 34,
-    },
-    "CL-0012": {
-        "label": "Lifetime income vs long-duration holdings",
-        "goal_points": 40,
-    },
-    "CL-0014": {
-        "label": "Liquidity need vs one property bet",
-        "theme_ids": ["SYN-AL-0307", "SYN-FI-0207", "SYN-ST-0106", "SYN-SP-0503"],
-        "theme": "Hong Kong property",
-        "goal_points": 40,
-    },
-    "CL-0016": {
-        "label": "JPY retirement vs employer-stock attachment",
-        "goal_points": 30,
-    },
-    "CL-0017": {
-        "label": "Private-market commitments vs gated liquidity",
-        "goal_points": 36,
-    },
-    "CL-0018": {
-        "label": "Luxury-cycle wealth doubled inside the portfolio",
-        "goal_points": 30,
-    },
-    "CL-0019": {
-        "label": "Diversification goal vs shipping-energy look-through",
-        "theme_ids": ["SYN-ST-0104", "SYN-EQ-0008", "SYN-EQ-0025", "SYN-SP-0505"],
-        "theme": "shipping and energy",
-        "goal_points": 39,
-    },
-    "CL-0020": {
-        "label": "Healthcare wealth doubled inside the portfolio",
-        "goal_points": 27,
-    },
-}
+def _detection(bundle: dict[str, Any], client_id: str) -> dict[str, Any]:
+    """Contradictions detected from the client's own record, cached per bundle."""
+
+    cache = bundle.setdefault("_detections", {})
+    if client_id not in cache:
+        as_of = _as_of(bundle)
+        client = bundle["clients"][bundle["clients"].client_id == client_id].iloc[0]
+        current = bundle["holdings"][(bundle["holdings"].client_id == client_id) & (bundle["holdings"].snapshot_date == as_of)]
+        commitments = bundle["commitments"]
+        cache[client_id] = detect(
+            client,
+            current,
+            bundle["instruments"],
+            _cash_need_summary(bundle, client_id),
+            float(commitments.loc[commitments.client_id == client_id, "uncalled"].sum()),
+            [n for n in bundle["rm_notes"] if n["client_id"] == client_id],
+            as_of,
+        )
+    return cache[client_id]
 
 
 def _records(df: pd.DataFrame) -> list[dict[str, Any]]:
@@ -363,7 +331,8 @@ def _priority_card(bundle: dict[str, Any], client_row: Any) -> dict[str, Any]:
     aum = float(client_row.total_aum_usd)
     as_of = _as_of(bundle)
     current = bundle["holdings"][(bundle["holdings"].client_id == client_id) & (bundle["holdings"].snapshot_date == as_of)]
-    rule = CLIENT_RULES.get(client_id, {})
+    detection = _detection(bundle, client_id)
+    primary = detection["primary"]
     findings = _mandate_findings(bundle, client_id)
     needs = _cash_need_summary(bundle, client_id)
     daily = float(current.loc[current.liquidity_tier == "Daily", "market_value_usd"].sum())
@@ -395,7 +364,7 @@ def _priority_card(bundle: dict[str, Any], client_row: Any) -> dict[str, Any]:
     if needs and min(n["due_from"] for n in needs) <= year_end:
         time_pressure = min(15.0, time_pressure + 6.0)
 
-    goal_pressure = float(rule.get("goal_points", 8.0))
+    goal_pressure = float(detection["goal_points"])
     appetite_adjustment, alignment_pressure, risk_share, target_risk_share = _risk_urgency_adjustments(
         client_row, current, aum
     )
@@ -438,34 +407,13 @@ def _priority_card(bundle: dict[str, Any], client_row: Any) -> dict[str, Any]:
         deadline_date = (as_of_dt + timedelta(hours=follow_hours)).isoformat()
         deadline_type = "RM follow-up"
 
-    if rule.get("theme_ids"):
-        exposure = _theme_exposure(current, rule["theme_ids"], aum)
-        evidence_line = f"{exposure:.1f}% linked to {rule['theme']} before outside wealth"
-    elif client_id == "CL-0012":
-        fi = float(current.loc[current.asset_class == "Fixed Income", "market_value_usd"].sum()) / aum * 100
-        maturity_years = [_maturity_year(name) for name in current.instrument_name]
-        longest_maturity = max((year for year in maturity_years if year), default="not recorded")
-        evidence_line = f"{fi:.1f}% fixed income; longest recorded maturity is {longest_maturity}"
-    elif client_id == "CL-0006":
-        usd_need = sum(n["amount_usd_m"] for n in needs if n["currency"] == "USD")
-        evidence_line = f"USD {usd_need:.1f}m needs; gated fund redemption pending"
-    elif client_id == "CL-0017":
-        commitments = bundle["commitments"]
-        uncalled = float(commitments.loc[commitments.client_id == client_id, "uncalled"].sum())
-        evidence_line = f"USD {uncalled / 1_000_000:.1f}m uncalled commitments"
+    if primary:
+        evidence_line = primary["evidence"]
     elif findings:
         evidence_line = findings[0]["label"]
     else:
         evidence_line = f"{gated / aum * 100:.1f}% gated or illiquid"
-
-    next_step = {
-        "CL-0012": "Verify annual draw; prepare duration ladder conversation",
-        "CL-0014": "Stress lending value before discussing redevelopment funding",
-        "CL-0019": "Rehearse Strait-reopening downside and ring-fence seed capital",
-        "CL-0006": "Build a currency-matched liquidity ladder",
-        "CL-0003": "Separate tax reserve before inherited-risk review",
-        "CL-0017": "Take a full liquidity map to the October investment committee",
-    }.get(client_id, "Review the highest-evidence gap with the client")
+    next_step = primary["next_step"] if primary else "Review the highest-evidence gap with the client"
 
     return {
         "client_id": client_id,
@@ -478,7 +426,12 @@ def _priority_card(bundle: dict[str, Any], client_row: Any) -> dict[str, Any]:
         "target_risk_share": _round(target_risk_share * 100, 1),
         "priority": "Now" if score >= 70 else "Next" if score >= 45 else "Watch",
         "deadline": {"date": deadline_date, "type": deadline_type},
-        "tension": rule.get("label", "Portfolio evidence requires review"),
+        "tension": primary["label"] if primary else "Portfolio evidence requires review",
+        "detected_from": primary["sources"] if primary else [],
+        "detections": [
+            {key: item[key] for key in ("kind", "label", "points", "evidence", "sources")}
+            for item in detection["detections"]
+        ],
         "evidence": evidence_line,
         "next_step": next_step,
         "aum_usd_m": _round(aum / 1_000_000, 1),
@@ -798,7 +751,7 @@ def _feature_profile(bundle: dict[str, Any], client_id: str) -> dict[str, Any]:
         )
 
     elif client_id == "CL-0014":
-        linked_ids = CLIENT_RULES[client_id]["theme_ids"]
+        linked_ids = _detection(bundle, client_id)["theme_ids"]
         exposure = _theme_exposure(current, linked_ids, aum)
         linked_count = int(current.instrument_id.isin(linked_ids).sum())
         ltv = _ltv_trigger_buffer(bundle, client_id)
@@ -899,7 +852,7 @@ def _feature_profile(bundle: dict[str, Any], client_id: str) -> dict[str, Any]:
         )
 
     elif client_id == "CL-0019":
-        linked_ids = CLIENT_RULES[client_id]["theme_ids"]
+        linked_ids = _detection(bundle, client_id)["theme_ids"]
         exposure = _theme_exposure(current, linked_ids, aum)
         reopen = _scenario_impact(
             current,
@@ -1191,7 +1144,7 @@ def _action_numeric_evidence(bundle, profile, recommendation):
     if kind == "outside_wealth":
         holdings = bundle["holdings"]
         current = holdings[(holdings.client_id == profile["client_id"]) & (holdings.snapshot_date == as_of)]
-        ids = CLIENT_RULES.get(profile["client_id"], {}).get("theme_ids", [])
+        ids = _detection(bundle, profile["client_id"])["theme_ids"]
         if ids and current.market_value_usd.sum():
             add(_theme_exposure(current, ids, float(current.market_value_usd.sum())), "percent", "holdings.csv+instruments.csv:" + profile["client_id"], "theme_exposure_pct")
     if kind in {"mandate", "movement"}:
