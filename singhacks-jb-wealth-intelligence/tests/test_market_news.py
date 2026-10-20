@@ -242,6 +242,39 @@ class MarketNewsTests(unittest.TestCase):
         after = {c["client_id"]: c["score"] for c in updated["book"]["priority_queue"]}
         self.assertEqual(before, after)
 
+    def _payload_with_headline(self, description, severity):
+        with tempfile.TemporaryDirectory() as directory, mock.patch.dict(
+            "os.environ", {"TESSERA_LIVE_NEWS_ENABLED": "true"}, clear=True
+        ):
+            state = Path(directory) / "live_events.json"
+            state.write_text(json.dumps([{
+                "event_id": "rss:escalation", "event_date": "2026-09-21",
+                "event_type": "Live market signal", "region": "Global", "description": description,
+                "primary_transmission": "Global risk assets", "severity": severity,
+                "source": "https://example.test/escalation", "source_type": "live_news", "status": "approved",
+            }]), encoding="utf-8")
+            payload = build_intelligence_payload(ROOT / "data", state)
+        return {card["client_id"]: card for card in payload["book"]["priority_queue"]}
+
+    def test_severe_headline_escalates_exposed_clients_beyond_capacity(self):
+        cards = self._payload_with_headline("Strait of Hormuz closure halts oil tanker shipping", "Severe")
+        escalated = {cid for cid, card in cards.items() if card["escalation"]}
+        self.assertIn("CL-0019", escalated)
+        abdullah = cards["CL-0019"]
+        self.assertEqual(abdullah["escalation"]["kind"], "portfolio_loss")
+        self.assertEqual(abdullah["priority"], "Now")
+        self.assertLess(abdullah["score"], 70)  # escalated by the breach, not by points
+        self.assertGreater(sum(card["priority"] == "Now" for card in cards.values()), 5)
+
+    def test_thin_margin_cushion_escalates_on_moderate_property_news(self):
+        cards = self._payload_with_headline("Hong Kong property market softens", "Medium")
+        self.assertEqual(cards["CL-0014"]["escalation"]["kind"], "margin_call")
+        self.assertIn("margin-call trigger", cards["CL-0014"]["escalation"]["reason"])
+
+    def test_generic_headline_escalates_no_one(self):
+        cards = self._payload_with_headline("All three major indices fell as global markets slid", "Severe")
+        self.assertFalse(any(card["escalation"] for card in cards.values()))
+
     def test_frozen_news_keeps_the_stored_register_without_fetching(self):
         with tempfile.TemporaryDirectory() as directory, mock.patch.dict(
             "os.environ", {"TESSERA_LIVE_NEWS_ENABLED": "true", "TESSERA_NEWS_FROZEN": "true"}, clear=True

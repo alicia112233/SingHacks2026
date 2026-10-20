@@ -90,6 +90,13 @@ contradiction. Generic "markets fell" headlines stay visible in the event
 register but do not change urgency. This is a review trigger, not an
 investment forecast or an automatic trade instruction.
 
+Points stay bounded so ordinary news cannot dominate the queue. A separate
+escalation lane (`tessera/escalation.py`) handles a bad day: it applies an
+illustrative downside stress to the holdings a headline touches and marks the
+client Escalated, outside the five-slot capacity, when the stress breaches the
+margin-call trigger, opens a 12-month funding gap or costs 5% of bank-held
+assets. The card shows the headline and reason, and the RM confirms relevance.
+
 For a demo, set `TESSERA_NEWS_FROZEN=true` after a rehearsal: the stored
 register keeps feeding scores, but no new headlines are fetched, so the
 queue on stage matches the rehearsed queue.

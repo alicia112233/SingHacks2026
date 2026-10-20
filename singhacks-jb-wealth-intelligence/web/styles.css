@@ -778,3 +778,14 @@ nav { display: grid; gap: 7px; }
 .dismiss-reason small { color: var(--muted); font-size: 10px; }
 
 .needs-correction { margin-top: 24px; padding-top: 24px; border-top: 2px solid #c87962; }
+
+.escalation-note {
+  display: block;
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-left: 3px solid var(--now);
+  background: var(--now-soft);
+  color: var(--now);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
