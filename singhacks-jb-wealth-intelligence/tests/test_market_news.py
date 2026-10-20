@@ -219,8 +219,39 @@ class MarketNewsTests(unittest.TestCase):
             for card in updated["book"]["priority_queue"]
         }
         self.assertEqual(set(pressure), set(profiles))
-        self.assertTrue(all(value == (8 if client_id in energy_clients else 5)
-                            for client_id, value in pressure.items()))
+        # Generic market headlines stay visible but no longer score; the oil and
+        # shipping story scores only where energy or shipping is the detected story.
+        self.assertEqual({c for c, value in pressure.items() if value}, {"CL-0001", "CL-0019"})
+        self.assertTrue(all(value in (0, 8) for value in pressure.values()))
+
+    def test_generic_headline_does_not_move_any_score(self):
+        baseline = build_intelligence_payload(ROOT / "data")
+        with tempfile.TemporaryDirectory() as directory, mock.patch.dict(
+            "os.environ", {"TESSERA_LIVE_NEWS_ENABLED": "true"}, clear=True
+        ):
+            state = Path(directory) / "live_events.json"
+            state.write_text(json.dumps([{
+                "event_id": "rss:generic", "event_date": "2026-09-21",
+                "event_type": "Live market signal", "region": "Global",
+                "description": "All three major indices fell as global markets slid",
+                "primary_transmission": "Global risk assets", "severity": "Severe",
+                "source": "https://example.test/generic", "source_type": "live_news", "status": "approved",
+            }]), encoding="utf-8")
+            updated = build_intelligence_payload(ROOT / "data", state)
+        before = {c["client_id"]: c["score"] for c in baseline["book"]["priority_queue"]}
+        after = {c["client_id"]: c["score"] for c in updated["book"]["priority_queue"]}
+        self.assertEqual(before, after)
+
+    def test_frozen_news_keeps_the_stored_register_without_fetching(self):
+        with tempfile.TemporaryDirectory() as directory, mock.patch.dict(
+            "os.environ", {"TESSERA_LIVE_NEWS_ENABLED": "true", "TESSERA_NEWS_FROZEN": "true"}, clear=True
+        ), mock.patch("tessera.market_news.urlopen") as fetch:
+            state = Path(directory) / "live_events.json"
+            state.write_text(json.dumps([{"event_id": "rss:kept", "event_date": "2026-09-01"}]), encoding="utf-8")
+            result = refresh(ROOT / "data", state)
+        fetch.assert_not_called()
+        self.assertEqual(result["status"], "frozen")
+        self.assertEqual([e["event_id"] for e in result["events"]], ["rss:kept"])
 
 
 if __name__ == "__main__":

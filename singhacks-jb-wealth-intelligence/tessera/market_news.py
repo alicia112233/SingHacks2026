@@ -50,6 +50,12 @@ def enabled() -> bool:
     return os.environ.get("TESSERA_LIVE_NEWS_ENABLED", "true").lower() in {"1", "true", "yes"}
 
 
+def frozen() -> bool:
+    """Keep the stored register but stop fetching, so a rehearsed demo stays identical."""
+
+    return os.environ.get("TESSERA_NEWS_FROZEN", "false").lower() in {"1", "true", "yes"}
+
+
 def _feed_urls() -> tuple[str, ...]:
     configured = os.environ.get("TESSERA_NEWS_FEEDS", "").strip()
     if configured:
@@ -140,6 +146,8 @@ def refresh(data_dir: str | Path, state_path: str | Path) -> dict[str, object]:
 
     if not enabled():
         return {"status": "disabled", "added": 0, "events": _read(Path(state_path))}
+    if frozen():
+        return {"status": "frozen", "added": 0, "events": _read(Path(state_path))}
     feeds = _feed_urls()
     if not feeds:
         raise RuntimeError("No market-news feeds are configured")

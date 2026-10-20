@@ -317,12 +317,38 @@ def _live_event_relevance(description: str, exposure: str) -> int:
     return 1 if re.search(r"\b(?:market|markets|equities)\b", headline) and "equity" in exposure else 0
 
 
+def _client_story_exposure(bundle: dict[str, Any], client_id: str) -> str:
+    """Text of the holdings behind the client's detected contradictions.
+
+    News moves urgency only when it hits this story. A generic "markets fell"
+    headline still appears in the event register but no longer scores.
+    """
+
+    detection = _detection(bundle, client_id)
+    parts = []
+    if (detection["theme_exposure_pct"] or 0) >= 10:
+        instruments = bundle["instruments"].set_index("instrument_id")
+        for instrument_id in detection["theme_ids"]:
+            row = instruments.loc[instrument_id]
+            parts.append(" ".join(str(v) for v in (row.instrument_name, row.sector, row.underlying_reference)))
+    if any(item["kind"] == "duration" for item in detection["detections"]):
+        parts.append("fixed income bond treasury credit")
+    return " ".join(parts).lower()
+
+
 def _live_event_pressure(bundle: dict[str, Any], client_id: str, as_of: str) -> int:
+    story = _client_story_exposure(bundle, client_id)
+    if not story:
+        return 0
+    events = bundle["event_log"]
+    if "source_type" not in events:
+        return 0
     pressure = 0
-    for event in _linked_events(bundle, client_id):
-        if str(event["date"]) < as_of:
-            continue
-        pressure = max(pressure, {"Severe": 8, "High": 5, "Medium": 2}.get(event["severity"], 1))
+    for row in events[events.source_type == "live_news"].itertuples():
+        # Relevance 2 means a specific topic (oil, shipping, property, rates...)
+        # matched the story; 1 is a generic market headline and does not score.
+        if str(row.event_date) >= as_of and _live_event_relevance(str(row.description), story) == 2:
+            pressure = max(pressure, {"Severe": 8, "High": 5, "Medium": 2}.get(row.severity, 1))
     return pressure
 
 
