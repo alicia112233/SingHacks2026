@@ -21,6 +21,7 @@ from tessera.contradictions import detect
 from tessera.escalation import NEWS_TOPICS, assess as assess_escalation, recent_live_news
 from tessera.recommendation_validation import assess, validate_numbers, publish, RUBRIC_VERSION, fingerprint, has_text
 from tessera.review_state import action_version
+from tessera.evaluation import wording_fingerprint
 from tessera.risk_analysis import analyse_client, order_by_urgency
 
 
@@ -1592,6 +1593,8 @@ def build_intelligence_payload(
         for recommendation in profile["recommendations"] + profile["alternative_candidates"]:
             recommendation["id"] = profile["client_id"] + ":" + fingerprint([recommendation["assessment_kind"], recommendation["title"], recommendation.get("source_key")])[:20]
             recommendation["evidence_version"] = profile["evidence_version"]
+            # Lets the model panel tell code-generated wording from RM-edited free text.
+            recommendation["wording_fingerprint"] = wording_fingerprint(recommendation)
             recommendation["risk_validation"] = _recommendation_risk_validation(
                 bundle, profile, recommendation
             )

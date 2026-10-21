@@ -800,3 +800,7 @@ nav { display: grid; gap: 7px; }
 .client-breach .breach-panel { padding-left: 20px; }
 .detected-from { margin: -6px 0 22px; font-size: 13px; color: var(--muted); }
 .detected-from strong { color: var(--ink, inherit); }
+.model-packet { margin: 18px 0 8px; border: 1px solid var(--line); background: #fff; }
+.model-packet summary { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; padding: 12px 16px; cursor: pointer; }
+.model-packet summary span { color: var(--muted); font-size: 12px; }
+.model-packet pre { max-height: 320px; margin: 0; padding: 12px 16px; overflow: auto; border-top: 1px solid var(--line); font-size: 11px; line-height: 1.45; white-space: pre-wrap; }

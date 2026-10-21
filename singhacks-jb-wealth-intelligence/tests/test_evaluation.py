@@ -85,5 +85,60 @@ class EvaluationProviderTests(unittest.TestCase):
         self.assertIn("run the panel again", result["error"])
 
 
+class DeidentifiedPacketTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        from pathlib import Path
+        from tessera.engine import build_intelligence_payload
+
+        cls.payload = build_intelligence_payload(Path(__file__).resolve().parents[1] / "data")
+        cls.client = cls.payload["client_profiles"]["CL-0019"]
+
+    def test_models_see_the_action_and_profile_but_not_the_client(self):
+        from tessera.evaluation import _evaluation_packet
+
+        packet = _evaluation_packet(self.client, self.client["recommendations"][0])
+        encoded = json.dumps(packet)
+        self.assertEqual(packet["proposed_action"]["title"], "Ring-fence the family-office seed capital")
+        self.assertEqual(packet["client_profile"]["risk_profile"], "Balanced Growth")
+        self.assertEqual(packet["client_profile"]["aum_band"], "USD 25-50m")
+        self.assertEqual(packet["client_profile"]["detected_contradictions"][0]["kind"], "wealth_concentration")
+        for private in ("Abdullah", "Mansoori", "CL-0019", "United Arab Emirates", "outside the Gulf region", "N-025", "32.21"):
+            self.assertNotIn(private, encoded)
+
+    def test_rm_edited_wording_is_withheld(self):
+        from tessera.evaluation import _evaluation_packet
+
+        edited = {**self.client["recommendations"][0], "detail": "Call Abdullah about his Dubai accounts"}
+        packet = _evaluation_packet(self.client, edited)
+        self.assertNotIn("detail", packet["proposed_action"])
+        self.assertIn("Withheld", packet["proposed_action"]["wording"])
+
+    def test_privacy_check_blocks_identifying_packets_before_any_model_runs(self):
+        from tessera.evaluation import _evaluation_packet, evaluate_recommendation, outbound_privacy_check
+
+        packet = _evaluation_packet(self.client, self.client["recommendations"][0])
+        self.assertEqual(outbound_privacy_check(packet, self.client)["status"], "Passed")
+        packet["client_profile"]["detected_contradictions"].append({"kind": "liquidity", "summary": "Abdullah Al-Mansoori CL-0019"})
+        self.assertEqual(set(outbound_privacy_check(packet, self.client)["issues"]), {"client ID", "client name"})
+
+        leaky = json.loads(json.dumps(self.payload))
+        leaky["client_profiles"]["CL-0019"]["priority"]["detections"][0]["label"] = "Abdullah wants out of shipping"
+        with mock.patch.dict("os.environ", {"TESSERA_EXTERNAL_JUDGES_ENABLED": "true", "AI_GATEWAY_API_KEY": "key"}), \
+                mock.patch("tessera.evaluation._call_judge") as judge:
+            result = evaluate_recommendation(leaky, "CL-0019", 0)
+        judge.assert_not_called()
+        self.assertEqual(result["privacy_check"]["status"], "Blocked")
+        self.assertTrue(all("privacy check blocked" in j["reason"] for j in result["judges"]))
+
+    def test_evaluation_records_what_was_sent(self):
+        from tessera.evaluation import evaluate_recommendation
+        from tessera.recommendation_validation import fingerprint
+
+        result = evaluate_recommendation(self.payload, "CL-0019", 0)
+        self.assertEqual(result["packet_fingerprint"], fingerprint(result["packet"]))
+        self.assertEqual(result["privacy_check"]["status"], "Passed")
+
+
 if __name__ == "__main__":
     unittest.main()
