@@ -175,7 +175,7 @@ class TesseraHandler(SimpleHTTPRequestHandler):
                 except (OSError, RuntimeError):
                     self._send_json({"error": "Market news is temporarily unavailable"}, HTTPStatus.SERVICE_UNAVAILABLE)
             elif path == "/api/notifications/urgency/scan":
-                self._send_json(scan_urgency_alerts(intelligence, URGENCY_ALERTS))
+                self._send_json(scan_urgency_alerts(reviewed_intelligence(intelligence, DECISIONS.snapshot()), URGENCY_ALERTS))
             elif path == "/api/notifications/urgency/acknowledge":
                 if not isinstance(body, dict):
                     raise ValueError("Request body must be an object")
@@ -257,7 +257,7 @@ def _start_urgency_monitor() -> threading.Thread | None:
     def monitor() -> None:
         while not URGENCY_MONITOR_STOP.is_set():
             try:
-                result = scan_urgency_alerts(INTELLIGENCE.get(), URGENCY_ALERTS)
+                result = scan_urgency_alerts(reviewed_intelligence(INTELLIGENCE.get(), DECISIONS.snapshot()), URGENCY_ALERTS)
                 sent = result["initial"] + result["reminded"] + result["escalated"]
                 if sent:
                     print(f"TESSERA • sent urgency alerts for {', '.join(sent)}")

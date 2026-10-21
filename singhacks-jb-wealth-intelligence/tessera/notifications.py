@@ -102,13 +102,6 @@ class TelegramNotifier:
     ) -> None:
         """Send an alert requesting human review, never an execution instruction."""
 
-        token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
-        chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
-        if not token or not chat_id:
-            raise TelegramNotificationError(
-                "Telegram is not configured. Add TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID to .env.local."
-            )
-
         client_id = str(client.get("client_id", "")).strip()
         score = client.get("score")
         if not client_id or not isinstance(score, (int, float)):
@@ -130,6 +123,32 @@ class TelegramNotifier:
             f"Next step: {html.escape(str(client.get('next_step', 'Open TESSERA and review the evidence.')))}\n\n"
             "RM review is required. This is not a forecast and does not approve a trade or client action."
         )
+        self._send(message)
+
+    def send_breach_alert(self, client: dict[str, Any], escalation: dict[str, Any]) -> None:
+        """Tell the RM that news may have breached a portfolio line; the RM confirms or dismisses it."""
+
+        client_id = str(client.get("client_id", "")).strip()
+        if not client_id or not escalation.get("reason"):
+            raise TelegramNotificationError("Breach alert is missing a client reference or reason.")
+        message = (
+            "<b>TESSERA • breach alert</b>\n\n"
+            f"Client reference: <code>{html.escape(client_id)}</code>\n"
+            f"What crossed the line: {html.escape(str(escalation['reason']))}.\n"
+            f"Headline ({html.escape(str(escalation.get('severity', '')))}, {html.escape(str(escalation.get('date', '')))}): "
+            f"{html.escape(str(escalation.get('headline', '')))}\n"
+            "Next step: open the client in TESSERA and confirm or dismiss the alert.\n\n"
+            "This is an illustrative stress test, not a forecast, and it does not approve a trade or client action."
+        )
+        self._send(message)
+
+    def _send(self, message: str) -> None:
+        token = os.environ.get("TELEGRAM_BOT_TOKEN", "").strip()
+        chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
+        if not token or not chat_id:
+            raise TelegramNotificationError(
+                "Telegram is not configured. Add TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID to .env.local."
+            )
         payload = json.dumps(
             {
                 "chat_id": chat_id,
@@ -228,8 +247,12 @@ def scan_urgency_alerts(intelligence, alert_store, *, now=None):
         raise ValueError("Priority queue is unavailable.")
     current_time = now or _now()
     notifier = TelegramNotifier()
+    if notifier.configuration_status() != "configured":
+        # Nothing can be delivered, so record nothing; alerts start once Telegram is set up.
+        return {"status": "not_configured", "policy": policy}
     result = {"status": "completed", "policy": policy, "qualified": 0,
               "initial": [], "reminded": [], "escalated": [], "acknowledged": [], "below_threshold": []}
+    result["breach_alerted"] = []
     for client in queue:
         if not isinstance(client, dict) or not client.get("client_id") or not finite(client.get("score")):
             continue
@@ -238,4 +261,18 @@ def scan_urgency_alerts(intelligence, alert_store, *, now=None):
         category = alert_store.transact(client_id, lambda existing: _scan_client(client, intelligence, existing, policy, current_time, notifier))
         if category:
             result[category].append(client_id)
+        escalation = client.get("escalation")
+        # One message per breach, and none once the RM has confirmed or dismissed it.
+        if isinstance(escalation, dict) and escalation.get("id") and not escalation.get("review"):
+            if alert_store.transact(f"breach:{client_id}", lambda existing: _scan_breach(client, escalation, existing, current_time, notifier)):
+                result["breach_alerted"].append(client_id)
     return result
+
+
+def _scan_breach(client, escalation, existing, current_time, notifier):
+    """Called under the store transaction so two scans cannot send the same breach twice."""
+    if existing and existing.get("escalation_id") == escalation["id"]:
+        return existing, False
+    notifier.send_breach_alert(client, escalation)
+    return {"client_id": client["client_id"], "escalation_id": escalation["id"], "kind": escalation.get("kind"),
+            "headline": escalation.get("headline"), "sent_at": current_time.isoformat()}, True

@@ -18,10 +18,27 @@ from tessera.notifications import (
 class FakeNotifier:
     def __init__(self):
         self.alerts: list[tuple[str, str, int | None]] = []
+        self.breaches: list[tuple[str, str]] = []
+
+    def configuration_status(self):
+        return "configured"
 
     def send_urgency_alert(self, client, *, kind, previous_score, potential_impact):
         assert "not a forecast" in potential_impact.lower() or "material review" in potential_impact.lower()
         self.alerts.append((client["client_id"], kind, previous_score))
+
+    def send_breach_alert(self, client, escalation):
+        self.breaches.append((client["client_id"], escalation["id"]))
+
+
+def breach_intelligence(escalation_id: str, review: dict | None = None) -> dict:
+    escalation = {"id": escalation_id, "kind": "margin_call", "reason": "Stressed lending value falls 1.0% against a 0.8% cushion",
+                  "headline": "Hong Kong property market softens", "severity": "Medium", "date": "2026-10-20"}
+    if review:
+        escalation["review"] = review
+    payload = intelligence(60)
+    payload["book"]["priority_queue"][0]["escalation"] = escalation
+    return payload
 
 
 def intelligence(score: int) -> dict:
@@ -62,6 +79,31 @@ class NotificationTests(unittest.TestCase):
         assert notifier.alerts == [("CL-TEST", "initial", None), ("CL-TEST", "reminder", 85)]
 
 
+    def test_breach_alert_is_sent_once_and_never_after_rm_review(self):
+        notifier = FakeNotifier()
+        patcher = mock.patch("tessera.notifications.TelegramNotifier", return_value=notifier)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+        store = UrgencyAlertStore(self.path / "alerts.json")
+
+        first = scan_urgency_alerts(breach_intelligence("b1"), store)
+        repeat = scan_urgency_alerts(breach_intelligence("b1"), store)
+        reviewed = scan_urgency_alerts(breach_intelligence("b2", {"status": "dismissed"}), store)
+        new_breach = scan_urgency_alerts(breach_intelligence("b3"), store)
+
+        assert first["breach_alerted"] == ["CL-TEST"]
+        assert repeat["breach_alerted"] == []
+        assert reviewed["breach_alerted"] == []
+        assert new_breach["breach_alerted"] == ["CL-TEST"]
+        assert notifier.breaches == [("CL-TEST", "b1"), ("CL-TEST", "b3")]
+        assert notifier.alerts == []  # a score of 60 stays below the urgency threshold
+
+    def test_unconfigured_telegram_sends_and_records_nothing(self):
+        store = UrgencyAlertStore(self.path / "alerts.json")
+        result = scan_urgency_alerts(breach_intelligence("b1"), store)
+        assert result["status"] == "not_configured"
+        assert not (self.path / "alerts.json").exists()
+
     def test_acknowledgement_pauses_reminder_but_not_material_escalation(self):
         notifier = FakeNotifier()
         patcher = mock.patch("tessera.notifications.TelegramNotifier", return_value=notifier)
@@ -82,6 +124,7 @@ class NotificationTests(unittest.TestCase):
     def test_concurrent_scans_send_once_across_store_instances(self):
         started, release = threading.Event(), threading.Event()
         notifier = mock.Mock()
+        notifier.configuration_status.return_value = "configured"
         def send(*args, **kwargs):
             started.set()
             self.assertTrue(release.wait(3))
@@ -99,6 +142,7 @@ class NotificationTests(unittest.TestCase):
     def test_acknowledgement_is_not_overwritten_by_inflight_scan(self):
         started, release = threading.Event(), threading.Event()
         notifier = mock.Mock()
+        notifier.configuration_status.return_value = "configured"
         def send(*args, **kwargs):
             started.set()
             self.assertTrue(release.wait(3))
@@ -117,6 +161,7 @@ class NotificationTests(unittest.TestCase):
         path = self.path / "alerts.json"
         path.write_text("broken JSON", encoding="utf-8")
         with mock.patch("tessera.notifications.TelegramNotifier") as notifier:
+            notifier.return_value.configuration_status.return_value = "configured"
             with self.assertRaisesRegex(ValueError, "refusing to resend"):
                 scan_urgency_alerts(intelligence(85), UrgencyAlertStore(path))
             notifier.return_value.send_urgency_alert.assert_not_called()

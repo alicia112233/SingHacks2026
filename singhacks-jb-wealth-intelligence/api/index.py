@@ -234,7 +234,7 @@ def urgency_notification_scan():
     """Run the score threshold check on demand or from a scheduler."""
 
     try:
-        return jsonify(scan_urgency_alerts(INTELLIGENCE.get(), urgency_alert_store()))
+        return jsonify(scan_urgency_alerts(current_intelligence(), urgency_alert_store()))
     except TelegramNotificationError as error:
         return jsonify(error=str(error)), HTTPStatus.SERVICE_UNAVAILABLE
     except (TypeError, ValueError) as error:
@@ -275,7 +275,7 @@ def scheduled_urgency_scan():
     if not secret or not hmac.compare_digest(request.headers.get("Authorization", ""), expected):
         return jsonify(error="Unauthorized"), HTTPStatus.UNAUTHORIZED
     try:
-        return jsonify(scan_urgency_alerts(INTELLIGENCE.get(), urgency_alert_store()))
+        return jsonify(scan_urgency_alerts(current_intelligence(), urgency_alert_store()))
     except TelegramNotificationError as error:
         return jsonify(error=str(error)), HTTPStatus.SERVICE_UNAVAILABLE
     except Exception:

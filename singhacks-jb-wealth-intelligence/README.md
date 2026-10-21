@@ -49,6 +49,10 @@ outbound alerts. With credentials configured, the local server starts its
 monitor automatically unless `TESSERA_URGENCY_MONITOR_ENABLED=false`.
 Defaults are an hourly scan, an urgency threshold of 80/100, and a 24-hour
 reminder interval. Escalation and acknowledgement state are persisted.
+Each new news breach alert is also sent once, with the client reference,
+the breached line and the headline; no message follows once the RM has
+confirmed or dismissed it. Without credentials, scans skip delivery and
+record nothing.
 See `.env.example` for policy settings and [deployment setup](DEPLOYMENT.md)
 for hosted scheduling. Configuring credentials enables real message delivery.
 
