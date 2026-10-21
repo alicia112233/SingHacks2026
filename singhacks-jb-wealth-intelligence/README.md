@@ -58,12 +58,12 @@ for hosted scheduling. Configuring credentials enables real message delivery.
 
 ## Main routes
 
-- `/` — daily book review
-- `/clients/{client_id}` — client review room
-- `/market-events` — all controlled and relevant live market events, with source links, calendar filters, severity/source filters, and newest/oldest sorting
-- `/scenario-studio` — adjustable portfolio scenarios
-- `/evidence-ledger` — controls, data fitness and decision history
-- `/health` — service health
+- `/`: daily book review
+- `/clients/{client_id}`: client review room
+- `/market-events`: all controlled and relevant live market events, with source links, calendar filters, severity/source filters, and newest/oldest sorting
+- `/scenario-studio`: adjustable portfolio scenarios
+- `/evidence-ledger`: controls, data fitness and decision history
+- `/health`: service health
 
 ## Verification
 

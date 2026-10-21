@@ -758,7 +758,7 @@ def _feature_profile(bundle: dict[str, Any], client_id: str) -> dict[str, Any]:
                     },
                 ],
                 "conversation": {
-                    "open": "You were right to ask why a ‘safe’ portfolio can still fall. The issue is not whether the bonds repay—it is whether their timetable still fits yours.",
+                    "open": "You were right to ask why a ‘safe’ portfolio can still fall. The issue is not whether the bonds repay. It is whether their timetable still fits yours.",
                     "show": f"One page: the {structured_need['currency']} {structured_need['amount_usd_m']:.2f}m annual need, the {maturity_year} maturity, and two rate sensitivities.",
                     "ask": f"Before we change anything, does the recorded annual need of {structured_need['currency']} {structured_need['amount_usd_m']:.2f}m reflect your current draw?",
                     "avoid": "Do not lead with total return or tell him to wait for recovery.",
@@ -839,7 +839,7 @@ def _feature_profile(bundle: dict[str, Any], client_id: str) -> dict[str, Any]:
                     {
                         "assessment_kind": "credit",
                         "title": "Protect the facility before funding the project",
-                        "detail": f"Treat the {ltv['currency']} {ltv['lending_value_buffer_m']:.2f}m trigger buffer—not reported headroom—as the binding constraint.",
+                        "detail": f"Treat the {ltv['currency']} {ltv['lending_value_buffer_m']:.2f}m trigger buffer, not reported headroom, as the binding constraint.",
                         "suitability": "Credit review required",
                         "reversible": True,
                     },
@@ -1645,7 +1645,7 @@ def build_intelligence_payload(
             client_id: client_profiles[client_id] for client_id in focus_client_ids
         },
         "governance": {
-            "recommendation_state": "Draft — RM approval required",
+            "recommendation_state": "Draft: RM approval required",
             "confidence_rubric": {
                 "version": RUBRIC_VERSION,
                 "meaning": "Evidence and control confidence, not probability of investment success.",

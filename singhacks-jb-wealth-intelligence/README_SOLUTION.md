@@ -1,4 +1,4 @@
-# TESSERA — Wealth Decision Intelligence
+# TESSERA: Wealth Decision Intelligence
 
 TESSERA is an internal advisory workspace that helps Relationship Managers decide which client situations need attention, prepare the supporting analysis and record the resulting decision.
 
