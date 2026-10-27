@@ -269,7 +269,12 @@ class MarketNewsTests(unittest.TestCase):
     def test_thin_margin_cushion_escalates_on_moderate_property_news(self):
         cards = self._payload_with_headline("Hong Kong property market softens", "Medium")
         self.assertEqual(cards["CL-0014"]["escalation"]["kind"], "margin_call")
-        self.assertIn("margin-call trigger", cards["CL-0014"]["escalation"]["reason"])
+        alert = cards["CL-0014"]["escalation"]
+        # Flags exposure and what to check; the stress figure is supporting detail, not a prediction.
+        self.assertIn("margin-call level", alert["reason"])
+        self.assertIn("Check collateral", alert["check"])
+        self.assertIn("Not a forecast", alert["stress"])
+        self.assertTrue(alert["exposed_holdings"])
 
     def test_rm_confirms_or_dismisses_a_breach_in_the_ledger(self):
         from tessera.services import DecisionStore, record_escalation_review
@@ -319,6 +324,12 @@ class MarketNewsTests(unittest.TestCase):
         self.assertIsNone(lau["escalation"])
         self.assertEqual(lau["market_event_pressure"], 0)
         self.assertIn("Hong Kong property market softens", {e["description"] for e in payload["market_events"]})
+
+    def test_gold_headline_does_not_touch_golden_harbour_properties(self):
+        cards = self._payload_with_headline("Gold price falls below $4,000 as bullion slides", "Severe")
+        alert = cards["CL-0014"]["escalation"]
+        self.assertFalse(alert and any("Golden Harbour" in name for name in alert["exposed_holdings"]))
+        self.assertEqual(cards["CL-0014"]["market_event_pressure"], 0)
 
     def test_generic_headline_escalates_no_one(self):
         cards = self._payload_with_headline("All three major indices fell as global markets slid", "Severe")

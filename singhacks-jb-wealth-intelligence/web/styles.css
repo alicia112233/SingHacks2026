@@ -790,6 +790,9 @@ nav { display: grid; gap: 7px; }
 .queue-lane.lane-breach span { color: var(--now); }
 .breach-panel { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 10px 20px 12px 104px; background: var(--now-soft); color: var(--now); font-size: 12px; line-height: 1.4; border-left: 3px solid var(--now); }
 .breach-panel strong { display: block; }
+.breach-panel span { display: block; margin-top: 3px; }
+.breach-panel b { font-weight: 600; }
+.breach-stress { display: block; margin-top: 4px; opacity: .85; font-size: 11px; }
 .breach-panel a { color: inherit; }
 .breach-panel.dismissed { background: transparent; color: var(--muted); border-left-color: transparent; }
 .breach-actions { display: flex; gap: 8px; flex-shrink: 0; }

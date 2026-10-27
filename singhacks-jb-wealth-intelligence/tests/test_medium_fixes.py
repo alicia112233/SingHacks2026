@@ -110,11 +110,11 @@ vm.runInContext(fs.readFileSync('web/app.js','utf8').replace(/init\(\);\s*$/, ''
  assert.equal(vm.runInContext("followUpInfo({score:50,deadline:{date:'2026-10-19T10:00:00+08:00'}}).short",context),'This week');
  assert.equal(vm.runInContext("followUpInfo({score:40,escalation:{id:'x'}}).key",context),'breach');
  assert.equal(vm.runInContext("followUpInfo({score:72,escalation:{id:'x',review:{status:'dismissed'}}}).key",context),'now');
- assert.equal(vm.runInContext("followUpInfo({score:40,escalation:{id:'x',review:{status:'confirmed'}}}).short",context),'Breach · confirmed');
+ assert.equal(vm.runInContext("followUpInfo({score:40,escalation:{id:'x',review:{status:'confirmed'}}}).short",context),'Exposure confirmed');
  assert(!vm.runInContext("fullDate('2026-10-19T12:00:00+08:00')",context).includes('INVALID'));
  vm.runInContext("state.decisions={records:[{action:'escalation_dismissed',headline:'HK property softens',reason:'Margin cushion breached',client_name:'Lau Chi Ming',recorded_at:'2026-10-20T00:00:00Z'}]}",context);
  const ledger=vm.runInContext("renderDecisionLedger()",context);
- assert(ledger.includes('Breach dismissed')&&ledger.includes('Breach alert: HK property softens')&&!ledger.includes('escalation_dismissed<'));
+ assert(ledger.includes('Exposure dismissed')&&ledger.includes('Possible exposure: HK property softens')&&!ledger.includes('escalation_dismissed<'));
  let calls=0;
  context.fetch=async()=>{calls++;return {ok:false,status:400,json:async()=>({error:'Bad input'})}};
  await assert.rejects(vm.runInContext("requestJson('/api/review')",context),/Bad input/);assert.equal(calls,1);

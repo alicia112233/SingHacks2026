@@ -52,6 +52,12 @@ def recent_live_news(events: pd.DataFrame, as_of: str) -> pd.DataFrame:
     return news[news.event_date.astype(str) >= cutoff]
 
 
+def mentions(text: str, term: str) -> bool:
+    """Whole-word match, so "gold" does not hit "Golden Harbour Properties"."""
+
+    return re.search(rf"\b{re.escape(term)}(?:s|es)?\b", text) is not None
+
+
 def _holding_text(current: pd.DataFrame, instruments: pd.DataFrame) -> pd.Series:
     refs = instruments.set_index("instrument_id")
     return current.instrument_id.map(
@@ -67,7 +73,7 @@ def _shocks(headline: str, severity: str, texts: pd.Series) -> tuple[pd.Series, 
     topics = []
     for name, pattern, terms, base in NEWS_TOPICS:
         if re.search(pattern, headline, re.I):
-            hit = texts.map(lambda text: any(term in text for term in terms))
+            hit = texts.map(lambda text: any(mentions(text, term) for term in terms))
             if hit.any():
                 topics.append(name)
                 shock = shock.where(~hit | (shock >= base * factor), base * factor)
@@ -108,6 +114,10 @@ def assess(
             continue
         loss = current.market_value_usd * shock
         loss_pct = float(loss.sum()) / aum * 100
+        touched = current[shock > 0]
+        exposed_pct = float(touched.market_value_usd.sum()) / aum * 100
+        # We flag possible exposure for the RM to check; the stress number is
+        # illustrative support, not a prediction of what the news will do.
         base = {
             "headline": str(event.description),
             "date": str(event.event_date),
@@ -115,6 +125,8 @@ def assess(
             "source_url": getattr(event, "source", None) if isinstance(getattr(event, "source", None), str) else None,
             "topics": topics,
             "stress_loss_pct": round(loss_pct, 1),
+            "exposed_pct": round(exposed_pct, 1),
+            "exposed_holdings": touched.groupby("instrument_name").market_value_usd.sum().sort_values(ascending=False).index[:3].tolist(),
         }
         if ltv and collateral_value:
             drop_pct = float((collateral.lending_value_base * shock.loc[collateral.index]).sum()) / collateral_value * 100
@@ -123,20 +135,26 @@ def assess(
                 found.append((3, drop_pct, {
                     **base,
                     "kind": "margin_call",
-                    "reason": f"Stressed lending value falls {drop_pct:.1f}% against a {cushion:.1f}% cushion to the margin-call trigger",
+                    "reason": "This headline touches holdings pledged for the client's loan, and the loan is already close to its margin-call level",
+                    "check": "Check collateral value and loan headroom before the next client call",
+                    "stress": f"Illustrative stress: lending value down {drop_pct:.1f}% against a {cushion:.1f}% cushion to the margin call. Not a forecast.",
                 }))
         stressed_daily = daily - float(loss[daily_mask].sum())
         if due_soon and due_soon <= daily and due_soon > stressed_daily:
             found.append((2, loss_pct, {
                 **base,
                 "kind": "funding_gap",
-                "reason": f"Stressed daily-liquid assets of USD {stressed_daily / 1e6:.1f}m no longer cover USD {due_soon / 1e6:.1f}m due within 12 months",
+                "reason": "This headline touches holdings the client may need to sell for cash due within 12 months",
+                "check": "Check that the upcoming cash needs are still covered without forced sales",
+                "stress": f"Illustrative stress: daily-liquid assets fall to USD {stressed_daily / 1e6:.1f}m against USD {due_soon / 1e6:.1f}m due. Not a forecast.",
             }))
         if loss_pct >= PORTFOLIO_LOSS_PCT:
             found.append((1, loss_pct, {
                 **base,
                 "kind": "portfolio_loss",
-                "reason": f"Downside stress of {loss_pct:.1f}% of bank-held assets on holdings this headline touches",
+                "reason": f"This headline touches holdings worth {exposed_pct:.0f}% of the client's bank-held portfolio",
+                "check": "Check the exposed holdings and whether the client wants to discuss them",
+                "stress": f"Illustrative stress: about {loss_pct:.1f}% of bank-held assets. Not a forecast.",
             }))
     if not found:
         return None

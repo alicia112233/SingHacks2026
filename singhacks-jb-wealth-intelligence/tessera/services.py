@@ -313,7 +313,7 @@ def create_escalation_review(body, intelligence):
         raise ValueError("Unknown client")
     escalation = card.get("escalation")
     if not escalation or escalation.get("id") != body.get("escalation_id"):
-        raise ValueError("This breach alert has changed. Refresh the review before continuing.")
+        raise ValueError("This exposure flag has changed. Refresh the review before continuing.")
     note = str(body.get("note", "")).strip()
     if len(note) > 1000:
         raise ValueError("Note must be 1,000 characters or fewer")

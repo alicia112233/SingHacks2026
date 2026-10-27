@@ -319,7 +319,7 @@ function isClientReviewComplete(clientId) {
 }
 
 function conversationsRequiringAttention() {
-  // A client needs attention today when they carry an open breach alert or score 70+.
+  // A client needs attention today when they may be exposed to a headline or score 70+.
   return state.data.book.priority_queue.filter((item) => {
     if (isClientReviewComplete(item.client_id)) return false;
     return ["breach", "now"].includes(followUpInfo({ ...item, score: urgencyScore(item) }).key);
@@ -334,9 +334,10 @@ function followUpLabel(item) {
   return followUpInfo(item).label;
 }
 
-// Queue lanes. A breach alert answers "did something just happen that could
-// break this portfolio?"; the score answers "whose pressure has built up most?".
-//   0 Breach alerts - live news stress crosses a hard line; RM confirms or dismisses
+// Queue lanes. "May be exposed" answers "did a recent headline touch this
+// portfolio hard enough to check today?"; the score answers "whose pressure has
+// built up most?". We flag possible exposure; we do not predict the outcome.
+//   0 May be exposed - a headline's stress test crosses a hard line; RM confirms or dismisses
 //   1 Act now       - urgency score 70+
 //   2 This week     - urgency score 45-69
 //   3 Monitor       - urgency score under 45
@@ -344,7 +345,7 @@ function followUpLabel(item) {
 // Inside each lane the highest score comes first.
 const TIER_RANK = { breach: 0, now: 1, week: 2, monitor: 3, resolved: 4 };
 const LANES = {
-  breach: { title: "Breach alerts", note: "Live news crosses a hard line. Confirm or dismiss each alert." },
+  breach: { title: "May be exposed", note: "A recent headline touches these portfolios. Check each one, then confirm or dismiss." },
   now: { title: "Act now", note: "Urgency score 70 or above" },
   week: { title: "This week", note: "Urgency score 45 to 69" },
   monitor: { title: "Monitor", note: "Urgency score below 45" },
@@ -358,7 +359,7 @@ function openBreach(item) {
 function followUpInfo(item) {
   if (item.complete) return { key: "resolved", label: "Review recorded · continue monitoring", short: "Reviewed" };
   const breach = openBreach(item);
-  if (breach) return { key: "breach", label: "BREACH ALERT", short: breach.review?.status === "confirmed" ? "Breach · confirmed" : "Breach alert" };
+  if (breach) return { key: "breach", label: "MAY BE EXPOSED", short: breach.review?.status === "confirmed" ? "Exposure confirmed" : "May be exposed" };
   if (item.score >= 70) return { key: "now", label: "ACT NOW", short: "Act now" };
   if (item.score >= 45) return { key: "week", label: "THIS WEEK", short: "This week" };
   return { key: "monitor", label: "MONITOR", short: "Monitor" };
@@ -395,7 +396,7 @@ function breachPanelHTML(item) {
   if (!escalation || item.complete) return "";
   const status = escalation.review?.status;
   if (status === "dismissed") {
-    return `<div class="breach-panel dismissed">Breach alert dismissed by the RM as not relevant: “${esc(escalation.headline)}”</div>`;
+    return `<div class="breach-panel dismissed">Exposure dismissed by the RM as not relevant: “${esc(escalation.headline)}”</div>`;
   }
   const actions = status === "confirmed"
     ? `<span class="breach-status">Confirmed by the RM · recorded in the ledger</span>`
@@ -403,7 +404,13 @@ function breachPanelHTML(item) {
        <button class="small-button" data-escalation-review="dismissed" data-client="${esc(item.client_id)}" data-escalation="${esc(escalation.id)}">Not relevant</button>`;
   return `
     <div class="breach-panel">
-      <div><strong>${esc(escalation.reason)}.</strong><span>Headline: “${esc(escalation.headline)}” · ${esc(escalation.severity)} · ${fullDate(escalation.date)}${escalation.source_url ? ` · <a href="${esc(escalation.source_url)}" target="_blank" rel="noopener noreferrer">Open source ↗</a>` : ""}</span></div>
+      <div>
+        <strong>${esc(escalation.reason)}.</strong>
+        ${escalation.check ? `<span><b>What to check:</b> ${esc(escalation.check)}.</span>` : ""}
+        ${escalation.exposed_holdings?.length ? `<span><b>Holdings it touches:</b> ${esc(escalation.exposed_holdings.join(", "))}</span>` : ""}
+        <span>Headline: “${esc(escalation.headline)}” · ${esc(escalation.severity)} · ${fullDate(escalation.date)}${escalation.source_url ? ` · <a href="${esc(escalation.source_url)}" target="_blank" rel="noopener noreferrer">Open source ↗</a>` : ""}</span>
+        ${escalation.stress ? `<small class="breach-stress">${esc(escalation.stress)}</small>` : ""}
+      </div>
       <div class="breach-actions">${actions}</div>
     </div>`;
 }
@@ -440,7 +447,7 @@ function queueTableHTML(queue, nextUpId) {
 function summaryHeaderHTML(counts, total) {
   return `
     <div class="queue-summary" aria-label="Follow-up summary">
-      <span class="queue-summary-item urgent"><b>${counts.breach}</b> breach alert${counts.breach === 1 ? "" : "s"}</span>
+      <span class="queue-summary-item urgent"><b>${counts.breach}</b> may be exposed</span>
       <span class="queue-summary-item">·</span>
       <span class="queue-summary-item urgent"><b>${counts.now}</b> act now</span>
       <span class="queue-summary-item">·</span>
@@ -466,7 +473,7 @@ function renderBook() {
       <article class="hero-panel">
         <span class="section-kicker">DAILY BOOK REVIEW</span>
         <h1>${attentionCount} client review${attentionCount === 1 ? "" : "s"} require RM attention today.</h1>
-        <p>Breach alerts come first: live news whose stress test crosses a hard line for that portfolio. Then clients are ranked by urgency score. News nudges the queue; a breach breaks it. Every score can be traced to its source records.</p>
+        <p>Clients who may be exposed to a recent headline come first, so the RM can check them. Then clients are ranked by urgency score. TESSERA flags possible exposure; it does not predict what the news will do. Every score can be traced to its source records.</p>
         <div class="hero-stats">
           <div><strong>${book.client_count}</strong><small>clients monitored</small></div>
           <div><strong>$${book.aum_usd_m}m</strong><small>book AUM</small></div>
@@ -485,7 +492,7 @@ function renderBook() {
 
     <div class="section-head">
       <div><span class="section-kicker">REVIEW QUEUE</span><h2>Prioritised client follow-up</h2></div>
-      <p>Breach alerts first, then lanes by urgency score, highest first inside each lane. Clearing urgent work reveals the next clients in line.</p>
+      <p>Possible news exposure first, then lanes by urgency score, highest first inside each lane. Clearing urgent work reveals the next clients in line.</p>
     </div>
     ${summaryHeaderHTML(counts, book.client_count)}
     ${queueTableHTML(queue, nextUpId)}
@@ -512,7 +519,7 @@ function renderAllClients() {
   const nextUpId = markNextUp(queue);
   $("#all-clients-view").innerHTML = `
     <section class="events-hero">
-      <div><span class="section-kicker">FULL BOOK</span><h1>All clients</h1><p>The complete queue: breach alerts first, then lanes by urgency score, highest first inside each lane. Today’s page shows only the first five.</p></div>
+      <div><span class="section-kicker">FULL BOOK</span><h1>All clients</h1><p>The complete queue: possible news exposure first, then lanes by urgency score, highest first inside each lane. Today’s page shows only the first five.</p></div>
       <button class="back-link" data-view="book">← Back to today</button>
     </section>
     ${summaryHeaderHTML(counts, queue.length)}
@@ -739,11 +746,11 @@ function queueCard(clientId) {
   return state.data.book.priority_queue.find((item) => item.client_id === clientId);
 }
 
-// The same breach alert as the queue, so the client page never tells a different story.
+// The same exposure flag as the queue, so the client page never tells a different story.
 function clientBreachHTML(clientId) {
   const card = queueCard(clientId);
   if (!card?.escalation) return "";
-  return `<div class="client-breach"><span class="section-kicker">BREACH ALERT</span>${breachPanelHTML({ ...card, complete: isClientReviewComplete(clientId) })}</div>`;
+  return `<div class="client-breach"><span class="section-kicker">MAY BE EXPOSED</span>${breachPanelHTML({ ...card, complete: isClientReviewComplete(clientId) })}</div>`;
 }
 
 function detectedFromHTML(clientId) {
@@ -831,8 +838,8 @@ const LEDGER_LABELS = {
   pending: "Restored",
   evaluated: "Model review",
   alternative: "Alternative",
-  escalation_confirmed: "Breach confirmed",
-  escalation_dismissed: "Breach dismissed",
+  escalation_confirmed: "Exposure confirmed",
+  escalation_dismissed: "Exposure dismissed",
 };
 
 // Shows exactly what would leave TESSERA, so the privacy boundary can be checked, not just claimed.
@@ -845,10 +852,10 @@ function modelPacketHTML(evaluation) {
 
 function renderDecisionLedger() {
   const records = [...state.decisions.records].reverse().slice(0, 12);
-  if (!records.length) return `<div class="empty-state ledger-empty"><strong>No decisions recorded</strong><span>Approvals, edits, dismissals and breach alert reviews will appear here.</span></div>`;
+  if (!records.length) return `<div class="empty-state ledger-empty"><strong>No decisions recorded</strong><span>Approvals, edits, dismissals and exposure reviews will appear here.</span></div>`;
   return `<div class="ledger-list">${records.map((record) => {
     const breach = record.action?.startsWith("escalation_");
-    const title = breach ? `Breach alert: ${record.headline}` : record.recommendation_title;
+    const title = breach ? `Possible exposure: ${record.headline}` : record.recommendation_title;
     const detail = breach ? record.reason : record.note;
     return `<article class="ledger-row"><span class="decision-status ${esc(record.action)}">${esc(LEDGER_LABELS[record.action] || record.action)}</span><div><strong>${esc(title)}</strong><p>${esc(record.client_name)} · ${esc(record.actor || "Review service")} · ${recordedDate(record.recorded_at)}</p>${detail ? `<small>${esc(detail)}</small>` : ""}</div></article>`;
   }).join("")}</div>`;
@@ -862,8 +869,8 @@ function renderGovernance() {
     ["02", "Temporal joins", "As-of views preserve valuation dates and surface stale marks"],
     ["03", "Deterministic gate", "Mandates, exclusions, concentration and source integrity"],
     ["04", "Contradiction detection", "Client words compared with look-through holdings, sources cited"],
-    ["05", "News and breach check", "Recent headlines nudge scores; a stress breach raises an alert"],
-    ["06", "RM decision", "Approvals and breach reviews are recorded in the ledger"],
+    ["05", "News exposure check", "Recent headlines nudge scores; a hard-line stress flags the client to check"],
+    ["06", "RM decision", "Approvals and exposure reviews are recorded in the ledger"],
   ];
   $("#governance-view").innerHTML = `
     <section class="governance-hero"><span class="section-kicker">CONTROLLED BY DESIGN</span><h1>Every review point has an owner, a source and a recorded outcome.</h1><p>TESSERA keeps three things apart: calculations done by deterministic code, signals read from client records and news, and optional model opinions, which are off by default and can only lower a score. Relationship Managers stay accountable for every action and the reason behind it.</p></section>
@@ -1030,7 +1037,7 @@ function bindEvents() {
           renderBook();
           applyRoute();
         }
-        showToast(breachReview.dataset.escalationReview === "confirmed" ? "Breach alert confirmed and recorded" : "Breach alert dismissed and recorded");
+        showToast(breachReview.dataset.escalationReview === "confirmed" ? "Exposure confirmed and recorded" : "Exposure dismissed and recorded");
       } catch (error) {
         breachReview.disabled = false;
         showToast(error.message, "error");

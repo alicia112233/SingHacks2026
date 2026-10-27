@@ -126,19 +126,20 @@ class TelegramNotifier:
         self._send(message)
 
     def send_breach_alert(self, client: dict[str, Any], escalation: dict[str, Any]) -> None:
-        """Tell the RM that news may have breached a portfolio line; the RM confirms or dismisses it."""
+        """Tell the RM a client may be exposed to a headline and what to check; the RM confirms or dismisses it."""
 
         client_id = str(client.get("client_id", "")).strip()
         if not client_id or not escalation.get("reason"):
-            raise TelegramNotificationError("Breach alert is missing a client reference or reason.")
+            raise TelegramNotificationError("Exposure alert is missing a client reference or reason.")
         message = (
-            "<b>TESSERA • breach alert</b>\n\n"
+            "<b>TESSERA • client may be exposed</b>\n\n"
             f"Client reference: <code>{html.escape(client_id)}</code>\n"
-            f"What crossed the line: {html.escape(str(escalation['reason']))}.\n"
+            f"Why: {html.escape(str(escalation['reason']))}.\n"
+            f"What to check: {html.escape(str(escalation.get('check', 'Open the client in TESSERA and review the exposure')))}.\n"
             f"Headline ({html.escape(str(escalation.get('severity', '')))}, {html.escape(str(escalation.get('date', '')))}): "
             f"{html.escape(str(escalation.get('headline', '')))}\n"
-            "Next step: open the client in TESSERA and confirm or dismiss the alert.\n\n"
-            "This is an illustrative stress test, not a forecast, and it does not approve a trade or client action."
+            "Next step: open the client in TESSERA, then confirm or dismiss.\n\n"
+            "TESSERA flags possible exposure; it does not predict the outcome or approve a trade or client action."
         )
         self._send(message)
 

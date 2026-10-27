@@ -18,7 +18,7 @@ from typing import Any, Iterable
 import pandas as pd
 
 from tessera.contradictions import detect
-from tessera.escalation import NEWS_TOPICS, assess as assess_escalation, recent_live_news
+from tessera.escalation import NEWS_TOPICS, assess as assess_escalation, mentions, recent_live_news
 from tessera.recommendation_validation import assess, validate_numbers, publish, RUBRIC_VERSION, fingerprint, has_text
 from tessera.review_state import action_version
 from tessera.evaluation import wording_fingerprint
@@ -306,7 +306,7 @@ def _live_event_relevance(description: str, exposure: str) -> int:
         return 0
     matched = [terms for _, pattern, terms, _ in NEWS_TOPICS if re.search(pattern, headline)]
     if matched:
-        return 2 if any(term in exposure for terms in matched for term in terms) else 0
+        return 2 if any(mentions(exposure, term) for terms in matched for term in terms) else 0
     return 1 if re.search(r"\b(?:market|markets|equities)\b", headline) and "equity" in exposure else 0
 
 
