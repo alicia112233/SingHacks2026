@@ -59,6 +59,12 @@ Why not score alone: news is capped at 8 points so daily noise cannot dominate, 
 
 Line to use: "News nudges the score. Real exposure gets flagged for the RM to check."
 
+### Are you sending client data to OpenAI, Anthropic or Google?
+
+No. In production the second-layer review runs on the bank's in-house model, which is allowed to use client data (C1 to C4) and runs offline. External models only ever see public data (C1 to C2), such as news. In the demo, external models review a de-identified packet: the action, the risk profile and key numbers, but no name, ID, nationality, the client's own words or RM notes. A code check blocks anything identifying, every packet is fingerprinted in the ledger, and the "What the models saw" view shows exactly what was sent. Whatever the models say, they can only lower confidence.
+
+Every section of the app is tagged: synthetic demo data, calculated by TESSERA, illustrative not a forecast, or public news.
+
 ### What is genuinely unique?
 
 Most copilots begin with a prompt. TESSERA begins with a governed decision gap: client intent × look-through risk × future needs × policy. Deterministic calculations establish the facts; scoped retrieval adds relevant institutional context; every output carries an evidence passport and remains subject to RM approval.

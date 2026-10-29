@@ -499,9 +499,9 @@ def evaluate_recommendation(
             "rm_decision_required": True,
         },
         "privacy": (
-            "Models see the proposed action, the client's risk profile and detected contradictions, and key numbers. "
+            "In this demo, models see the proposed action, the client's risk profile and detected contradictions, and key numbers. "
             "Names, IDs, nationality, the client's own words, RM notes and RM-edited wording never leave TESSERA. "
-            "External evaluation remains opt-in."
+            "In production the review runs on the bank's in-house model; external models only see public data."
         ),
         "packet": packet,
         "packet_fingerprint": fingerprint(packet),

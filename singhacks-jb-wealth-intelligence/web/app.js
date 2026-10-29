@@ -408,8 +408,8 @@ function breachPanelHTML(item) {
         <strong>${esc(escalation.reason)}.</strong>
         ${escalation.check ? `<span><b>What to check:</b> ${esc(escalation.check)}.</span>` : ""}
         ${escalation.exposed_holdings?.length ? `<span><b>Holdings it touches:</b> ${esc(escalation.exposed_holdings.join(", "))}</span>` : ""}
-        <span>Headline: “${esc(escalation.headline)}” · ${esc(escalation.severity)} · ${fullDate(escalation.date)}${escalation.source_url ? ` · <a href="${esc(escalation.source_url)}" target="_blank" rel="noopener noreferrer">Open source ↗</a>` : ""}</span>
-        ${escalation.stress ? `<small class="breach-stress">${esc(escalation.stress)}</small>` : ""}
+        <span>${sourceTag("news")} Headline: “${esc(escalation.headline)}” · ${esc(escalation.severity)} · ${fullDate(escalation.date)}${escalation.source_url ? ` · <a href="${esc(escalation.source_url)}" target="_blank" rel="noopener noreferrer">Open source ↗</a>` : ""}</span>
+        ${escalation.stress ? `<small class="breach-stress">${sourceTag("sim")} ${esc(escalation.stress)}</small>` : ""}
       </div>
       <div class="breach-actions">${actions}</div>
     </div>`;
@@ -494,6 +494,7 @@ function renderBook() {
       <div><span class="section-kicker">REVIEW QUEUE</span><h2>Prioritised client follow-up</h2></div>
       <p>Possible news exposure first, then lanes by urgency score, highest first inside each lane. Clearing urgent work reveals the next clients in line.</p>
     </div>
+    ${dataLegendHTML()}
     ${summaryHeaderHTML(counts, book.client_count)}
     ${queueTableHTML(queue, nextUpId)}
     <div class="all-clients-link-row"><button class="small-button event-list-link" data-view="all-clients">Open all clients →</button><span>${fullQueue.length - queue.length} more client${fullQueue.length - queue.length === 1 ? "" : "s"} on the all-clients page</span></div>
@@ -553,7 +554,7 @@ function renderMarketEvents() {
         <label><span>Source</span><select data-event-source aria-label="Filter by source"><option value="all" ${source === "all" ? "selected" : ""}>All sources</option><option value="live" ${source === "live" ? "selected" : ""}>Live news</option><option value="controlled" ${source === "controlled" ? "selected" : ""}>Controlled register</option></select></label>
         <button class="small-button" type="button" data-clear-event-filters ${from || to || sort !== "newest" || severity !== "all" || source !== "all" ? "" : "disabled"}>Clear filters</button>
       </div>
-      <div class="all-events-list">${filteredEvents.length ? filteredEvents.map((event) => `<article class="all-event-row"><div class="all-event-date"><strong>${fullDate(event.date)}</strong><span>${esc(event.region)} · ${esc(event.type)}</span></div><div class="all-event-copy"><header><span class="severity severity-${esc(event.severity).toLowerCase()}">${esc(event.severity)}</span><h3>${esc(event.description)}</h3></header><p>${esc(event.transmission)}</p><small>${esc(event.publisher || event.source)}${event.source_url ? ` · <a href="${esc(event.source_url)}" target="_blank" rel="noopener noreferrer">Open news source ↗</a>` : ""}</small></div></article>`).join("") : `<div class="empty-state"><strong>No events match those dates</strong><span>Choose a wider date range or clear the calendar filters.</span></div>`}</div>
+      <div class="all-events-list">${filteredEvents.length ? filteredEvents.map((event) => `<article class="all-event-row"><div class="all-event-date"><strong>${fullDate(event.date)}</strong><span>${esc(event.region)} · ${esc(event.type)}</span></div><div class="all-event-copy"><header><span class="severity severity-${esc(event.severity).toLowerCase()}">${esc(event.severity)}</span>${sourceTag(event.source === "live news" ? "news" : "record")}<h3>${esc(event.description)}</h3></header><p>${esc(event.transmission)}</p><small>${esc(event.publisher || event.source)}${event.source_url ? ` · <a href="${esc(event.source_url)}" target="_blank" rel="noopener noreferrer">Open news source ↗</a>` : ""}</small></div></article>`).join("") : `<div class="empty-state"><strong>No events match those dates</strong><span>Choose a wider date range or clear the calendar filters.</span></div>`}</div>
     </section>`;
 }
 
@@ -711,7 +712,7 @@ function riskAnalysisHTML(risk = {}) {
   risk = risk || {};
   const score = value => typeof value === "number" && Number.isFinite(value) ? `${Number(value.toFixed(1))}/5` : "Insufficient data";
   return `<section class="panel risk-analysis">
-    <div class="panel-title"><h3>Risk Appetite</h3></div>
+    <div class="panel-title"><h3>Risk Appetite ${sourceTag("calc")}</h3></div>
     <div class="risk-analysis-scores">${["capacity", "tolerance", "horizon", "overall"].map(key => `<div><span>${key[0].toUpperCase() + key.slice(1)}:</span> <strong>${score(risk[key])}</strong></div>`).join("")}</div>
     <p>${esc(risk.explanation || "Insufficient data. Risk analysis is unavailable in the current customer record.")}</p>
   </section>`;
@@ -772,6 +773,22 @@ function detectedFromHTML(clientId) {
   return `<p class="detected-from"><strong>Why this client is flagged:</strong> ${esc(card.tension)}. Detected from ${esc(sources.join(", "))}.</p>`;
 }
 
+// Every section says where its content comes from, so simulated and real data are never confused.
+const SOURCE_TAGS = {
+  record: "Synthetic demo data",
+  calc: "Calculated by TESSERA",
+  sim: "Illustrative, not a forecast",
+  news: "Public news",
+};
+
+function sourceTag(kind) {
+  return `<span class="source-tag source-${kind}">${SOURCE_TAGS[kind]}</span>`;
+}
+
+function dataLegendHTML() {
+  return `<div class="data-legend"><strong>Where each figure comes from:</strong> ${sourceTag("record")} invented client records for this demo ${sourceTag("calc")} ${sourceTag("sim")} ${sourceTag("news")}<span>In a bank deployment, client records and anything calculated from them would be sensitive client data (C3 to C4); public news is C1 to C2.</span></div>`;
+}
+
 function renderClient(clientId) {
   const client = profiles()[clientId];
   if (!client) return;
@@ -781,37 +798,39 @@ function renderClient(clientId) {
       <div><button class="back-link" data-back-book>← Back to review queue</button><h1>${esc(client.name)}</h1><p>${esc(client.life_stage)} · ${esc(client.source_of_wealth)}</p></div>
       <div><div class="profile-tags"><span>${esc(client.risk_profile)}</span><span>${esc(client.reporting_language)}</span><span>${esc(client.booking_centre)}</span></div><div class="client-aum"><strong>$${client.aum_usd_m}m</strong><small>CURRENT BANK-HELD AUM</small></div></div>
     </div>
+    ${dataLegendHTML()}
     <div class="metric-rail">${client.headline_metrics.map((metric) => `<div><strong>${esc(metric.value)}</strong><span>${esc(metric.label)}</span></div>`).join("")}</div>
+    <div class="tag-row">${sourceTag("calc")} from ${sourceTag("record")}</div>
     ${clientBreachHTML(clientId)}
     ${riskAnalysisHTML(client.risk_analysis)}
     ${urgencyAcknowledgementHTML(clientId)}
     <div class="tension-map">
-      <div class="tension-item"><small>CLIENT POSITION</small><p>${esc(client.tension.client_says)}</p></div>
-      <div class="tension-item"><small>PORTFOLIO POSITION</small><p>${esc(client.tension.portfolio_does)}</p></div>
-      <div class="tension-item"><small>UPCOMING CONSTRAINT</small><p>${esc(client.tension.future_demands)}</p></div>
+      <div class="tension-item"><small>CLIENT POSITION</small>${sourceTag("record")}<p>${esc(client.tension.client_says)}</p></div>
+      <div class="tension-item"><small>PORTFOLIO POSITION</small>${sourceTag("calc")}<p>${esc(client.tension.portfolio_does)}</p></div>
+      <div class="tension-item"><small>UPCOMING CONSTRAINT</small>${sourceTag("record")}<p>${esc(client.tension.future_demands)}</p></div>
     </div>
     ${detectedFromHTML(clientId)}
 
     <div class="analysis-grid">
       <section class="panel">
-        <div class="panel-title"><h3>Portfolio value history</h3><small>OBSERVED SNAPSHOTS · USD CONVERTED</small></div>
+        <div class="panel-title"><h3>Portfolio value history ${sourceTag("record")}</h3><small>OBSERVED SNAPSHOTS · USD CONVERTED</small></div>
         <div id="chart-panel-body">${pathChart(client)}</div>
         <p class="chart-note">Value includes market movement, transactions, withdrawals and currency translation. Select a point for the exact snapshot value and period change.</p>
       </section>
       <aside class="panel">
         <div class="panel-title"><h3>Relevant market events</h3><small>EVENT REGISTER + LIVE NEWS</small></div>
-        <div class="events-list">${client.linked_events.length ? client.linked_events.slice(-3).map((event) => `<div class="event-item"><small>${fullDate(event.date)} · ${esc(event.severity)}${event.publisher ? ` · ${esc(event.publisher)}` : ""}</small><p>${esc(event.description)}</p><span>${esc(event.transmission)}${event.source_url ? ` · <a href="${esc(event.source_url)}" target="_blank" rel="noopener noreferrer">Open source ↗</a>` : ""}</span></div>`).join("") : `<div class="empty-state"><strong>No directly linked events</strong><span>The review is based on portfolio, mandate and client records.</span></div>`}</div>
+        <div class="events-list">${client.linked_events.length ? client.linked_events.slice(-3).map((event) => `<div class="event-item"><small>${fullDate(event.date)} · ${esc(event.severity)}${event.publisher ? ` · ${esc(event.publisher)}` : ""}</small>${sourceTag(event.source === "live news" ? "news" : "record")}<p>${esc(event.description)}</p><span>${esc(event.transmission)}${event.source_url ? ` · <a href="${esc(event.source_url)}" target="_blank" rel="noopener noreferrer">Open source ↗</a>` : ""}</span></div>`).join("") : `<div class="empty-state"><strong>No directly linked events</strong><span>The review is based on portfolio, mandate and client records.</span></div>`}</div>
       </aside>
     </div>
 
     <section class="panel scenario-panel">
-      <aside class="scenario-sidebar"><span class="section-kicker">SCENARIO ANALYSIS</span><h3>Test the portfolio</h3>${client.scenarios.map((scenario, index) => `<button class="scenario-selector ${index === state.currentScenario ? "active" : ""}" data-client-scenario="${index}">${esc(scenario.name)}</button>`).join("")}<button class="scenario-studio-link" data-open-studio="${esc(client.client_id)}">Open full scenario studio →</button></aside>
+      <aside class="scenario-sidebar"><span class="section-kicker">SCENARIO ANALYSIS</span><h3>Test the portfolio</h3>${sourceTag("sim")}${client.scenarios.map((scenario, index) => `<button class="scenario-selector ${index === state.currentScenario ? "active" : ""}" data-client-scenario="${index}">${esc(scenario.name)}</button>`).join("")}<button class="scenario-studio-link" data-open-studio="${esc(client.client_id)}">Open full scenario studio →</button></aside>
       <div class="scenario-output" id="client-scenario-output">${scenarioHTML(client, state.currentScenario)}</div>
     </section>
 
     <div class="decision-grid">
-      <section class="panel"><div class="panel-title"><h3>Actions worth considering</h3><small>RM REVIEW REQUIRED</small></div><div id="recommendations-list">${recommendationsHTML(client)}</div></section>
-      <aside class="panel conversation-card"><div class="panel-title"><h3>Conversation brief</h3><small>${esc(client.confidence.level)}</small></div><div class="talk-line"><small>OPEN WITH</small><p>${esc(client.conversation.open)}</p></div><div class="talk-line"><small>SHOW</small><p>${esc(client.conversation.show)}</p></div><div class="talk-line"><small>ASK</small><p>${esc(client.conversation.ask)}</p></div><div class="talk-line"><small>AVOID</small><p>${esc(client.conversation.avoid)}</p></div><button class="evidence-button" data-evidence>Open evidence passport →</button></aside>
+      <section class="panel"><div class="panel-title"><h3>Actions worth considering ${sourceTag("calc")}</h3><small>RM REVIEW REQUIRED</small></div><div id="recommendations-list">${recommendationsHTML(client)}</div></section>
+      <aside class="panel conversation-card"><div class="panel-title"><h3>Conversation brief ${sourceTag("calc")}</h3><small>${esc(client.confidence.level)}</small></div><div class="talk-line"><small>OPEN WITH</small><p>${esc(client.conversation.open)}</p></div><div class="talk-line"><small>SHOW</small><p>${esc(client.conversation.show)}</p></div><div class="talk-line"><small>ASK</small><p>${esc(client.conversation.ask)}</p></div><div class="talk-line"><small>AVOID</small><p>${esc(client.conversation.avoid)}</p></div><button class="evidence-button" data-evidence>Open evidence passport →</button></aside>
     </div>`;
 }
 
@@ -873,8 +892,8 @@ function renderGovernance() {
     ["06", "RM decision", "Approvals and exposure reviews are recorded in the ledger"],
   ];
   $("#governance-view").innerHTML = `
-    <section class="governance-hero"><span class="section-kicker">CONTROLLED BY DESIGN</span><h1>Every review point has an owner, a source and a recorded outcome.</h1><p>TESSERA keeps three things apart: calculations done by deterministic code, signals read from client records and news, and optional model opinions, which are off by default and can only lower a score. Relationship Managers stay accountable for every action and the reason behind it.</p></section>
-    <section class="architecture"><div class="panel-title"><h3>Operating architecture</h3><small>OPTIONAL MODEL REVIEW IS OFF BY DEFAULT</small></div><div class="architecture-flow">${nodes.map((node) => `<div class="architecture-node"><b>${node[0]}</b><strong>${node[1]}</strong><span>${node[2]}</span></div>`).join("")}</div></section>
+    <section class="governance-hero"><span class="section-kicker">CONTROLLED BY DESIGN</span><h1>Every review point has an owner, a source and a recorded outcome.</h1><p>TESSERA keeps three things apart: calculations done by deterministic code, signals read from client records and news, and a second-layer model review that can only lower a score; in production it runs on the bank's in-house model, while external models only see public data. Relationship Managers stay accountable for every action and the reason behind it.</p></section>
+    <section class="architecture"><div class="panel-title"><h3>Operating architecture</h3><small>CLIENT DATA STAYS ON THE BANK'S IN-HOUSE MODEL</small></div><div class="architecture-flow">${nodes.map((node) => `<div class="architecture-node"><b>${node[0]}</b><strong>${node[1]}</strong><span>${node[2]}</span></div>`).join("")}</div></section>
     <div class="governance-grid"><section class="panel"><div class="panel-title"><h3>Control framework</h3><small>${esc(governance.recommendation_state)}</small></div><div class="principle-list">${governance.principles.map((principle, index) => `<div class="principle-item"><b>${index + 1}</b><p>${esc(principle)}</p></div>`).join("")}</div></section><section class="panel"><div class="panel-title"><h3>Data fitness before advice</h3><small>${esc(quality.overall)}</small></div><div class="quality-list">${quality.checks.map((item) => `<div class="quality-item"><div><strong>${esc(item.name)}</strong><span>${esc(item.evidence)}</span></div><b class="quality-status ${esc(item.status)}">${esc(item.status)}</b></div>`).join("")}</div></section></div>
     ${rubric ? `<section class="panel confidence-rubric"><div class="panel-title"><div><h3>Recommendation confidence rubric</h3><p>${esc(rubric.meaning)}</p></div><small>VERSION ${esc(rubric.version)} · ${esc(rubric.calibration)}</small></div><div class="rubric-layout"><div class="rubric-weights">${rubric.weights.map((item) => `<div><span>${esc(item.name)}</span><b>${item.weight} pts</b></div>`).join("")}</div><div class="rubric-bands">${rubric.bands.map((item) => `<div><b>${esc(item.range)}</b><strong>${esc(item.label)}</strong><span>${esc(item.action)}</span></div>`).join("")}</div></div></section>` : ""}
     <section class="panel decision-ledger"><div class="panel-title"><h3>Decision ledger</h3><small>${state.decisions.records.length} RECORDED EVENT${state.decisions.records.length === 1 ? "" : "S"}</small></div>${renderDecisionLedger()}</section>`;
@@ -910,7 +929,7 @@ function evaluationPanelHTML(evaluation, index) {
   const retrievedEvidence = retrieval.evidence?.length
     ? `<div class="retrieval-list">${retrieval.evidence.map((item) => `<article><header><strong>${esc(item.source)}</strong><span>${esc(item.source_type)}</span></header><p>${esc(item.excerpt)}</p></article>`).join("")}</div>`
     : "";
-  return `<div class="evaluation-heading"><div><span class="section-kicker">MODEL PANEL RESULT</span><h3>Independent evaluation</h3></div><button class="action-button" data-run-evaluation="${index}">Run again</button></div><div class="panel-consensus"><strong>${evaluation.consensus.score}/100</strong><div><b>${esc(evaluation.consensus.band)}</b><span>${esc(evaluation.consensus.rule)}</span></div></div><h4 class="evaluation-subtitle">Evidence coverage</h4><div class="dataset-scores">${Object.entries(evaluation.datasets).map(([name, lens]) => `<div><small>${esc(name)} dataset</small><b>${lens.score}/100</b><span>${esc(lens.detail)}</span></div>`).join("")}</div><div class="validation-layers"><div><small>DETERMINISTIC ALGORITHM</small><b>${evaluation.deterministic.score}/100 · ${esc(evaluation.deterministic.status)}</b><span>Policy, evidence, suitability, freshness and hard-stop validation.</span></div><div><small>PREDICTIVE PROBABILITY</small><b>${esc(predictive.status)}</b><span>${esc(predictive.reason)}</span></div></div><h4 class="evaluation-subtitle">Chroma semantic evidence</h4><div class="retrieval-status ${retrieval.status === "ready" ? "ready" : ""}"><strong>${esc(retrieval.status)}</strong><span>${esc(retrieval.reason)}</span></div>${retrievedEvidence}<h4 class="evaluation-subtitle">Independent judges</h4><div class="judge-list">${evaluation.judges.map((judge) => `<article class="${judge.status === "Completed" ? "completed" : "unavailable"}"><header><div><small>${esc(judge.provider)} provider</small><strong>${esc(judge.model)}</strong></div><b>${judge.status === "Completed" ? `${judge.score}/100` : esc(judge.status)}</b></header>${judge.status === "Completed" ? `<p>${esc(judge.rationale)}</p><div><span>Customer ${judge.customer_fit}</span><span>Product ${judge.product_fit}</span><span>Signal ${judge.signal_support}</span></div>${judge.required_rm_checks?.length ? `<ul>${judge.required_rm_checks.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>` : ""}` : `<p>${esc(judgeFailureMessage(judge))}</p>`}</article>`).join("")}</div>${modelPacketHTML(evaluation)}<p class="privacy-note">${esc(evaluation.privacy)} RM approval is still required.</p>`;
+  return `<div class="evaluation-heading"><div><span class="section-kicker">SECOND-LAYER REVIEW</span><h3>Model review of this action</h3></div><button class="action-button" data-run-evaluation="${index}">Run again</button></div><div class="panel-consensus"><strong>${evaluation.consensus.score}/100</strong><div><b>${esc(evaluation.consensus.band)}</b><span>${esc(evaluation.consensus.rule)}</span></div></div><h4 class="evaluation-subtitle">Evidence coverage</h4><div class="dataset-scores">${Object.entries(evaluation.datasets).map(([name, lens]) => `<div><small>${esc(name)} dataset</small><b>${lens.score}/100</b><span>${esc(lens.detail)}</span></div>`).join("")}</div><div class="validation-layers"><div><small>DETERMINISTIC ALGORITHM</small><b>${evaluation.deterministic.score}/100 · ${esc(evaluation.deterministic.status)}</b><span>Policy, evidence, suitability, freshness and hard-stop validation.</span></div><div><small>PREDICTIVE PROBABILITY</small><b>${esc(predictive.status)}</b><span>${esc(predictive.reason)}</span></div></div><h4 class="evaluation-subtitle">Chroma semantic evidence</h4><div class="retrieval-status ${retrieval.status === "ready" ? "ready" : ""}"><strong>${esc(retrieval.status)}</strong><span>${esc(retrieval.reason)}</span></div>${retrievedEvidence}<h4 class="evaluation-subtitle">Reviewing models</h4><p class="production-note"><strong>In production:</strong> this review runs on the bank's in-house model, which may use client data (C1 to C4) and runs offline. External models such as GPT, Claude and Gemini only ever see public data (C1 to C2), such as news. This demo shows external models reviewing a de-identified packet, so you can see the review working.</p><div class="judge-list">${evaluation.judges.map((judge) => `<article class="${judge.status === "Completed" ? "completed" : "unavailable"}"><header><div><small>${esc(judge.provider)} provider</small><strong>${esc(judge.model)}</strong></div><b>${judge.status === "Completed" ? `${judge.score}/100` : esc(judge.status)}</b></header>${judge.status === "Completed" ? `<p>${esc(judge.rationale)}</p><div><span>Customer ${judge.customer_fit}</span><span>Product ${judge.product_fit}</span><span>Signal ${judge.signal_support}</span></div>${judge.required_rm_checks?.length ? `<ul>${judge.required_rm_checks.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>` : ""}` : `<p>${esc(judgeFailureMessage(judge))}</p>`}</article>`).join("")}</div>${modelPacketHTML(evaluation)}<p class="privacy-note">${esc(evaluation.privacy)} RM approval is still required.</p>`;
 }
 
 async function runIndependentEvaluation(client, index, button) {
