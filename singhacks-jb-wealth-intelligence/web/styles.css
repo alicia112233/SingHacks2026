@@ -790,7 +790,7 @@ nav { display: grid; gap: 7px; }
 .queue-lane.lane-breach span { color: var(--now); }
 .breach-panel { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 10px 20px 12px 104px; background: var(--now-soft); color: var(--now); font-size: 12px; line-height: 1.4; border-left: 3px solid var(--now); }
 .breach-panel strong { display: block; }
-.breach-panel span { display: block; margin-top: 3px; }
+.breach-panel span:not(.source-tag) { display: block; margin-top: 3px; }
 .breach-panel b { font-weight: 600; }
 .breach-stress { display: block; margin-top: 4px; opacity: .85; font-size: 11px; }
 .breach-panel a { color: inherit; }
@@ -815,7 +815,7 @@ nav { display: grid; gap: 7px; }
 .data-legend { margin: 0 0 14px; padding: 8px 12px; border: 1px dashed var(--line); font-size: 12px; color: var(--muted); line-height: 1.9; }
 .data-legend strong { color: inherit; margin-right: 4px; }
 .data-legend > span:last-child { display: block; line-height: 1.5; }
-.tag-row { margin: -6px 0 14px; font-size: 11px; color: var(--muted); }
+.tag-row { display: flex; justify-content: flex-end; align-items: center; gap: 6px; margin: 6px 0 22px; font-size: 11px; color: var(--muted); }
 .tension-item .source-tag { display: table; margin: 4px 0 6px; }
 .event-item .source-tag, .all-event-copy .source-tag { margin-left: 6px; }
 .production-note { margin: 0 0 12px; padding: 10px 12px; border-left: 3px solid var(--teal, #2f6f5e); background: #eef5f2; font-size: 12px; line-height: 1.5; }

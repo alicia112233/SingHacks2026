@@ -800,7 +800,7 @@ function renderClient(clientId) {
     </div>
     ${dataLegendHTML()}
     <div class="metric-rail">${client.headline_metrics.map((metric) => `<div><strong>${esc(metric.value)}</strong><span>${esc(metric.label)}</span></div>`).join("")}</div>
-    <div class="tag-row">${sourceTag("calc")} from ${sourceTag("record")}</div>
+    <div class="tag-row">Figures above ${sourceTag("calc")}</div>
     ${clientBreachHTML(clientId)}
     ${riskAnalysisHTML(client.risk_analysis)}
     ${urgencyAcknowledgementHTML(clientId)}
