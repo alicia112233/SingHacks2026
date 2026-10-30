@@ -236,9 +236,10 @@ class ApplicationRouteTests(unittest.TestCase):
                 evaluation = json.load(response)
         self.assertEqual(evaluation["deterministic"]["score"], 84)
         self.assertEqual(
-            [judge["provider"] for judge in evaluation["judges"]],
-            ["openai", "anthropic", "google"],
+            [judge["angle"] for judge in evaluation["judges"]],
+            ["Suitability and compliance", "Client fit", "Evidence quality"],
         )
+        self.assertEqual({judge["model"] for judge in evaluation["judges"]}, {"anthropic/claude-sonnet-4.6"})
 
     def test_local_chat_endpoint_returns_grounded_citations(self):
         body = json.dumps(

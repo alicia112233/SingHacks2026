@@ -18,7 +18,7 @@ from typing import Any, Iterable
 import pandas as pd
 
 from tessera.contradictions import detect
-from tessera.escalation import NEWS_TOPICS, assess as assess_escalation, mentions, recent_live_news
+from tessera.escalation import NEWS_TOPICS, assess as assess_escalation, headline_topics, mentions, recent_live_news
 from tessera.recommendation_validation import assess, validate_numbers, publish, RUBRIC_VERSION, fingerprint, has_text
 from tessera.review_state import action_version
 from tessera.evaluation import wording_fingerprint
@@ -300,8 +300,12 @@ def _client_market_exposure(bundle: dict[str, Any], client_id: str) -> str:
     ).lower()
 
 
-def _live_event_relevance(description: str, exposure: str) -> int:
+def _live_event_relevance(description: str, exposure: str, triaged: Any = None) -> int:
     headline = description.lower()
+    if isinstance(triaged, list):
+        # The triage models already judged relevance; an empty list means "not relevant".
+        terms = [term for _, _, topic_terms, _ in headline_topics(headline, triaged) for term in topic_terms]
+        return 2 if any(mentions(exposure, term) for term in terms) else 0
     if re.search(r"\b(?:heloc|mortgage|savings interest rates?|savings accounts?|credit card)\b", headline):
         return 0
     matched = [terms for _, pattern, terms, _ in NEWS_TOPICS if re.search(pattern, headline)]
@@ -337,7 +341,7 @@ def _live_event_pressure(bundle: dict[str, Any], client_id: str, as_of: str) -> 
     for row in recent_live_news(bundle["event_log"], as_of).itertuples():
         # Relevance 2 means a specific topic (oil, shipping, property, rates...)
         # matched the story; 1 is a generic market headline and does not score.
-        if _live_event_relevance(str(row.description), story) == 2:
+        if _live_event_relevance(str(row.description), story, getattr(row, "topics", None)) == 2:
             pressure = max(pressure, {"Severe": 8, "High": 5, "Medium": 2}.get(row.severity, 1))
     return pressure
 
@@ -489,14 +493,15 @@ def _linked_events(bundle: dict[str, Any], client_id: str) -> list[dict[str, Any
     for row in events.itertuples():
         transmission = str(row.primary_transmission).lower()
         source_type = getattr(row, "source_type", None)
-        if (
-            source_type == "live_news" and _live_event_relevance(str(row.description), exposure)
-        ) or (
-            source_type != "live_news" and any(channel.lower() in transmission for channel in channels)
-        ):
+        relevance = (
+            _live_event_relevance(str(row.description), exposure, getattr(row, "topics", None))
+            if source_type == "live_news"
+            else 1 if any(channel.lower() in transmission for channel in channels) else 0
+        )
+        if relevance:
             source_url = getattr(row, "source", None)
             publisher = getattr(row, "publisher", None)
-            selected.append(
+            selected.append((relevance,
                 {
                     "date": row.event_date,
                     "severity": row.severity,
@@ -505,14 +510,11 @@ def _linked_events(bundle: dict[str, Any], client_id: str) -> list[dict[str, Any
                     "source": "live news" if source_type == "live_news" else f"event_log.csv • {row.event_date}",
                     "source_url": _clean_text(source_url) if source_type == "live_news" else None,
                     "publisher": _clean_text(publisher) if source_type == "live_news" else None,
+                    "triage": _triage(row),
                 }
-            )
-    selected.sort(key=lambda item: (
-        item["date"],
-        _live_event_relevance(item["description"], exposure) if item["source"] == "live news" else 1,
-        SEVERITY_ORDER.get(item["severity"], 0),
-    ))
-    return selected[-5:]
+            ))
+    selected.sort(key=lambda pair: (pair[1]["date"], pair[0], SEVERITY_ORDER.get(pair[1]["severity"], 0)))
+    return [item for _, item in selected[-5:]]
 
 
 def _clean_text(value: Any) -> str | None:
@@ -522,6 +524,11 @@ def _clean_text(value: Any) -> str | None:
         return None
     text = str(value).strip()
     return text or None
+
+
+def _triage(row: Any) -> dict[str, Any] | None:
+    triage = getattr(row, "triage", None)
+    return triage if isinstance(triage, dict) else None
 
 
 def _market_events(bundle: dict[str, Any]) -> list[dict[str, Any]]:
@@ -541,6 +548,7 @@ def _market_events(bundle: dict[str, Any]) -> list[dict[str, Any]]:
                 "source": "live news" if source_type == "live_news" else f"event_log.csv • {row.event_date}",
                 "source_url": _clean_text(source_url) if source_type == "live_news" else None,
                 "publisher": _clean_text(publisher) if source_type == "live_news" else None,
+                "triage": _triage(row),
             }
         )
     return events

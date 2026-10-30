@@ -46,9 +46,9 @@ class ReviewWorkflowTests(unittest.TestCase):
         return self.client.post("/api/decisions", json={**(body or self.request_body(index)), "action": "approved", "note": "Checked the source evidence and suitability"})
 
     def panel(self, score=30, verdict="block", index=1):
-        def judge(model, packet, token):
-            return {"model": model, "provider": "test", "status": "Completed", "score": score, "verdict": verdict}
-        with mock.patch("tessera.evaluation._external_judges_enabled", return_value=True), mock.patch("tessera.evaluation._gateway_token", return_value="test"), mock.patch("tessera.evaluation._call_judge", side_effect=judge):
+        def judge(model, packet, token, angle, url):
+            return {"model": model, "provider": "test", "angle_id": angle[0], "status": "Completed", "score": score, "verdict": verdict}
+        with mock.patch("tessera.evaluation._review_enabled", return_value=True), mock.patch("tessera.evaluation._gateway_token", return_value="test"), mock.patch("tessera.evaluation._call_judge", side_effect=judge):
             response = self.client.post("/api/evaluations", json=self.request_body(index))
         self.assertEqual(response.status_code, 200, response.json)
         return response.json

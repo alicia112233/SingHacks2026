@@ -65,18 +65,25 @@ def _holding_text(current: pd.DataFrame, instruments: pd.DataFrame) -> pd.Series
     )
 
 
-def _shocks(headline: str, severity: str, texts: pd.Series) -> tuple[pd.Series, list[str]]:
+def headline_topics(headline: str, triaged: Any = None) -> list[tuple[str, str, tuple[str, ...], float]]:
+    """Topics a headline hits: the models' triage when present, else the keyword rules."""
+
+    if isinstance(triaged, list):
+        return [topic for topic in NEWS_TOPICS if topic[0] in triaged]
+    return [topic for topic in NEWS_TOPICS if re.search(topic[1], headline, re.I)]
+
+
+def _shocks(headline: str, severity: str, texts: pd.Series, triaged: Any = None) -> tuple[pd.Series, list[str]]:
     """Per-holding downside shock for one headline, and the topics it hit."""
 
     factor = SEVERITY_FACTOR.get(severity, 0.15)
     shock = pd.Series(0.0, index=texts.index)
     topics = []
-    for name, pattern, terms, base in NEWS_TOPICS:
-        if re.search(pattern, headline, re.I):
-            hit = texts.map(lambda text: any(mentions(text, term) for term in terms))
-            if hit.any():
-                topics.append(name)
-                shock = shock.where(~hit | (shock >= base * factor), base * factor)
+    for name, _, terms, base in headline_topics(headline, triaged):
+        hit = texts.map(lambda text: any(mentions(text, term) for term in terms))
+        if hit.any():
+            topics.append(name)
+            shock = shock.where(~hit | (shock >= base * factor), base * factor)
     return shock, topics
 
 
@@ -109,7 +116,7 @@ def assess(
 
     found = []
     for event in news.itertuples():
-        shock, topics = _shocks(str(event.description), str(event.severity), texts)
+        shock, topics = _shocks(str(event.description), str(event.severity), texts, getattr(event, "topics", None))
         if not topics:
             continue
         loss = current.market_value_usd * shock

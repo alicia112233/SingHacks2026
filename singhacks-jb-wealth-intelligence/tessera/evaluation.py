@@ -16,26 +16,45 @@ from tessera.retrieval import retrieve_recommendation_evidence
 
 
 GATEWAY_URL = "https://ai-gateway.vercel.sh/v1/chat/completions"
-DEFAULT_JUDGE_MODELS = (
-    "openai/gpt-5.4",
-    "anthropic/claude-sonnet-4.6",
-    "google/gemini-3.7-flash",
+# Client data (C3-C4) may only reach the bank's in-house model. The demo has no
+# in-house model, so one labelled stand-in plays that role; external models
+# only ever read public headlines (see news_triage.py).
+INHOUSE_STANDIN_MODEL = "anthropic/claude-sonnet-4.6"
+REVIEW_ANGLES = (
+    (
+        "suitability",
+        "Suitability and compliance",
+        "Focus on suitability and compliance: the risk profile, mandate limits, risk indicators and deterministic hard stops.",
+    ),
+    (
+        "client_fit",
+        "Client fit",
+        "Focus on client fit: whether the action serves the detected contradictions, cash needs and the portfolio as a whole.",
+    ),
+    (
+        "evidence",
+        "Evidence quality",
+        "Focus on evidence quality: whether every claim and number in the action is backed by the supplied evidence.",
+    ),
 )
 
 
-def _models() -> tuple[str, ...]:
-    configured = os.environ.get("TESSERA_JUDGE_MODELS", "").strip()
-    if not configured:
-        return DEFAULT_JUDGE_MODELS
-    return tuple(model.strip() for model in configured.split(",") if model.strip())[:3]
+def _inhouse_model() -> str:
+    return os.environ.get("TESSERA_INHOUSE_MODEL", "").strip() or INHOUSE_STANDIN_MODEL
 
 
-def _external_judges_enabled() -> bool:
-    return os.environ.get("TESSERA_EXTERNAL_JUDGES_ENABLED", "").lower() in {
-        "1",
-        "true",
-        "yes",
-    }
+def _inhouse_url() -> str:
+    """An OpenAI-compatible endpoint, e.g. a local offline model, else the gateway stand-in."""
+
+    return os.environ.get("TESSERA_INHOUSE_URL", "").strip()
+
+
+def _review_enabled() -> bool:
+    # The old flag name still works so existing deployments keep their setting.
+    return any(
+        os.environ.get(name, "").lower() in {"1", "true", "yes"}
+        for name in ("TESSERA_INHOUSE_REVIEW_ENABLED", "TESSERA_EXTERNAL_JUDGES_ENABLED")
+    )
 
 
 def _gateway_token() -> str:
@@ -262,9 +281,18 @@ def _normalise_judgement(judgement: dict[str, Any]) -> dict[str, Any]:
     return judgement
 
 
-def _call_judge(model: str, packet: dict[str, Any], token: str) -> dict[str, Any]:
+def _call_judge(
+    model: str,
+    packet: dict[str, Any],
+    token: str,
+    angle: tuple[str, str, str] | None = None,
+    url: str = "",
+) -> dict[str, Any]:
+    labels = {"angle_id": angle[0], "angle": angle[1]} if angle else {}
+    provider = "local in-house model" if url else model.split("/", 1)[0]
     prompt = (
-        "Evaluate only the supplied evidence packet. You are an independent wealth "
+        (angle[2] + " " if angle else "")
+        + "Evaluate only the supplied evidence packet. You are an independent wealth "
         "recommendation risk judge, not an investment recommender. Review the proposed "
         "action against the client profile, detected contradictions and evidence. The "
         "client is de-identified on purpose; do not ask who they are. Treat absent facts "
@@ -301,13 +329,13 @@ def _call_judge(model: str, packet: dict[str, Any], token: str) -> dict[str, Any
                 },
             },
         }
+        headers = {"Content-Type": "application/json"}
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
         request = Request(
-            GATEWAY_URL,
+            url or GATEWAY_URL,
             data=json.dumps(payload).encode("utf-8"),
-            headers={
-                "Authorization": f"Bearer {token}",
-                "Content-Type": "application/json",
-            },
+            headers=headers,
             method="POST",
         )
         try:
@@ -316,7 +344,8 @@ def _call_judge(model: str, packet: dict[str, Any], token: str) -> dict[str, Any
         except (HTTPError, URLError, TimeoutError) as error:
             return {
                 "model": model,
-                "provider": model.split("/", 1)[0],
+                "provider": provider,
+                **labels,
                 "status": "Unavailable",
                 "error": f"Provider request failed: {str(error)[:180]}",
             }
@@ -326,7 +355,8 @@ def _call_judge(model: str, packet: dict[str, Any], token: str) -> dict[str, Any
             )
             return {
                 "model": model,
-                "provider": model.split("/", 1)[0],
+                "provider": provider,
+                **labels,
                 "status": "Completed",
                 **judgement,
             }
@@ -336,7 +366,8 @@ def _call_judge(model: str, packet: dict[str, Any], token: str) -> dict[str, Any
 
     return {
         "model": model,
-        "provider": model.split("/", 1)[0],
+        "provider": provider,
+        **labels,
         "status": "Incomplete response",
         "error": (
             "The provider twice returned an incomplete structured judgement. "
@@ -422,61 +453,59 @@ def evaluate_recommendation(
         "scenario_impact_range_pct": [min(impacts), max(impacts)] if impacts else None,
     }
 
-    models = _models()
-    enabled = _external_judges_enabled()
+    model = _inhouse_model()
+    url = _inhouse_url()
+    enabled = _review_enabled()
     token = _gateway_token()
     retrieval = retrieve_recommendation_evidence(client, recommendation)
     packet = _evaluation_packet(client, recommendation, retrieval["evidence"])
     privacy_check = outbound_privacy_check(packet, client)
-    if privacy_check["status"] != "Passed":
-        judges = [
-            {"model": model, "provider": model.split("/", 1)[0], "status": "Not run",
-             "reason": "The outbound privacy check blocked this packet: " + ", ".join(privacy_check["issues"]) + "."}
-            for model in models
+
+    def not_run(reason: str) -> list[dict[str, Any]]:
+        provider = "local in-house model" if url else model.split("/", 1)[0]
+        return [
+            {"model": model, "provider": provider, "angle_id": angle[0], "angle": angle[1],
+             "status": "Not run", "reason": reason}
+            for angle in REVIEW_ANGLES
         ]
-    elif enabled and token:
+
+    if privacy_check["status"] != "Passed":
+        judges = not_run("The outbound privacy check blocked this packet: " + ", ".join(privacy_check["issues"]) + ".")
+    elif enabled and (token or url):
         judges: list[dict[str, Any]] = []
-        with ThreadPoolExecutor(max_workers=len(models)) as executor:
-            futures = {
-                executor.submit(_call_judge, model, packet, token): model
-                for model in models
-            }
+        with ThreadPoolExecutor(max_workers=len(REVIEW_ANGLES)) as executor:
+            futures = [
+                executor.submit(_call_judge, model, packet, token, angle, url)
+                for angle in REVIEW_ANGLES
+            ]
             for future in as_completed(futures):
                 judges.append(future.result())
-        judges.sort(key=lambda item: models.index(item["model"]))
+        order = [angle[0] for angle in REVIEW_ANGLES]
+        judges.sort(key=lambda item: order.index(item.get("angle_id", order[0])))
     else:
-        reason = (
-            "External judges are disabled. Set TESSERA_EXTERNAL_JUDGES_ENABLED=true "
-            "and configure AI Gateway authentication to opt in."
+        judges = not_run(
+            "The in-house review is off. Set TESSERA_INHOUSE_REVIEW_ENABLED=true and "
+            "configure TESSERA_INHOUSE_URL or AI Gateway authentication to turn it on."
             if not enabled
             else "AI Gateway authentication is not configured."
         )
-        judges = [
-            {
-                "model": model,
-                "provider": model.split("/", 1)[0],
-                "status": "Not run",
-                "reason": reason,
-            }
-            for model in models
-        ]
 
     completed = [judge for judge in judges if judge["status"] == "Completed"]
     panel_score = deterministic_score
     spread = None
-    consensus_rule = "Deterministic score only; external judges did not run."
+    consensus_rule = "Deterministic score only; the in-house review did not run."
     if completed:
         scores = [int(judge["score"]) for judge in completed]
         judge_median = round(median(scores))
         panel_score = min(deterministic_score, judge_median)
         spread = max(scores) - min(scores)
-        consensus_rule = "Lower of deterministic score and median independent-judge score."
+        consensus_rule = "Lower of the deterministic score and the median of the review angles."
         if spread > 20:
             panel_score = min(panel_score, 69)
-            consensus_rule += " Judge disagreement above 20 points caps the result at 69."
+            consensus_rule += " Angles more than 20 points apart cap the result at 69."
         if any(judge.get("verdict") == "block" for judge in completed):
             panel_score = min(panel_score, 49)
-            consensus_rule += " Any judge block verdict caps the result at 49."
+            consensus_rule += " A block from any angle caps the result at 49."
 
     return {
         "recommendation_id": recommendation["id"],
@@ -498,10 +527,15 @@ def evaluate_recommendation(
             "rule": consensus_rule,
             "rm_decision_required": True,
         },
+        "reviewer": {
+            "model": model,
+            "deployment": "Local in-house model" if url else "Demo stand-in for the bank's in-house model",
+        },
         "privacy": (
-            "In this demo, models see the proposed action, the client's risk profile and detected contradictions, and key numbers. "
-            "Names, IDs, nationality, the client's own words, RM notes and RM-edited wording never leave TESSERA. "
-            "In production the review runs on the bank's in-house model; external models only see public data."
+            "Client data in this review only goes to the bank's in-house model. The reviewer sees the proposed action, "
+            "the client's risk profile and detected contradictions, and key numbers. Names, IDs, nationality, "
+            "the client's own words, RM notes and RM-edited wording never leave TESSERA. "
+            "External models only read public news headlines."
         ),
         "packet": packet,
         "packet_fingerprint": fingerprint(packet),

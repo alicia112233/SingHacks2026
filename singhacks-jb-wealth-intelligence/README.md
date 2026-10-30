@@ -17,16 +17,18 @@ Run this application server rather than `python -m http.server`; the latter can
 serve the frontend but will return 404 for `/api/evaluations` and the other API
 routes. Restart `python app.py` after pulling route changes.
 
-To enable the optional multi-provider model panel locally, copy `.env.example`
-to `.env.local`, set `TESSERA_EXTERNAL_JUDGES_ENABLED=true`, and add either a
-Vercel AI Gateway key as `AI_GATEWAY_API_KEY` or a current
-`VERCEL_OIDC_TOKEN`. The default panel uses OpenAI, Claude Sonnet, and Gemini;
-edit the comma-separated `TESSERA_JUDGE_MODELS` value to use other supported
-models such as Claude Opus.
+AI work is split by data class. Client data (C3-C4) only reaches the bank's
+in-house model, which reviews each action from three angles; the demo uses a
+labelled stand-in (`TESSERA_INHOUSE_MODEL`) or a local endpoint
+(`TESSERA_INHOUSE_URL`). External models (OpenAI, Claude, Gemini) only triage
+public headlines (`TESSERA_NEWS_MODELS`). To turn either on locally, copy
+`.env.example` to `.env.local`, set `TESSERA_INHOUSE_REVIEW_ENABLED=true` or
+`TESSERA_NEWS_TRIAGE_ENABLED=true`, and add a Vercel AI Gateway key as
+`AI_GATEWAY_API_KEY` or a current `VERCEL_OIDC_TOKEN`.
 
 Chroma Cloud retrieves source-labelled semantic evidence from controlled RM
 notes, events, mandates and instrument references. Retrieved excerpts are not
-sent to external judges: their packet contains only allowlisted numeric fields
+sent to the review model: its packet contains only allowlisted numeric fields
 and controlled categories. Retrieval can support the evidence chat assistant.
 Exact portfolio and suitability calculations remain deterministic. See
 [`docs/CHROMA_CLOUD.md`](docs/CHROMA_CLOUD.md) for indexing and setup.

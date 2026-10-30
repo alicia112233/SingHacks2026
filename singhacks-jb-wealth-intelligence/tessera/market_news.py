@@ -15,8 +15,11 @@ from urllib.parse import quote
 from urllib.request import Request, urlopen
 from xml.etree import ElementTree
 
+from tessera import news_triage
+
 
 _STATE_LOCK = threading.Lock()
+TRIAGE_RECENT = 60
 
 DEFAULT_FEEDS = (
     "https://finance.yahoo.com/rss/topstories",
@@ -180,7 +183,9 @@ def refresh(data_dir: str | Path, state_path: str | Path) -> dict[str, object]:
                     known.add(event["event_id"])
                     added.append(event)
         events = sorted(existing + added, key=lambda item: (item.get("event_date", ""), item.get("event_id", "")))
-        if added or existing != stored or not state.exists():
+        # Only the newest headlines can score, so older ones are not sent for triage.
+        triaged = news_triage.triage(events[-TRIAGE_RECENT:])
+        if added or triaged or existing != stored or not state.exists():
             state.parent.mkdir(parents=True, exist_ok=True)
             temporary = state.with_suffix(".tmp")
             with temporary.open("w", encoding="utf-8") as handle:

@@ -90,7 +90,7 @@ The local server persists these events to `runtime/decisions.json`. Vercel deplo
 | `/evidence-ledger` | Controls, data fitness and decision history |
 | `/api/intelligence` | Current analytics payload; recalculated when a source file changes |
 | `/api/decisions` | Decision history and effective state |
-| `/api/evaluations` | On-demand deterministic, predictive-readiness and independent-judge panel |
+| `/api/evaluations` | On-demand deterministic, predictive-readiness and in-house three-angle review |
 | `/api/chat` | Client-scoped hybrid retrieval and cited assistant answers |
 | `/health` | Service health |
 
@@ -135,7 +135,7 @@ Position, client, mandate, credit and event records
            Append-only decision ledger
 ```
 
-External model judges are disabled by default. When explicitly enabled, they receive a purpose-limited evidence packet without client name, client ID or raw RM notes. Their scores cannot override a deterministic hard stop or raise the deterministic score, and RM approval remains mandatory. A bank rollout should use approved private endpoints and its data-processing controls.
+AI work is split by data class. The second-layer action review runs on the bank's in-house model (a labelled stand-in in the demo), reviewing from three angles, and is disabled by default. When enabled, it receives a purpose-limited evidence packet without client name, client ID or raw RM notes. External models only triage public headlines. Their scores cannot override a deterministic hard stop or raise the deterministic score, and RM approval remains mandatory. A bank rollout should use approved private endpoints and its data-processing controls.
 
 Assistant model generation is also disabled by default. The chat remains usable
 through local extractive answers. When enabled, generation receives only the

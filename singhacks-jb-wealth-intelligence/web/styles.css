@@ -818,4 +818,5 @@ nav { display: grid; gap: 7px; }
 .tag-row { display: flex; justify-content: flex-end; align-items: center; gap: 6px; margin: 6px 0 22px; font-size: 11px; color: var(--muted); }
 .tension-item .source-tag { display: table; margin: 4px 0 6px; }
 .event-item .source-tag, .all-event-copy .source-tag { margin-left: 6px; }
+.triage-note { display: block; margin-top: 4px; color: #5a6b8c; font-size: 11px; }
 .production-note { margin: 0 0 12px; padding: 10px 12px; border-left: 3px solid var(--teal, #2f6f5e); background: #eef5f2; font-size: 12px; line-height: 1.5; }

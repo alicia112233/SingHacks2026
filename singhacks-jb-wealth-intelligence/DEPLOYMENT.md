@@ -58,19 +58,23 @@ committer as a member.
 
 ### Manual preview deployment
 
-### Optional independent model judges
+### Optional AI layers
 
-The multi-provider judge panel is off by default. To enable it, configure these
-Vercel environment variables:
+AI work is split by data class. Both layers are off by default:
 
 ```text
-TESSERA_EXTERNAL_JUDGES_ENABLED=true
-TESSERA_JUDGE_MODELS=openai/gpt-5.4,anthropic/claude-sonnet-4.6,google/gemini-3.7-flash
+# In-house action review (client data, C3-C4): one model, three angles
+TESSERA_INHOUSE_REVIEW_ENABLED=true
+TESSERA_INHOUSE_MODEL=anthropic/claude-sonnet-4.6
+# Public-news triage (C1-C2): up to three external models vote per headline
+TESSERA_NEWS_TRIAGE_ENABLED=true
+TESSERA_NEWS_MODELS=openai/gpt-5.4,anthropic/claude-sonnet-4.6,google/gemini-3.7-flash
 ```
 
-`TESSERA_JUDGE_MODELS` accepts up to three comma-separated AI Gateway model
-IDs. You can replace Sonnet with `anthropic/claude-opus-4.6`, or configure both
-Claude models if same-vendor comparison is intentional.
+The demo has no bank in-house model, so `TESSERA_INHOUSE_MODEL` is a labelled
+stand-in. Set `TESSERA_INHOUSE_URL` to an OpenAI-compatible endpoint (for
+example a local Ollama server) to run the review fully offline. The old
+`TESSERA_EXTERNAL_JUDGES_ENABLED` flag still turns the review on.
 
 Use Vercel AI Gateway OIDC in the hosted function or add `AI_GATEWAY_API_KEY`.
 Create a static key on the Vercel AI Gateway API Keys page; this is a gateway

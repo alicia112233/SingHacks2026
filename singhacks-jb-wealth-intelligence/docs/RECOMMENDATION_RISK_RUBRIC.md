@@ -29,18 +29,20 @@ Controlled client, product and signal data
 1. **Model validation** checks whether the recommendation is directionally and materially supported by an independent analytical model. TESSERA currently uses transparent portfolio sensitivities. Because these are not calibrated predictions, this layer is marked `Provisional` and confidence is capped at 84.
 2. **Human validation** requires the RM to inspect the evidence, confirm suitability and record a decision with rationale. The LLM cannot waive this control or place a trade.
 
-### Independent LLM judge panel
+### In-house model review, three angles
 
-An on-demand panel may run the same purpose-limited evidence packet through
-models from different providers. Each judge separately scores customer fit,
-product fit and signal support and lists unsupported claims, conflicts and RM
-checks. The panel score is the lower of the deterministic score and the median
-completed-judge score. A spread above 20 points caps the result at 69; any judge
-`block` verdict caps it at 49. A judge can lower or challenge the recommendation
-but can never bypass a deterministic hard stop or raise the deterministic score.
+Client data may only reach the bank's in-house model, so one model reviews the
+same purpose-limited evidence packet three times: suitability and compliance,
+client fit, and evidence quality. Each angle scores customer fit, product fit
+and signal support and lists unsupported claims, conflicts and RM checks. The
+panel score is the lower of the deterministic score and the median angle score.
+A spread above 20 points caps the result at 69; a `block` from any angle caps it
+at 49. The review can lower or challenge the recommendation but can never bypass
+a deterministic hard stop or raise the deterministic score.
 
-External judges are disabled by default and receive no client name, client ID or
-raw RM notes when enabled. Their outputs are opinions, not a predictive
+The review is disabled by default and receives no client name, client ID or raw
+RM notes when enabled. The demo runs it on a labelled stand-in model. External
+models only triage public headlines. Their outputs are opinions, not a predictive
 probability and not an approval.
 
 ## Score composition
