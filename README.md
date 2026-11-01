@@ -10,14 +10,14 @@ Built for SingHacks using controlled, non-production records. The application su
 
 ## Walk through a client review
 
-| Step | What you do | What TESSERA provides |
-| --- | --- | --- |
-| Prioritise | Open the daily book review | A follow-up queue ranked by tier, deadline and urgency |
-| Investigate | Open a client review room | Portfolio history, cash needs, mandate exceptions and source evidence |
-| Explore | Adjust assumptions in Scenario Studio | Transparent portfolio sensitivities |
-| Evaluate | Inspect an action's risk rubric | Dimension scores, evidence, confidence caps and blockers |
-| Decide | Approve, edit, dismiss or restore | Version checks, approval gates and an append-only decision history |
-| Follow up | Review outstanding urgency | Optional Telegram alerts, reminders and escalation |
+| Step        | What you do                           | What TESSERA provides                                                 |
+| ----------- | ------------------------------------- | --------------------------------------------------------------------- |
+| Prioritise  | Open the daily book review            | A follow-up queue ranked by tier, deadline and urgency                |
+| Investigate | Open a client review room             | Portfolio history, cash needs, mandate exceptions and source evidence |
+| Explore     | Adjust assumptions in Scenario Studio | Transparent portfolio sensitivities                                   |
+| Evaluate    | Inspect an action's risk rubric       | Dimension scores, evidence, confidence caps and blockers              |
+| Decide      | Approve, edit, dismiss or restore     | Version checks, approval gates and an append-only decision history    |
+| Follow up   | Review outstanding urgency            | Optional Telegram alerts, reminders and escalation                    |
 
 Today shows the first five clients; **All clients** shows the complete queue. Follow-up labels are **Act now**, **Due today**, **Due by [date]**, **Monitor** and **Reviewed**, with **Overdue** shown for expired deadlines. Reviewed means the review was recorded, not that the underlying exposure disappeared.
 
@@ -29,10 +29,10 @@ The **Market Events** register brings controlled events and exposure-relevant RS
 
 Three measures answer different questions:
 
-| Measure | Question it supports |
-| --- | --- |
-| Client urgency, out of 100 | Which client review needs attention first? |
-| Recommendation confidence, out of 100 | How well is this particular action supported? |
+| Measure                                | Question it supports                                                     |
+| -------------------------------------- | ------------------------------------------------------------------------ |
+| Client urgency, out of 100             | Which client review needs attention first?                               |
+| Recommendation confidence, out of 100  | How well is this particular action supported?                            |
 | Client risk indicators, on a 1-5 scale | What do the available records say about capacity, tolerance and horizon? |
 
 These are not probabilities of a positive return. Recommendation assessments use each action's evidence and constraints; equal scores remain possible. The current analytical layer uses illustrative sensitivities rather than calibrated forecasts, so recommendation confidence is capped at 84/100.
@@ -70,16 +70,16 @@ The browser interface uses HTML, CSS and JavaScript. Python handles analysis and
 
 Application paths are under `singhacks-jb-wealth-intelligence/`.
 
-| Path | Purpose |
-| --- | --- |
-| `app.py` | Local HTTP server and optional alert monitor |
-| `api/index.py` | Hosted Flask API |
-| `web/` | Browser interface and styles |
-| `tessera/` | Analysis, evidence validation, review state, storage and integrations |
-| `data/` | Controlled source records |
-| `runtime/` | Local generated state and ledgers |
-| `tests/` | Regression tests |
-| `docs/` | Rubric and integration guides |
+| Path             | Purpose                                                               |
+| ---------------- | --------------------------------------------------------------------- |
+| `app.py`       | Local HTTP server and optional alert monitor                          |
+| `api/index.py` | Hosted Flask API                                                      |
+| `web/`         | Browser interface and styles                                          |
+| `tessera/`     | Analysis, evidence validation, review state, storage and integrations |
+| `data/`        | Controlled source records                                             |
+| `runtime/`     | Local generated state and ledgers                                     |
+| `tests/`       | Regression tests                                                      |
+| `docs/`        | Rubric and integration guides                                         |
 
 ### Verification
 

@@ -764,6 +764,24 @@ nav { display: grid; gap: 7px; }
   font-size: 10px;
 }
 
+.client-search-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  background: var(--paper-2);
+}
+.client-search-field { display: grid; flex: 1 1 320px; min-width: 0; gap: 8px; }
+.client-search-field span { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.client-search-field input { width: 100%; min-width: 0; min-height: 44px; padding: 10px 12px; border: 1px solid var(--line); color: var(--ink); background: var(--paper); font: inherit; font-size: 13px; }
+.client-search-field input:focus-visible { outline: 3px solid rgba(183,143,80,.35); outline-offset: 2px; border-color: var(--teal); }
+.client-search-toolbar button { min-height: 44px; padding: 10px 14px; color: var(--teal); font-size: 11px; }
+.client-search-toolbar button:disabled { opacity: .4; cursor: default; }
+#client-search-count { margin: 0 0 14px; color: var(--muted); font-size: 11px; }
+
 .dismiss-reasons { display: grid; gap: 8px; margin-bottom: 16px; }
 .dismiss-reason {
   display: flex;

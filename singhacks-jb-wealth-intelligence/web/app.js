@@ -14,6 +14,7 @@ const state = {
   chatMessages: [],
   chatRecognition: null,
   eventFilters: { from: "", to: "", sort: "newest", severity: "all", source: "all" },
+  clientSearch: "",
 };
 
 const $ = (selector, root = document) => root.querySelector(selector);
@@ -515,16 +516,37 @@ function renderBook() {
 }
 
 function renderAllClients() {
-  const queue = buildQueue();
-  const counts = queueCounts(queue);
-  const nextUpId = markNextUp(queue);
   $("#all-clients-view").innerHTML = `
     <section class="events-hero">
       <div><span class="section-kicker">FULL BOOK</span><h1>All clients</h1><p>The complete queue: possible news exposure first, then lanes by urgency score, highest first inside each lane. Today’s page shows only the first five.</p></div>
       <button class="back-link" data-view="book">← Back to today</button>
     </section>
-    ${summaryHeaderHTML(counts, queue.length)}
-    ${queueTableHTML(queue, nextUpId)}`;
+    <div class="client-search-toolbar" role="search" aria-label="Search client list">
+      <label class="client-search-field" for="all-clients-search">
+        <span>Search clients</span>
+        <input id="all-clients-search" type="search" data-client-search value="${esc(state.clientSearch)}" placeholder="Name, ID, booking centre, risk profile or RM" autocomplete="off" aria-describedby="client-search-count">
+      </label>
+      <button class="small-button" id="clear-client-search" type="button" data-clear-client-search>Clear search</button>
+      <p id="client-search-count" role="status" aria-live="polite" aria-atomic="true"></p>
+    </div>
+    <div id="all-clients-results"></div>`;
+  renderClientSearchResults();
+}
+
+function renderClientSearchResults() {
+  const queue = buildQueue();
+  const terms = state.clientSearch.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const filteredQueue = queue.filter((item) => {
+    const searchText = [item.client_name, item.client_id, item.booking_centre, item.risk_profile, state.data.meta.rm]
+      .join(" ").toLowerCase();
+    return terms.every((term) => searchText.includes(term));
+  });
+  $("#client-search-count").textContent = `Showing ${filteredQueue.length} of ${queue.length} client${queue.length === 1 ? "" : "s"}`;
+  $("#clear-client-search").disabled = !state.clientSearch;
+  $("#all-clients-results").innerHTML = `
+    ${summaryHeaderHTML(queueCounts(filteredQueue), filteredQueue.length)}
+    ${filteredQueue.length ? queueTableHTML(filteredQueue, markNextUp(queue)) : `
+      <div class="empty-state"><strong>No clients match your search</strong><span>Try a different name, client ID, booking centre, risk profile or RM, or clear your search.</span></div>`}`;
 }
 
 function renderMarketEvents() {
@@ -1153,6 +1175,13 @@ function bindEvents() {
       state.eventFilters = { from: "", to: "", sort: "newest", severity: "all", source: "all" };
       renderMarketEvents();
     }
+    if (event.target.closest("[data-clear-client-search]")) {
+      state.clientSearch = "";
+      const input = $("[data-client-search]");
+      input.value = "";
+      renderClientSearchResults();
+      input.focus();
+    }
   });
 
   document.addEventListener("change", (event) => {
@@ -1192,6 +1221,10 @@ function bindEvents() {
   });
 
   document.addEventListener("input", (event) => {
+    if (event.target.matches("[data-client-search]")) {
+      state.clientSearch = event.target.value;
+      renderClientSearchResults();
+    }
     if (event.target.matches("[data-scenario-scale]")) {
       state.studioScale = Number(event.target.value);
       $("#studio-scenario-output").innerHTML = scenarioHTML(profiles()[state.studioClient], state.studioScenario, state.studioScale, true);
