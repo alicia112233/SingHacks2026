@@ -17,6 +17,7 @@ from typing import Any, Iterable
 
 import pandas as pd
 
+from tessera.client_vector import build_client_vectors
 from tessera.contradictions import detect
 from tessera.escalation import NEWS_TOPICS, assess as assess_escalation, headline_topics, mentions, recent_live_news
 from tessera.recommendation_validation import assess, validate_numbers, publish, RUBRIC_VERSION, fingerprint, has_text
@@ -1648,6 +1649,9 @@ def build_intelligence_payload(
             ),
         },
         "market_events": _market_events(bundle),
+        "client_vectors": build_client_vectors(
+            bundle, {client_id: _cash_need_summary(bundle, client_id) for client_id in clients.client_id}
+        ),
         "client_profiles": client_profiles,
         "featured_clients": {
             client_id: client_profiles[client_id] for client_id in focus_client_ids

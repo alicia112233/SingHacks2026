@@ -83,6 +83,7 @@
       <a href="walkthrough.html">Walkthrough</a>
       <a href="https://claude.ai/artifact/A9A354YmGx1mBfQHcoURZR">Slides ↗</a>
       <a href="map.html">Project map</a>
+      <a href="bookmap.html">Book map</a>
       <a href="evolution.html" aria-current="page">How it evolved</a>
     </div>
     <div class="navright"><span class="team">SAPTrio</span><a href="https://github.com/alicia112233/SingHacks2026">GitHub ↗</a></div>
@@ -93,7 +94,7 @@
   <header class="ev-head">
     <p class="kicker">How it evolved</p>
     <h1 class="title">We built a smart assistant. We learned to build for a bank.</h1>
-    <p class="lede">At SingHacks we asked one question: are the AI's answers good? We removed names before calling outside models and thought that was enough. Over the two months since, user testing with a Julius Bär RM training lead and our own research taught us to ask a different question first: where is client data allowed to go at all? This page shows how that changed the product.</p>
+    <p class="lede">At SingHacks we asked one question: are the AI's answers good? We removed names before calling outside models and thought that was enough. Over the two months since, a check with a relationship manager about their pain points, plus our own research, taught us to ask a different question first: where is client data allowed to go at all? This page shows how that changed the product.</p>
   </header>
 
   <section class="models" aria-label="Our mental model, then and now">
@@ -186,7 +187,7 @@
       <div class="side"><span class="num">1</span><h3>Where client data is allowed to go</h3><span class="date">21 Oct and 30 Oct 2026</span></div>
       <div class="bwa">
         <div class="b"><h4>We believed</h4><p>Removing names is enough. Outside AI models reviewed each action using the client's portfolio numbers, with names, IDs and RM notes stripped out.</p></div>
-        <div class="w"><h4>What changed our mind</h4><span class="src-tag">User testing</span><p>A Julius Bär RM training lead explained data classes. Client data (C3 to C4), anonymised or not, may only go to the bank's in-house AI, which runs offline. Tools like Copilot are cleared for public data (C1 to C2) only, and API use is restricted.</p></div>
+        <div class="w"><h4>What changed our mind</h4><span class="src-tag">User testing</span><p>Talking to an RM about how they work showed us how strictly a bank separates public data from client data. Client data, anonymised or not, stays with AI the bank runs itself.</p></div>
         <div class="a"><h4>What we built</h4><p>First, a stricter check that blocks any packet carrying a name, ID or note, plus a view of exactly what the model saw. Then a full split: outside models only read public headlines, and one in-house model reviews actions from three angles.</p></div>
       </div>
     </article>
@@ -195,7 +196,7 @@
       <div class="side"><span class="num">2</span><h3>From predicting to screening</h3><span class="date">27 Oct 2026</span></div>
       <div class="bwa">
         <div class="b"><h4>We believed</h4><p>A good alert tells the RM what a headline will do to a client's portfolio.</p></div>
-        <div class="w"><h4>What changed our mind</h4><span class="src-tag">User testing</span><p>The RM lead doubted any system can know every portfolio and predict each headline's impact. RMs already get market reviews every Monday and Thursday and a daily media review.</p></div>
+        <div class="w"><h4>What changed our mind</h4><span class="src-tag">User testing</span><p>The RM we spoke to doubted any system can predict each headline's impact on every portfolio. RMs already get regular market and media reviews, so the gap is knowing which clients to check.</p></div>
         <div class="a"><h4>What we built</h4><p>A “May be exposed” flag: which clients a headline touches and what to check. Scenarios are labelled as illustrations, and confidence is capped at 84 until a model is tested on real outcomes.</p></div>
       </div>
     </article>
@@ -226,14 +227,14 @@
     <h2 class="title">What we want to learn next</h2>
     <div class="next-grid">
       <div><span class="planned">Proposed</span><h3>A 30-day shadow pilot with one desk</h3><p>Measure how fast an RM reaches the first high-value review, how much evidence is complete, and why RMs override TESSERA.</p></div>
-      <div><span class="planned">Planned feature</span><h3>China's offshore trust tax</h3><p>Suggested by the RM lead as a real Singapore-relevant trigger: China's 20% tax on offshore trust income (MOF/STA Announcement No. 21 of 2026). Not built yet.</p></div>
+      <div><span class="planned">Planned feature</span><h3>China's offshore trust tax</h3><p>A real, Singapore-relevant trigger from our research: China's 20% tax on offshore trust income (MOF/STA Announcement No. 21 of 2026). Not built yet.</p></div>
     </div>
   </div>
 </section>
 
 <footer class="site">
   <div class="wrap">
-    <p>TESSERA by SAPTrio. User testing: a feedback session with a Julius Bär Lead for RM Training on 21 Oct 2026. Data classes as described in that session.</p>
+    <p>TESSERA by SAPTrio. User testing: a conversation with a relationship manager about their pain points, October 2026.</p>
   </div>
 </footer>
 

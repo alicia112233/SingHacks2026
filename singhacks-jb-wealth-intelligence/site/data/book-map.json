@@ -1,0 +1,3068 @@
+{
+ "as_of": "2026-08-26",
+ "snapshots": [
+  "2025-12-31",
+  "2026-02-27",
+  "2026-03-31",
+  "2026-06-30",
+  "2026-08-26"
+ ],
+ "method": "Named features calculated in-house from the client record. Each feature is ranked across the book, groups are weighted equally, and similarity is cosine. Similarity, not prediction; never sent to any model.",
+ "features": [
+  {
+   "key": "theme:energy",
+   "label": "Energy",
+   "group": "Exposure, looked through",
+   "unit": "share"
+  },
+  {
+   "key": "theme:shipping",
+   "label": "Shipping",
+   "group": "Exposure, looked through",
+   "unit": "share"
+  },
+  {
+   "key": "theme:property",
+   "label": "Property",
+   "group": "Exposure, looked through",
+   "unit": "share"
+  },
+  {
+   "key": "theme:plantation",
+   "label": "Plantation",
+   "group": "Exposure, looked through",
+   "unit": "share"
+  },
+  {
+   "key": "theme:healthcare",
+   "label": "Healthcare",
+   "group": "Exposure, looked through",
+   "unit": "share"
+  },
+  {
+   "key": "theme:technology",
+   "label": "Technology",
+   "group": "Exposure, looked through",
+   "unit": "share"
+  },
+  {
+   "key": "theme:luxury",
+   "label": "Luxury",
+   "group": "Exposure, looked through",
+   "unit": "share"
+  },
+  {
+   "key": "theme:commodities",
+   "label": "Commodities",
+   "group": "Exposure, looked through",
+   "unit": "share"
+  },
+  {
+   "key": "theme:industrial",
+   "label": "Industrial",
+   "group": "Exposure, looked through",
+   "unit": "share"
+  },
+  {
+   "key": "asset:Equity",
+   "label": "Equity",
+   "group": "Portfolio build",
+   "unit": "share"
+  },
+  {
+   "key": "asset:Fixed Income",
+   "label": "Fixed income",
+   "group": "Portfolio build",
+   "unit": "share"
+  },
+  {
+   "key": "asset:Structured Products",
+   "label": "Structured products",
+   "group": "Portfolio build",
+   "unit": "share"
+  },
+  {
+   "key": "asset:Alternatives",
+   "label": "Alternatives",
+   "group": "Portfolio build",
+   "unit": "share"
+  },
+  {
+   "key": "asset:Commodities",
+   "label": "Commodities",
+   "group": "Portfolio build",
+   "unit": "share"
+  },
+  {
+   "key": "asset:Cash and Equivalents",
+   "label": "Cash",
+   "group": "Portfolio build",
+   "unit": "share"
+  },
+  {
+   "key": "currency_mismatch",
+   "label": "Held outside base currency",
+   "group": "Portfolio build",
+   "unit": "share"
+  },
+  {
+   "key": "daily_liquid",
+   "label": "Sellable daily",
+   "group": "Liquidity",
+   "unit": "share"
+  },
+  {
+   "key": "gated",
+   "label": "Gated or illiquid",
+   "group": "Liquidity",
+   "unit": "share"
+  },
+  {
+   "key": "ltv_to_trigger",
+   "label": "Loan against its margin-call level",
+   "group": "Obligations",
+   "unit": "share"
+  },
+  {
+   "key": "cash_need_cover",
+   "label": "Cash due in 24 months against daily-liquid assets",
+   "group": "Obligations",
+   "unit": "ratio"
+  },
+  {
+   "key": "uncalled_share",
+   "label": "Uncalled fund commitments",
+   "group": "Obligations",
+   "unit": "share"
+  },
+  {
+   "key": "risk_tolerance",
+   "label": "Risk tolerance score",
+   "group": "Stated profile",
+   "unit": "score"
+  },
+  {
+   "key": "horizon_years",
+   "label": "Investment horizon",
+   "group": "Stated profile",
+   "unit": "years"
+  },
+  {
+   "key": "risk_gap",
+   "label": "Risk assets above target",
+   "group": "Stated profile",
+   "unit": "points"
+  }
+ ],
+ "axes": {
+  "x": {
+   "low": [
+    "Gated or illiquid",
+    "Alternatives"
+   ],
+   "high": [
+    "Sellable daily",
+    "Held outside base currency"
+   ]
+  },
+  "y": {
+   "low": [
+    "Investment horizon",
+    "Risk tolerance score"
+   ],
+   "high": [
+    "Fixed income",
+    "Property"
+   ]
+  }
+ },
+ "clients": {
+  "CL-0001": {
+   "values": {
+    "theme:energy": 0.4499,
+    "theme:shipping": 0.0357,
+    "theme:property": 0.0,
+    "theme:plantation": 0.0,
+    "theme:healthcare": 0.0,
+    "theme:technology": 0.0509,
+    "theme:luxury": 0.0,
+    "theme:commodities": 0.0367,
+    "theme:industrial": 0.0357,
+    "asset:Equity": 0.7036,
+    "asset:Fixed Income": 0.1453,
+    "asset:Structured Products": 0.0357,
+    "asset:Alternatives": 0.0415,
+    "asset:Commodities": 0.0367,
+    "asset:Cash and Equivalents": 0.0372,
+    "currency_mismatch": 0.9714,
+    "daily_liquid": 0.8942,
+    "gated": 0.0357,
+    "ltv_to_trigger": 0.845,
+    "cash_need_cover": 0.1599,
+    "uncalled_share": 0.0,
+    "risk_tolerance": 6.0,
+    "horizon_years": 25.0,
+    "risk_gap": 0.2975
+   },
+   "similar": [
+    {
+     "client_id": "CL-0005",
+     "name": "Aishah binti Rahman",
+     "similarity": 0.38,
+     "shared": [
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 0.8942,
+       "b": 0.9428
+      },
+      {
+       "key": "currency_mismatch",
+       "label": "Held outside base currency",
+       "unit": "share",
+       "a": 0.9714,
+       "b": 0.6132
+      },
+      {
+       "key": "theme:energy",
+       "label": "Energy",
+       "unit": "share",
+       "a": 0.4499,
+       "b": 0.1113
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0016",
+     "name": "Yamamoto Kenji",
+     "similarity": 0.36,
+     "shared": [
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 0.8942,
+       "b": 1.0
+      },
+      {
+       "key": "risk_gap",
+       "label": "Risk assets above target",
+       "unit": "points",
+       "a": 0.2975,
+       "b": 0.2537
+      },
+      {
+       "key": "currency_mismatch",
+       "label": "Held outside base currency",
+       "unit": "share",
+       "a": 0.9714,
+       "b": 0.5641
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0018",
+     "name": "Elena Marchetti-Wong",
+     "similarity": 0.33,
+     "shared": [
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 0.8942,
+       "b": 1.0
+      },
+      {
+       "key": "asset:Commodities",
+       "label": "Commodities",
+       "unit": "share",
+       "a": 0.0367,
+       "b": 0.1404
+      },
+      {
+       "key": "currency_mismatch",
+       "label": "Held outside base currency",
+       "unit": "share",
+       "a": 0.9714,
+       "b": 0.468
+      }
+     ]
+    }
+   ],
+   "goal_gap": [
+    {
+     "date": "2025-12-31",
+     "pct": 38.1
+    },
+    {
+     "date": "2026-02-27",
+     "pct": 37.8
+    },
+    {
+     "date": "2026-03-31",
+     "pct": 44.0
+    },
+    {
+     "date": "2026-06-30",
+     "pct": 44.1
+    },
+    {
+     "date": "2026-08-26",
+     "pct": 45.0
+    }
+   ],
+   "goal_themes": "energy",
+   "biggest_moves": [
+    {
+     "key": "ltv_to_trigger",
+     "label": "Loan against its margin-call level",
+     "from": 1.1214,
+     "to": 0.845
+    },
+    {
+     "key": "theme:energy",
+     "label": "Energy",
+     "from": 0.3811,
+     "to": 0.4499
+    },
+    {
+     "key": "asset:Structured Products",
+     "label": "Structured products",
+     "from": 0.0,
+     "to": 0.0357
+    }
+   ],
+   "map": {
+    "x": 0.284,
+    "y": -0.707
+   },
+   "name": "Hartono Wijaya Kusuma",
+   "score": 51,
+   "lane": "week",
+   "tension": "Diversification goal vs energy exposure"
+  },
+  "CL-0002": {
+   "values": {
+    "theme:energy": 0.0,
+    "theme:shipping": 0.0,
+    "theme:property": 0.0,
+    "theme:plantation": 0.0,
+    "theme:healthcare": 0.0,
+    "theme:technology": 0.8856,
+    "theme:luxury": 0.0,
+    "theme:commodities": 0.0,
+    "theme:industrial": 0.0,
+    "asset:Equity": 0.2353,
+    "asset:Fixed Income": 0.0261,
+    "asset:Structured Products": 0.0337,
+    "asset:Alternatives": 0.6835,
+    "asset:Commodities": 0.0,
+    "asset:Cash and Equivalents": 0.0214,
+    "currency_mismatch": 0.0,
+    "daily_liquid": 0.2828,
+    "gated": 0.7172,
+    "ltv_to_trigger": 0.9828,
+    "cash_need_cover": 0.4694,
+    "uncalled_share": 0.0,
+    "risk_tolerance": 8.0,
+    "horizon_years": 20.0,
+    "risk_gap": 0.2925
+   },
+   "similar": [
+    {
+     "client_id": "CL-0014",
+     "name": "Lau Chi Ming",
+     "similarity": 0.53,
+     "shared": [
+      {
+       "key": "ltv_to_trigger",
+       "label": "Loan against its margin-call level",
+       "unit": "share",
+       "a": 0.9828,
+       "b": 0.9916
+      },
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.7172,
+       "b": 0.2662
+      },
+      {
+       "key": "cash_need_cover",
+       "label": "Cash due in 24 months against daily-liquid assets",
+       "unit": "ratio",
+       "a": 0.4694,
+       "b": 0.6751
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0017",
+     "name": "Fong Enterprises Family Office",
+     "similarity": 0.5,
+     "shared": [
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.7172,
+       "b": 0.2745
+      },
+      {
+       "key": "risk_gap",
+       "label": "Risk assets above target",
+       "unit": "points",
+       "a": 0.2925,
+       "b": 0.3053
+      },
+      {
+       "key": "asset:Alternatives",
+       "label": "Alternatives",
+       "unit": "share",
+       "a": 0.6835,
+       "b": 0.3786
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0011",
+     "name": "Tan Boon Huat",
+     "similarity": 0.48,
+     "shared": [
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.7172,
+       "b": 0.4728
+      },
+      {
+       "key": "ltv_to_trigger",
+       "label": "Loan against its margin-call level",
+       "unit": "share",
+       "a": 0.9828,
+       "b": 0.4036
+      },
+      {
+       "key": "asset:Alternatives",
+       "label": "Alternatives",
+       "unit": "share",
+       "a": 0.6835,
+       "b": 0.4728
+      }
+     ]
+    }
+   ],
+   "goal_gap": null,
+   "goal_themes": null,
+   "biggest_moves": [
+    {
+     "key": "ltv_to_trigger",
+     "label": "Loan against its margin-call level",
+     "from": 0.8443,
+     "to": 0.9828
+    },
+    {
+     "key": "asset:Alternatives",
+     "label": "Alternatives",
+     "from": 0.7288,
+     "to": 0.6835
+    },
+    {
+     "key": "asset:Structured Products",
+     "label": "Structured products",
+     "from": 0.0,
+     "to": 0.0337
+    }
+   ],
+   "map": {
+    "x": -1.0,
+    "y": -0.482
+   },
+   "name": "Ravi Chandrasekaran",
+   "score": 70,
+   "lane": "exposed",
+   "tension": "Liquidity need vs sellable assets"
+  },
+  "CL-0003": {
+   "values": {
+    "theme:energy": 0.0,
+    "theme:shipping": 0.0,
+    "theme:property": 0.0,
+    "theme:plantation": 0.0,
+    "theme:healthcare": 0.0,
+    "theme:technology": 0.1068,
+    "theme:luxury": 0.2606,
+    "theme:commodities": 0.0,
+    "theme:industrial": 0.1837,
+    "asset:Equity": 0.7146,
+    "asset:Fixed Income": 0.0915,
+    "asset:Structured Products": 0.0539,
+    "asset:Alternatives": 0.0632,
+    "asset:Commodities": 0.0,
+    "asset:Cash and Equivalents": 0.0769,
+    "currency_mismatch": 0.2564,
+    "daily_liquid": 0.8829,
+    "gated": 0.0539,
+    "ltv_to_trigger": 0.0,
+    "cash_need_cover": 0.1894,
+    "uncalled_share": 0.0,
+    "risk_tolerance": 2.0,
+    "horizon_years": 15.0,
+    "risk_gap": 0.5917
+   },
+   "similar": [
+    {
+     "client_id": "CL-0016",
+     "name": "Yamamoto Kenji",
+     "similarity": 0.32,
+     "shared": [
+      {
+       "key": "risk_gap",
+       "label": "Risk assets above target",
+       "unit": "points",
+       "a": 0.5917,
+       "b": 0.2537
+      },
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 0.8829,
+       "b": 1.0
+      },
+      {
+       "key": "asset:Cash and Equivalents",
+       "label": "Cash",
+       "unit": "share",
+       "a": 0.0769,
+       "b": 0.078
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0018",
+     "name": "Elena Marchetti-Wong",
+     "similarity": 0.2,
+     "shared": [
+      {
+       "key": "theme:luxury",
+       "label": "Luxury",
+       "unit": "share",
+       "a": 0.2606,
+       "b": 0.1628
+      },
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 0.8829,
+       "b": 1.0
+      },
+      {
+       "key": "asset:Cash and Equivalents",
+       "label": "Cash",
+       "unit": "share",
+       "a": 0.0769,
+       "b": 0.1258
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0007",
+     "name": "Alistair Pemberton-Hale",
+     "similarity": 0.19,
+     "shared": [
+      {
+       "key": "theme:industrial",
+       "label": "Industrial",
+       "unit": "share",
+       "a": 0.1837,
+       "b": 0.0654
+      },
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 0.8829,
+       "b": 0.8792
+      },
+      {
+       "key": "asset:Structured Products",
+       "label": "Structured products",
+       "unit": "share",
+       "a": 0.0539,
+       "b": 0.051
+      }
+     ]
+    }
+   ],
+   "goal_gap": null,
+   "goal_themes": null,
+   "biggest_moves": [
+    {
+     "key": "currency_mismatch",
+     "label": "Held outside base currency",
+     "from": 0.2285,
+     "to": 0.2564
+    },
+    {
+     "key": "theme:luxury",
+     "label": "Luxury",
+     "from": 0.2874,
+     "to": 0.2606
+    },
+    {
+     "key": "theme:technology",
+     "label": "Technology",
+     "from": 0.0872,
+     "to": 0.1068
+    }
+   ],
+   "map": {
+    "x": 0.179,
+    "y": 0.064
+   },
+   "name": "Margarethe Voss-Brenner",
+   "score": 70,
+   "lane": "now",
+   "tension": "Conservative profile vs risk-heavy portfolio"
+  },
+  "CL-0004": {
+   "values": {
+    "theme:energy": 0.0,
+    "theme:shipping": 0.0,
+    "theme:property": 0.0975,
+    "theme:plantation": 0.0,
+    "theme:healthcare": 0.0,
+    "theme:technology": 0.0,
+    "theme:luxury": 0.0,
+    "theme:commodities": 0.0,
+    "theme:industrial": 0.0,
+    "asset:Equity": 0.238,
+    "asset:Fixed Income": 0.6471,
+    "asset:Structured Products": 0.0,
+    "asset:Alternatives": 0.0539,
+    "asset:Commodities": 0.0,
+    "asset:Cash and Equivalents": 0.061,
+    "currency_mismatch": 0.0975,
+    "daily_liquid": 0.8323,
+    "gated": 0.0539,
+    "ltv_to_trigger": 0.0,
+    "cash_need_cover": 0.0521,
+    "uncalled_share": 0.0,
+    "risk_tolerance": 3.0,
+    "horizon_years": 18.0,
+    "risk_gap": -0.0181
+   },
+   "similar": [
+    {
+     "client_id": "CL-0012",
+     "name": "Cheung Kwok Wing",
+     "similarity": 0.85,
+     "shared": [
+      {
+       "key": "asset:Fixed Income",
+       "label": "Fixed income",
+       "unit": "share",
+       "a": 0.6471,
+       "b": 0.6662
+      },
+      {
+       "key": "theme:property",
+       "label": "Property",
+       "unit": "share",
+       "a": 0.0975,
+       "b": 0.0943
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0008",
+     "name": "Chen Wei Ling",
+     "similarity": 0.39,
+     "shared": [
+      {
+       "key": "asset:Fixed Income",
+       "label": "Fixed income",
+       "unit": "share",
+       "a": 0.6471,
+       "b": 0.3236
+      },
+      {
+       "key": "theme:property",
+       "label": "Property",
+       "unit": "share",
+       "a": 0.0975,
+       "b": 0.0818
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0014",
+     "name": "Lau Chi Ming",
+     "similarity": 0.29,
+     "shared": [
+      {
+       "key": "asset:Fixed Income",
+       "label": "Fixed income",
+       "unit": "share",
+       "a": 0.6471,
+       "b": 0.4419
+      },
+      {
+       "key": "theme:property",
+       "label": "Property",
+       "unit": "share",
+       "a": 0.0975,
+       "b": 0.4903
+      }
+     ]
+    }
+   ],
+   "goal_gap": null,
+   "goal_themes": null,
+   "biggest_moves": [
+    {
+     "key": "asset:Fixed Income",
+     "label": "Fixed income",
+     "from": 0.6659,
+     "to": 0.6471
+    },
+    {
+     "key": "asset:Equity",
+     "label": "Equity",
+     "from": 0.2253,
+     "to": 0.238
+    }
+   ],
+   "map": {
+    "x": 0.052,
+    "y": 0.741
+   },
+   "name": "Chalermchai Suphanburi",
+   "score": 49,
+   "lane": "week",
+   "tension": "Lifetime income vs long-duration holdings"
+  },
+  "CL-0005": {
+   "values": {
+    "theme:energy": 0.1113,
+    "theme:shipping": 0.0,
+    "theme:property": 0.0,
+    "theme:plantation": 0.1017,
+    "theme:healthcare": 0.1284,
+    "theme:technology": 0.0,
+    "theme:luxury": 0.0,
+    "theme:commodities": 0.0,
+    "theme:industrial": 0.0,
+    "asset:Equity": 0.6774,
+    "asset:Fixed Income": 0.2654,
+    "asset:Structured Products": 0.0,
+    "asset:Alternatives": 0.0,
+    "asset:Commodities": 0.0,
+    "asset:Cash and Equivalents": 0.0572,
+    "currency_mismatch": 0.6132,
+    "daily_liquid": 0.9428,
+    "gated": 0.0,
+    "ltv_to_trigger": 0.0,
+    "cash_need_cover": 0.0071,
+    "uncalled_share": 0.0,
+    "risk_tolerance": 5.0,
+    "horizon_years": 20.0,
+    "risk_gap": 0.2274
+   },
+   "similar": [
+    {
+     "client_id": "CL-0016",
+     "name": "Yamamoto Kenji",
+     "similarity": 0.8,
+     "shared": [
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 0.9428,
+       "b": 1.0
+      },
+      {
+       "key": "theme:healthcare",
+       "label": "Healthcare",
+       "unit": "share",
+       "a": 0.1284,
+       "b": 0.2697
+      },
+      {
+       "key": "currency_mismatch",
+       "label": "Held outside base currency",
+       "unit": "share",
+       "a": 0.6132,
+       "b": 0.5641
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0018",
+     "name": "Elena Marchetti-Wong",
+     "similarity": 0.59,
+     "shared": [
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 0.9428,
+       "b": 1.0
+      },
+      {
+       "key": "currency_mismatch",
+       "label": "Held outside base currency",
+       "unit": "share",
+       "a": 0.6132,
+       "b": 0.468
+      },
+      {
+       "key": "asset:Equity",
+       "label": "Equity",
+       "unit": "share",
+       "a": 0.6774,
+       "b": 0.504
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0008",
+     "name": "Chen Wei Ling",
+     "similarity": 0.49,
+     "shared": [
+      {
+       "key": "theme:healthcare",
+       "label": "Healthcare",
+       "unit": "share",
+       "a": 0.1284,
+       "b": 0.0685
+      },
+      {
+       "key": "currency_mismatch",
+       "label": "Held outside base currency",
+       "unit": "share",
+       "a": 0.6132,
+       "b": 0.4384
+      },
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 0.9428,
+       "b": 0.8639
+      }
+     ]
+    }
+   ],
+   "goal_gap": [
+    {
+     "date": "2025-12-31",
+     "pct": 9.8
+    },
+    {
+     "date": "2026-02-27",
+     "pct": 9.8
+    },
+    {
+     "date": "2026-03-31",
+     "pct": 10.5
+    },
+    {
+     "date": "2026-06-30",
+     "pct": 10.1
+    },
+    {
+     "date": "2026-08-26",
+     "pct": 10.2
+    }
+   ],
+   "goal_themes": "plantation",
+   "biggest_moves": [
+    {
+     "key": "asset:Equity",
+     "label": "Equity",
+     "from": 0.6423,
+     "to": 0.6774
+    },
+    {
+     "key": "asset:Fixed Income",
+     "label": "Fixed income",
+     "from": 0.296,
+     "to": 0.2654
+    },
+    {
+     "key": "currency_mismatch",
+     "label": "Held outside base currency",
+     "from": 0.5881,
+     "to": 0.6132
+    }
+   ],
+   "map": {
+    "x": 0.687,
+    "y": -0.055
+   },
+   "name": "Aishah binti Rahman",
+   "score": 57,
+   "lane": "week",
+   "tension": "Diversification goal vs plantation exposure"
+  },
+  "CL-0006": {
+   "values": {
+    "theme:energy": 0.0,
+    "theme:shipping": 0.0,
+    "theme:property": 0.2506,
+    "theme:plantation": 0.0,
+    "theme:healthcare": 0.0,
+    "theme:technology": 0.0,
+    "theme:luxury": 0.0,
+    "theme:commodities": 0.0,
+    "theme:industrial": 0.0,
+    "asset:Equity": 0.4021,
+    "asset:Fixed Income": 0.29,
+    "asset:Structured Products": 0.0,
+    "asset:Alternatives": 0.1933,
+    "asset:Commodities": 0.0,
+    "asset:Cash and Equivalents": 0.1146,
+    "currency_mismatch": 0.2677,
+    "daily_liquid": 0.6921,
+    "gated": 0.1933,
+    "ltv_to_trigger": 0.0,
+    "cash_need_cover": 0.6395,
+    "uncalled_share": 0.166,
+    "risk_tolerance": 5.0,
+    "horizon_years": 18.0,
+    "risk_gap": 0.1454
+   },
+   "similar": [
+    {
+     "client_id": "CL-0014",
+     "name": "Lau Chi Ming",
+     "similarity": 0.57,
+     "shared": [
+      {
+       "key": "cash_need_cover",
+       "label": "Cash due in 24 months against daily-liquid assets",
+       "unit": "ratio",
+       "a": 0.6395,
+       "b": 0.6751
+      },
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.1933,
+       "b": 0.2662
+      },
+      {
+       "key": "theme:property",
+       "label": "Property",
+       "unit": "share",
+       "a": 0.2506,
+       "b": 0.4903
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0011",
+     "name": "Tan Boon Huat",
+     "similarity": 0.4,
+     "shared": [
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.1933,
+       "b": 0.4728
+      },
+      {
+       "key": "theme:property",
+       "label": "Property",
+       "unit": "share",
+       "a": 0.2506,
+       "b": 0.5142
+      },
+      {
+       "key": "asset:Alternatives",
+       "label": "Alternatives",
+       "unit": "share",
+       "a": 0.1933,
+       "b": 0.4728
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0017",
+     "name": "Fong Enterprises Family Office",
+     "similarity": 0.4,
+     "shared": [
+      {
+       "key": "uncalled_share",
+       "label": "Uncalled fund commitments",
+       "unit": "share",
+       "a": 0.166,
+       "b": 0.1797
+      },
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.1933,
+       "b": 0.2745
+      },
+      {
+       "key": "cash_need_cover",
+       "label": "Cash due in 24 months against daily-liquid assets",
+       "unit": "ratio",
+       "a": 0.6395,
+       "b": 0.3057
+      }
+     ]
+    }
+   ],
+   "goal_gap": null,
+   "goal_themes": null,
+   "biggest_moves": [
+    {
+     "key": "currency_mismatch",
+     "label": "Held outside base currency",
+     "from": 0.2537,
+     "to": 0.2677
+    },
+    {
+     "key": "asset:Equity",
+     "label": "Equity",
+     "from": 0.3888,
+     "to": 0.4021
+    },
+    {
+     "key": "theme:property",
+     "label": "Property",
+     "from": 0.2636,
+     "to": 0.2506
+    }
+   ],
+   "map": {
+    "x": -0.403,
+    "y": 0.487
+   },
+   "name": "Nguyen Thi Bao Tran",
+   "score": 49,
+   "lane": "week",
+   "tension": "USD obligations vs SGD-heavy assets"
+  },
+  "CL-0007": {
+   "values": {
+    "theme:energy": 0.0,
+    "theme:shipping": 0.0,
+    "theme:property": 0.0,
+    "theme:plantation": 0.0,
+    "theme:healthcare": 0.0,
+    "theme:technology": 0.0,
+    "theme:luxury": 0.0,
+    "theme:commodities": 0.2404,
+    "theme:industrial": 0.0654,
+    "asset:Equity": 0.3601,
+    "asset:Fixed Income": 0.2898,
+    "asset:Structured Products": 0.051,
+    "asset:Alternatives": 0.0698,
+    "asset:Commodities": 0.1893,
+    "asset:Cash and Equivalents": 0.04,
+    "currency_mismatch": 0.0705,
+    "daily_liquid": 0.8792,
+    "gated": 0.051,
+    "ltv_to_trigger": 0.0,
+    "cash_need_cover": 0.3411,
+    "uncalled_share": 0.0,
+    "risk_tolerance": 5.0,
+    "horizon_years": 12.0,
+    "risk_gap": 0.2202
+   },
+   "similar": [
+    {
+     "client_id": "CL-0012",
+     "name": "Cheung Kwok Wing",
+     "similarity": 0.28,
+     "shared": [
+      {
+       "key": "theme:industrial",
+       "label": "Industrial",
+       "unit": "share",
+       "a": 0.0654,
+       "b": 0.0583
+      },
+      {
+       "key": "asset:Fixed Income",
+       "label": "Fixed income",
+       "unit": "share",
+       "a": 0.2898,
+       "b": 0.6662
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0008",
+     "name": "Chen Wei Ling",
+     "similarity": 0.24,
+     "shared": [
+      {
+       "key": "asset:Commodities",
+       "label": "Commodities",
+       "unit": "share",
+       "a": 0.1893,
+       "b": 0.0429
+      },
+      {
+       "key": "theme:commodities",
+       "label": "Commodities",
+       "unit": "share",
+       "a": 0.2404,
+       "b": 0.0429
+      },
+      {
+       "key": "asset:Fixed Income",
+       "label": "Fixed income",
+       "unit": "share",
+       "a": 0.2898,
+       "b": 0.3236
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0003",
+     "name": "Margarethe Voss-Brenner",
+     "similarity": 0.19,
+     "shared": [
+      {
+       "key": "theme:industrial",
+       "label": "Industrial",
+       "unit": "share",
+       "a": 0.0654,
+       "b": 0.1837
+      },
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 0.8792,
+       "b": 0.8829
+      },
+      {
+       "key": "asset:Structured Products",
+       "label": "Structured products",
+       "unit": "share",
+       "a": 0.051,
+       "b": 0.0539
+      }
+     ]
+    }
+   ],
+   "goal_gap": null,
+   "goal_themes": null,
+   "biggest_moves": [
+    {
+     "key": "asset:Fixed Income",
+     "label": "Fixed income",
+     "from": 0.3166,
+     "to": 0.2898
+    },
+    {
+     "key": "asset:Commodities",
+     "label": "Commodities",
+     "from": 0.1689,
+     "to": 0.1893
+    },
+    {
+     "key": "theme:commodities",
+     "label": "Commodities",
+     "from": 0.2228,
+     "to": 0.2404
+    }
+   ],
+   "map": {
+    "x": 0.09,
+    "y": 0.296
+   },
+   "name": "Alistair Pemberton-Hale",
+   "score": 24,
+   "lane": "monitor",
+   "tension": "Portfolio evidence requires review"
+  },
+  "CL-0008": {
+   "values": {
+    "theme:energy": 0.0,
+    "theme:shipping": 0.0,
+    "theme:property": 0.0818,
+    "theme:plantation": 0.0,
+    "theme:healthcare": 0.0685,
+    "theme:technology": 0.0,
+    "theme:luxury": 0.0,
+    "theme:commodities": 0.0429,
+    "theme:industrial": 0.0,
+    "asset:Equity": 0.4974,
+    "asset:Fixed Income": 0.3236,
+    "asset:Structured Products": 0.0,
+    "asset:Alternatives": 0.0,
+    "asset:Commodities": 0.0429,
+    "asset:Cash and Equivalents": 0.1361,
+    "currency_mismatch": 0.4384,
+    "daily_liquid": 0.8639,
+    "gated": 0.0,
+    "ltv_to_trigger": 0.0,
+    "cash_need_cover": 0.03,
+    "uncalled_share": 0.0,
+    "risk_tolerance": 5.0,
+    "horizon_years": 15.0,
+    "risk_gap": 0.0903
+   },
+   "similar": [
+    {
+     "client_id": "CL-0018",
+     "name": "Elena Marchetti-Wong",
+     "similarity": 0.67,
+     "shared": [
+      {
+       "key": "asset:Cash and Equivalents",
+       "label": "Cash",
+       "unit": "share",
+       "a": 0.1361,
+       "b": 0.1258
+      },
+      {
+       "key": "asset:Commodities",
+       "label": "Commodities",
+       "unit": "share",
+       "a": 0.0429,
+       "b": 0.1404
+      },
+      {
+       "key": "theme:commodities",
+       "label": "Commodities",
+       "unit": "share",
+       "a": 0.0429,
+       "b": 0.1404
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0016",
+     "name": "Yamamoto Kenji",
+     "similarity": 0.65,
+     "shared": [
+      {
+       "key": "asset:Cash and Equivalents",
+       "label": "Cash",
+       "unit": "share",
+       "a": 0.1361,
+       "b": 0.078
+      },
+      {
+       "key": "theme:healthcare",
+       "label": "Healthcare",
+       "unit": "share",
+       "a": 0.0685,
+       "b": 0.2697
+      },
+      {
+       "key": "asset:Commodities",
+       "label": "Commodities",
+       "unit": "share",
+       "a": 0.0429,
+       "b": 0.0265
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0012",
+     "name": "Cheung Kwok Wing",
+     "similarity": 0.49,
+     "shared": [
+      {
+       "key": "asset:Fixed Income",
+       "label": "Fixed income",
+       "unit": "share",
+       "a": 0.3236,
+       "b": 0.6662
+      },
+      {
+       "key": "theme:property",
+       "label": "Property",
+       "unit": "share",
+       "a": 0.0818,
+       "b": 0.0943
+      },
+      {
+       "key": "asset:Cash and Equivalents",
+       "label": "Cash",
+       "unit": "share",
+       "a": 0.1361,
+       "b": 0.0697
+      }
+     ]
+    }
+   ],
+   "goal_gap": null,
+   "goal_themes": null,
+   "biggest_moves": [
+    {
+     "key": "currency_mismatch",
+     "label": "Held outside base currency",
+     "from": 0.4126,
+     "to": 0.4384
+    },
+    {
+     "key": "asset:Equity",
+     "label": "Equity",
+     "from": 0.4837,
+     "to": 0.4974
+    },
+    {
+     "key": "asset:Fixed Income",
+     "label": "Fixed income",
+     "from": 0.3365,
+     "to": 0.3236
+    }
+   ],
+   "map": {
+    "x": 0.528,
+    "y": 0.475
+   },
+   "name": "Chen Wei Ling",
+   "score": 22,
+   "lane": "monitor",
+   "tension": "Portfolio evidence requires review"
+  },
+  "CL-0009": {
+   "values": {
+    "theme:energy": 0.0,
+    "theme:shipping": 0.0,
+    "theme:property": 0.0,
+    "theme:plantation": 0.0,
+    "theme:healthcare": 0.0,
+    "theme:technology": 0.0,
+    "theme:luxury": 0.0,
+    "theme:commodities": 0.0,
+    "theme:industrial": 0.1719,
+    "asset:Equity": 0.3341,
+    "asset:Fixed Income": 0.1445,
+    "asset:Structured Products": 0.0,
+    "asset:Alternatives": 0.0716,
+    "asset:Commodities": 0.0,
+    "asset:Cash and Equivalents": 0.4498,
+    "currency_mismatch": 0.2914,
+    "daily_liquid": 0.9284,
+    "gated": 0.0716,
+    "ltv_to_trigger": 0.0,
+    "cash_need_cover": 0.0,
+    "uncalled_share": 0.0348,
+    "risk_tolerance": 5.0,
+    "horizon_years": 20.0,
+    "risk_gap": -0.0444
+   },
+   "similar": [
+    {
+     "client_id": "CL-0010",
+     "name": "Priya Nair Menon",
+     "similarity": 0.34,
+     "shared": [
+      {
+       "key": "asset:Alternatives",
+       "label": "Alternatives",
+       "unit": "share",
+       "a": 0.0716,
+       "b": 0.0735
+      },
+      {
+       "key": "currency_mismatch",
+       "label": "Held outside base currency",
+       "unit": "share",
+       "a": 0.2914,
+       "b": 0.721
+      },
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.0716,
+       "b": 0.0735
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0018",
+     "name": "Elena Marchetti-Wong",
+     "similarity": 0.28,
+     "shared": [
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 0.9284,
+       "b": 1.0
+      },
+      {
+       "key": "asset:Cash and Equivalents",
+       "label": "Cash",
+       "unit": "share",
+       "a": 0.4498,
+       "b": 0.1258
+      },
+      {
+       "key": "currency_mismatch",
+       "label": "Held outside base currency",
+       "unit": "share",
+       "a": 0.2914,
+       "b": 0.468
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0012",
+     "name": "Cheung Kwok Wing",
+     "similarity": 0.24,
+     "shared": [
+      {
+       "key": "theme:industrial",
+       "label": "Industrial",
+       "unit": "share",
+       "a": 0.1719,
+       "b": 0.0583
+      },
+      {
+       "key": "asset:Cash and Equivalents",
+       "label": "Cash",
+       "unit": "share",
+       "a": 0.4498,
+       "b": 0.0697
+      }
+     ]
+    }
+   ],
+   "goal_gap": null,
+   "goal_themes": null,
+   "biggest_moves": [
+    {
+     "key": "currency_mismatch",
+     "label": "Held outside base currency",
+     "from": 0.2747,
+     "to": 0.2914
+    }
+   ],
+   "map": {
+    "x": 0.277,
+    "y": 0.185
+   },
+   "name": "Andreas Lindqvist",
+   "score": 26,
+   "lane": "monitor",
+   "tension": "Portfolio evidence requires review"
+  },
+  "CL-0010": {
+   "values": {
+    "theme:energy": 0.0,
+    "theme:shipping": 0.0,
+    "theme:property": 0.0,
+    "theme:plantation": 0.0,
+    "theme:healthcare": 0.1218,
+    "theme:technology": 0.0,
+    "theme:luxury": 0.0,
+    "theme:commodities": 0.0,
+    "theme:industrial": 0.0,
+    "asset:Equity": 0.4959,
+    "asset:Fixed Income": 0.3674,
+    "asset:Structured Products": 0.0,
+    "asset:Alternatives": 0.0735,
+    "asset:Commodities": 0.0,
+    "asset:Cash and Equivalents": 0.0633,
+    "currency_mismatch": 0.721,
+    "daily_liquid": 0.8633,
+    "gated": 0.0735,
+    "ltv_to_trigger": 0.0,
+    "cash_need_cover": 0.0,
+    "uncalled_share": 0.0,
+    "risk_tolerance": 6.0,
+    "horizon_years": 35.0,
+    "risk_gap": 0.0494
+   },
+   "similar": [
+    {
+     "client_id": "CL-0009",
+     "name": "Andreas Lindqvist",
+     "similarity": 0.34,
+     "shared": [
+      {
+       "key": "asset:Alternatives",
+       "label": "Alternatives",
+       "unit": "share",
+       "a": 0.0735,
+       "b": 0.0716
+      },
+      {
+       "key": "currency_mismatch",
+       "label": "Held outside base currency",
+       "unit": "share",
+       "a": 0.721,
+       "b": 0.2914
+      },
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.0735,
+       "b": 0.0716
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0015",
+     "name": "Kim Do-Yoon",
+     "similarity": 0.25,
+     "shared": [
+      {
+       "key": "horizon_years",
+       "label": "Investment horizon",
+       "unit": "years",
+       "a": 35.0,
+       "b": 25.0
+      },
+      {
+       "key": "risk_tolerance",
+       "label": "Risk tolerance score",
+       "unit": "score",
+       "a": 6.0,
+       "b": 9.0
+      },
+      {
+       "key": "asset:Alternatives",
+       "label": "Alternatives",
+       "unit": "share",
+       "a": 0.0735,
+       "b": 0.2194
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0005",
+     "name": "Aishah binti Rahman",
+     "similarity": 0.22,
+     "shared": [
+      {
+       "key": "currency_mismatch",
+       "label": "Held outside base currency",
+       "unit": "share",
+       "a": 0.721,
+       "b": 0.6132
+      },
+      {
+       "key": "theme:healthcare",
+       "label": "Healthcare",
+       "unit": "share",
+       "a": 0.1218,
+       "b": 0.1284
+      },
+      {
+       "key": "asset:Fixed Income",
+       "label": "Fixed income",
+       "unit": "share",
+       "a": 0.3674,
+       "b": 0.2654
+      }
+     ]
+    }
+   ],
+   "goal_gap": null,
+   "goal_themes": null,
+   "biggest_moves": [
+    {
+     "key": "currency_mismatch",
+     "label": "Held outside base currency",
+     "from": 0.6904,
+     "to": 0.721
+    },
+    {
+     "key": "asset:Equity",
+     "label": "Equity",
+     "from": 0.4696,
+     "to": 0.4959
+    },
+    {
+     "key": "asset:Fixed Income",
+     "label": "Fixed income",
+     "from": 0.3861,
+     "to": 0.3674
+    }
+   ],
+   "map": {
+    "x": 0.134,
+    "y": -0.194
+   },
+   "name": "Priya Nair Menon",
+   "score": 9,
+   "lane": "monitor",
+   "tension": "Portfolio evidence requires review"
+  },
+  "CL-0011": {
+   "values": {
+    "theme:energy": 0.0,
+    "theme:shipping": 0.0,
+    "theme:property": 0.5142,
+    "theme:plantation": 0.0,
+    "theme:healthcare": 0.0,
+    "theme:technology": 0.0,
+    "theme:luxury": 0.0,
+    "theme:commodities": 0.0,
+    "theme:industrial": 0.0,
+    "asset:Equity": 0.2156,
+    "asset:Fixed Income": 0.2447,
+    "asset:Structured Products": 0.0,
+    "asset:Alternatives": 0.4728,
+    "asset:Commodities": 0.0,
+    "asset:Cash and Equivalents": 0.067,
+    "currency_mismatch": 0.236,
+    "daily_liquid": 0.4602,
+    "gated": 0.4728,
+    "ltv_to_trigger": 0.4036,
+    "cash_need_cover": 0.1273,
+    "uncalled_share": 0.0,
+    "risk_tolerance": 2.0,
+    "horizon_years": 8.0,
+    "risk_gap": 0.4484
+   },
+   "similar": [
+    {
+     "client_id": "CL-0014",
+     "name": "Lau Chi Ming",
+     "similarity": 0.63,
+     "shared": [
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.4728,
+       "b": 0.2662
+      },
+      {
+       "key": "ltv_to_trigger",
+       "label": "Loan against its margin-call level",
+       "unit": "share",
+       "a": 0.4036,
+       "b": 0.9916
+      },
+      {
+       "key": "theme:property",
+       "label": "Property",
+       "unit": "share",
+       "a": 0.5142,
+       "b": 0.4903
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0002",
+     "name": "Ravi Chandrasekaran",
+     "similarity": 0.48,
+     "shared": [
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.4728,
+       "b": 0.7172
+      },
+      {
+       "key": "ltv_to_trigger",
+       "label": "Loan against its margin-call level",
+       "unit": "share",
+       "a": 0.4036,
+       "b": 0.9828
+      },
+      {
+       "key": "asset:Alternatives",
+       "label": "Alternatives",
+       "unit": "share",
+       "a": 0.4728,
+       "b": 0.6835
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0006",
+     "name": "Nguyen Thi Bao Tran",
+     "similarity": 0.4,
+     "shared": [
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.4728,
+       "b": 0.1933
+      },
+      {
+       "key": "theme:property",
+       "label": "Property",
+       "unit": "share",
+       "a": 0.5142,
+       "b": 0.2506
+      },
+      {
+       "key": "asset:Alternatives",
+       "label": "Alternatives",
+       "unit": "share",
+       "a": 0.4728,
+       "b": 0.1933
+      }
+     ]
+    }
+   ],
+   "goal_gap": null,
+   "goal_themes": null,
+   "biggest_moves": [],
+   "map": {
+    "x": -0.693,
+    "y": 0.685
+   },
+   "name": "Tan Boon Huat",
+   "score": 76,
+   "lane": "now",
+   "tension": "Succession plan vs illiquid estate"
+  },
+  "CL-0012": {
+   "values": {
+    "theme:energy": 0.0,
+    "theme:shipping": 0.0583,
+    "theme:property": 0.0943,
+    "theme:plantation": 0.0,
+    "theme:healthcare": 0.0,
+    "theme:technology": 0.0,
+    "theme:luxury": 0.0,
+    "theme:commodities": 0.0,
+    "theme:industrial": 0.0583,
+    "asset:Equity": 0.2212,
+    "asset:Fixed Income": 0.6662,
+    "asset:Structured Products": 0.0,
+    "asset:Alternatives": 0.0429,
+    "asset:Commodities": 0.0,
+    "asset:Cash and Equivalents": 0.0697,
+    "currency_mismatch": 0.143,
+    "daily_liquid": 0.8159,
+    "gated": 0.0429,
+    "ltv_to_trigger": 0.0,
+    "cash_need_cover": 0.056,
+    "uncalled_share": 0.0,
+    "risk_tolerance": 3.0,
+    "horizon_years": 12.0,
+    "risk_gap": -0.0459
+   },
+   "similar": [
+    {
+     "client_id": "CL-0004",
+     "name": "Chalermchai Suphanburi",
+     "similarity": 0.85,
+     "shared": [
+      {
+       "key": "asset:Fixed Income",
+       "label": "Fixed income",
+       "unit": "share",
+       "a": 0.6662,
+       "b": 0.6471
+      },
+      {
+       "key": "theme:property",
+       "label": "Property",
+       "unit": "share",
+       "a": 0.0943,
+       "b": 0.0975
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0008",
+     "name": "Chen Wei Ling",
+     "similarity": 0.49,
+     "shared": [
+      {
+       "key": "asset:Fixed Income",
+       "label": "Fixed income",
+       "unit": "share",
+       "a": 0.6662,
+       "b": 0.3236
+      },
+      {
+       "key": "theme:property",
+       "label": "Property",
+       "unit": "share",
+       "a": 0.0943,
+       "b": 0.0818
+      },
+      {
+       "key": "asset:Cash and Equivalents",
+       "label": "Cash",
+       "unit": "share",
+       "a": 0.0697,
+       "b": 0.1361
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0014",
+     "name": "Lau Chi Ming",
+     "similarity": 0.28,
+     "shared": [
+      {
+       "key": "asset:Fixed Income",
+       "label": "Fixed income",
+       "unit": "share",
+       "a": 0.6662,
+       "b": 0.4419
+      },
+      {
+       "key": "theme:property",
+       "label": "Property",
+       "unit": "share",
+       "a": 0.0943,
+       "b": 0.4903
+      }
+     ]
+    }
+   ],
+   "goal_gap": null,
+   "goal_themes": null,
+   "biggest_moves": [
+    {
+     "key": "asset:Fixed Income",
+     "label": "Fixed income",
+     "from": 0.7021,
+     "to": 0.6662
+    },
+    {
+     "key": "asset:Equity",
+     "label": "Equity",
+     "from": 0.1915,
+     "to": 0.2212
+    },
+    {
+     "key": "daily_liquid",
+     "label": "Sellable daily",
+     "from": 0.7938,
+     "to": 0.8159
+    }
+   ],
+   "map": {
+    "x": 0.124,
+    "y": 1.0
+   },
+   "name": "Cheung Kwok Wing",
+   "score": 59,
+   "lane": "week",
+   "tension": "Lifetime income vs long-duration holdings"
+  },
+  "CL-0013": {
+   "values": {
+    "theme:energy": 0.0,
+    "theme:shipping": 0.0,
+    "theme:property": 0.0,
+    "theme:plantation": 0.0,
+    "theme:healthcare": 0.0,
+    "theme:technology": 0.5706,
+    "theme:luxury": 0.0,
+    "theme:commodities": 0.0,
+    "theme:industrial": 0.0,
+    "asset:Equity": 0.7573,
+    "asset:Fixed Income": 0.055,
+    "asset:Structured Products": 0.0709,
+    "asset:Alternatives": 0.0653,
+    "asset:Commodities": 0.0,
+    "asset:Cash and Equivalents": 0.0514,
+    "currency_mismatch": 0.0893,
+    "daily_liquid": 0.8638,
+    "gated": 0.1362,
+    "ltv_to_trigger": 0.2719,
+    "cash_need_cover": 0.0,
+    "uncalled_share": 0.0,
+    "risk_tolerance": 8.0,
+    "horizon_years": 22.0,
+    "risk_gap": 0.2335
+   },
+   "similar": [
+    {
+     "client_id": "CL-0015",
+     "name": "Kim Do-Yoon",
+     "similarity": 0.52,
+     "shared": [
+      {
+       "key": "risk_tolerance",
+       "label": "Risk tolerance score",
+       "unit": "score",
+       "a": 8.0,
+       "b": 9.0
+      },
+      {
+       "key": "asset:Structured Products",
+       "label": "Structured products",
+       "unit": "share",
+       "a": 0.0709,
+       "b": 0.1284
+      },
+      {
+       "key": "theme:technology",
+       "label": "Technology",
+       "unit": "share",
+       "a": 0.5706,
+       "b": 0.4257
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0002",
+     "name": "Ravi Chandrasekaran",
+     "similarity": 0.45,
+     "shared": [
+      {
+       "key": "risk_tolerance",
+       "label": "Risk tolerance score",
+       "unit": "score",
+       "a": 8.0,
+       "b": 8.0
+      },
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.1362,
+       "b": 0.7172
+      },
+      {
+       "key": "ltv_to_trigger",
+       "label": "Loan against its margin-call level",
+       "unit": "share",
+       "a": 0.2719,
+       "b": 0.9828
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0001",
+     "name": "Hartono Wijaya Kusuma",
+     "similarity": 0.26,
+     "shared": [
+      {
+       "key": "ltv_to_trigger",
+       "label": "Loan against its margin-call level",
+       "unit": "share",
+       "a": 0.2719,
+       "b": 0.845
+      },
+      {
+       "key": "risk_tolerance",
+       "label": "Risk tolerance score",
+       "unit": "score",
+       "a": 8.0,
+       "b": 6.0
+      },
+      {
+       "key": "asset:Equity",
+       "label": "Equity",
+       "unit": "share",
+       "a": 0.7573,
+       "b": 0.7036
+      }
+     ]
+    }
+   ],
+   "goal_gap": null,
+   "goal_themes": null,
+   "biggest_moves": [
+    {
+     "key": "asset:Structured Products",
+     "label": "Structured products",
+     "from": 0.0,
+     "to": 0.0709
+    },
+    {
+     "key": "daily_liquid",
+     "label": "Sellable daily",
+     "from": 0.9271,
+     "to": 0.8638
+    },
+    {
+     "key": "gated",
+     "label": "Gated or illiquid",
+     "from": 0.0729,
+     "to": 0.1362
+    }
+   ],
+   "map": {
+    "x": -0.177,
+    "y": -0.793
+   },
+   "name": "Zhang Meiling",
+   "score": 28,
+   "lane": "monitor",
+   "tension": "Technology wealth doubled inside the portfolio"
+  },
+  "CL-0014": {
+   "values": {
+    "theme:energy": 0.0,
+    "theme:shipping": 0.0,
+    "theme:property": 0.4903,
+    "theme:plantation": 0.0,
+    "theme:healthcare": 0.0,
+    "theme:technology": 0.0,
+    "theme:luxury": 0.0,
+    "theme:commodities": 0.0,
+    "theme:industrial": 0.0,
+    "asset:Equity": 0.2339,
+    "asset:Fixed Income": 0.4419,
+    "asset:Structured Products": 0.0705,
+    "asset:Alternatives": 0.1958,
+    "asset:Commodities": 0.0,
+    "asset:Cash and Equivalents": 0.058,
+    "currency_mismatch": 0.4419,
+    "daily_liquid": 0.4295,
+    "gated": 0.2662,
+    "ltv_to_trigger": 0.9916,
+    "cash_need_cover": 0.6751,
+    "uncalled_share": 0.0,
+    "risk_tolerance": 5.0,
+    "horizon_years": 12.0,
+    "risk_gap": 0.0501
+   },
+   "similar": [
+    {
+     "client_id": "CL-0011",
+     "name": "Tan Boon Huat",
+     "similarity": 0.63,
+     "shared": [
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.2662,
+       "b": 0.4728
+      },
+      {
+       "key": "ltv_to_trigger",
+       "label": "Loan against its margin-call level",
+       "unit": "share",
+       "a": 0.9916,
+       "b": 0.4036
+      },
+      {
+       "key": "theme:property",
+       "label": "Property",
+       "unit": "share",
+       "a": 0.4903,
+       "b": 0.5142
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0006",
+     "name": "Nguyen Thi Bao Tran",
+     "similarity": 0.57,
+     "shared": [
+      {
+       "key": "cash_need_cover",
+       "label": "Cash due in 24 months against daily-liquid assets",
+       "unit": "ratio",
+       "a": 0.6751,
+       "b": 0.6395
+      },
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.2662,
+       "b": 0.1933
+      },
+      {
+       "key": "theme:property",
+       "label": "Property",
+       "unit": "share",
+       "a": 0.4903,
+       "b": 0.2506
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0002",
+     "name": "Ravi Chandrasekaran",
+     "similarity": 0.53,
+     "shared": [
+      {
+       "key": "ltv_to_trigger",
+       "label": "Loan against its margin-call level",
+       "unit": "share",
+       "a": 0.9916,
+       "b": 0.9828
+      },
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.2662,
+       "b": 0.7172
+      },
+      {
+       "key": "cash_need_cover",
+       "label": "Cash due in 24 months against daily-liquid assets",
+       "unit": "ratio",
+       "a": 0.6751,
+       "b": 0.4694
+      }
+     ]
+    }
+   ],
+   "goal_gap": null,
+   "goal_themes": null,
+   "biggest_moves": [
+    {
+     "key": "ltv_to_trigger",
+     "label": "Loan against its margin-call level",
+     "from": 0.7704,
+     "to": 0.9916
+    },
+    {
+     "key": "gated",
+     "label": "Gated or illiquid",
+     "from": 0.1913,
+     "to": 0.2662
+    },
+    {
+     "key": "asset:Structured Products",
+     "label": "Structured products",
+     "from": 0.0,
+     "to": 0.0705
+    }
+   ],
+   "map": {
+    "x": -0.719,
+    "y": 0.703
+   },
+   "name": "Lau Chi Ming",
+   "score": 71,
+   "lane": "now",
+   "tension": "Liquidity need vs sellable assets"
+  },
+  "CL-0015": {
+   "values": {
+    "theme:energy": 0.1284,
+    "theme:shipping": 0.1284,
+    "theme:property": 0.0,
+    "theme:plantation": 0.0,
+    "theme:healthcare": 0.0,
+    "theme:technology": 0.4257,
+    "theme:luxury": 0.0,
+    "theme:commodities": 0.0754,
+    "theme:industrial": 0.0,
+    "asset:Equity": 0.466,
+    "asset:Fixed Income": 0.0407,
+    "asset:Structured Products": 0.1284,
+    "asset:Alternatives": 0.2194,
+    "asset:Commodities": 0.0754,
+    "asset:Cash and Equivalents": 0.0701,
+    "currency_mismatch": 0.0759,
+    "daily_liquid": 0.6522,
+    "gated": 0.1284,
+    "ltv_to_trigger": 0.0,
+    "cash_need_cover": 0.0,
+    "uncalled_share": 0.0,
+    "risk_tolerance": 9.0,
+    "horizon_years": 25.0,
+    "risk_gap": 0.1592
+   },
+   "similar": [
+    {
+     "client_id": "CL-0013",
+     "name": "Zhang Meiling",
+     "similarity": 0.52,
+     "shared": [
+      {
+       "key": "risk_tolerance",
+       "label": "Risk tolerance score",
+       "unit": "score",
+       "a": 9.0,
+       "b": 8.0
+      },
+      {
+       "key": "asset:Structured Products",
+       "label": "Structured products",
+       "unit": "share",
+       "a": 0.1284,
+       "b": 0.0709
+      },
+      {
+       "key": "theme:technology",
+       "label": "Technology",
+       "unit": "share",
+       "a": 0.4257,
+       "b": 0.5706
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0019",
+     "name": "Abdullah Al-Mansoori",
+     "similarity": 0.4,
+     "shared": [
+      {
+       "key": "asset:Structured Products",
+       "label": "Structured products",
+       "unit": "share",
+       "a": 0.1284,
+       "b": 0.129
+      },
+      {
+       "key": "horizon_years",
+       "label": "Investment horizon",
+       "unit": "years",
+       "a": 25.0,
+       "b": 25.0
+      },
+      {
+       "key": "theme:shipping",
+       "label": "Shipping",
+       "unit": "share",
+       "a": 0.1284,
+       "b": 0.332
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0002",
+     "name": "Ravi Chandrasekaran",
+     "similarity": 0.32,
+     "shared": [
+      {
+       "key": "risk_tolerance",
+       "label": "Risk tolerance score",
+       "unit": "score",
+       "a": 9.0,
+       "b": 8.0
+      },
+      {
+       "key": "theme:technology",
+       "label": "Technology",
+       "unit": "share",
+       "a": 0.4257,
+       "b": 0.8856
+      },
+      {
+       "key": "asset:Alternatives",
+       "label": "Alternatives",
+       "unit": "share",
+       "a": 0.2194,
+       "b": 0.6835
+      }
+     ]
+    }
+   ],
+   "goal_gap": null,
+   "goal_themes": null,
+   "biggest_moves": [
+    {
+     "key": "theme:energy",
+     "label": "Energy",
+     "from": 0.0,
+     "to": 0.1284
+    },
+    {
+     "key": "theme:shipping",
+     "label": "Shipping",
+     "from": 0.0,
+     "to": 0.1284
+    },
+    {
+     "key": "gated",
+     "label": "Gated or illiquid",
+     "from": 0.0,
+     "to": 0.1284
+    }
+   ],
+   "map": {
+    "x": -0.218,
+    "y": -0.712
+   },
+   "name": "Kim Do-Yoon",
+   "score": 7,
+   "lane": "monitor",
+   "tension": "Portfolio evidence requires review"
+  },
+  "CL-0016": {
+   "values": {
+    "theme:energy": 0.0,
+    "theme:shipping": 0.0,
+    "theme:property": 0.0,
+    "theme:plantation": 0.0,
+    "theme:healthcare": 0.2697,
+    "theme:technology": 0.0,
+    "theme:luxury": 0.0,
+    "theme:commodities": 0.0265,
+    "theme:industrial": 0.0,
+    "asset:Equity": 0.6772,
+    "asset:Fixed Income": 0.2183,
+    "asset:Structured Products": 0.0,
+    "asset:Alternatives": 0.0,
+    "asset:Commodities": 0.0265,
+    "asset:Cash and Equivalents": 0.078,
+    "currency_mismatch": 0.5641,
+    "daily_liquid": 1.0,
+    "gated": 0.0,
+    "ltv_to_trigger": 0.0,
+    "cash_need_cover": 0.0076,
+    "uncalled_share": 0.0,
+    "risk_tolerance": 5.0,
+    "horizon_years": 20.0,
+    "risk_gap": 0.2537
+   },
+   "similar": [
+    {
+     "client_id": "CL-0018",
+     "name": "Elena Marchetti-Wong",
+     "similarity": 0.82,
+     "shared": [
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 1.0,
+       "b": 1.0
+      },
+      {
+       "key": "asset:Cash and Equivalents",
+       "label": "Cash",
+       "unit": "share",
+       "a": 0.078,
+       "b": 0.1258
+      },
+      {
+       "key": "currency_mismatch",
+       "label": "Held outside base currency",
+       "unit": "share",
+       "a": 0.5641,
+       "b": 0.468
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0005",
+     "name": "Aishah binti Rahman",
+     "similarity": 0.8,
+     "shared": [
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 1.0,
+       "b": 0.9428
+      },
+      {
+       "key": "theme:healthcare",
+       "label": "Healthcare",
+       "unit": "share",
+       "a": 0.2697,
+       "b": 0.1284
+      },
+      {
+       "key": "currency_mismatch",
+       "label": "Held outside base currency",
+       "unit": "share",
+       "a": 0.5641,
+       "b": 0.6132
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0008",
+     "name": "Chen Wei Ling",
+     "similarity": 0.65,
+     "shared": [
+      {
+       "key": "asset:Cash and Equivalents",
+       "label": "Cash",
+       "unit": "share",
+       "a": 0.078,
+       "b": 0.1361
+      },
+      {
+       "key": "theme:healthcare",
+       "label": "Healthcare",
+       "unit": "share",
+       "a": 0.2697,
+       "b": 0.0685
+      },
+      {
+       "key": "asset:Commodities",
+       "label": "Commodities",
+       "unit": "share",
+       "a": 0.0265,
+       "b": 0.0429
+      }
+     ]
+    }
+   ],
+   "goal_gap": [
+    {
+     "date": "2025-12-31",
+     "pct": 26.4
+    },
+    {
+     "date": "2026-02-27",
+     "pct": 26.2
+    },
+    {
+     "date": "2026-03-31",
+     "pct": 26.7
+    },
+    {
+     "date": "2026-06-30",
+     "pct": 26.7
+    },
+    {
+     "date": "2026-08-26",
+     "pct": 27.0
+    }
+   ],
+   "goal_themes": "healthcare",
+   "biggest_moves": [
+    {
+     "key": "asset:Equity",
+     "label": "Equity",
+     "from": 0.6596,
+     "to": 0.6772
+    },
+    {
+     "key": "asset:Fixed Income",
+     "label": "Fixed income",
+     "from": 0.2311,
+     "to": 0.2183
+    }
+   ],
+   "map": {
+    "x": 0.746,
+    "y": -0.091
+   },
+   "name": "Yamamoto Kenji",
+   "score": 61,
+   "lane": "week",
+   "tension": "Diversification goal vs healthcare exposure"
+  },
+  "CL-0017": {
+   "values": {
+    "theme:energy": 0.0,
+    "theme:shipping": 0.0,
+    "theme:property": 0.0,
+    "theme:plantation": 0.0,
+    "theme:healthcare": 0.0189,
+    "theme:technology": 0.0404,
+    "theme:luxury": 0.0,
+    "theme:commodities": 0.034,
+    "theme:industrial": 0.0,
+    "asset:Equity": 0.3427,
+    "asset:Fixed Income": 0.1834,
+    "asset:Structured Products": 0.0,
+    "asset:Alternatives": 0.3786,
+    "asset:Commodities": 0.034,
+    "asset:Cash and Equivalents": 0.0614,
+    "currency_mismatch": 0.0458,
+    "daily_liquid": 0.6214,
+    "gated": 0.2745,
+    "ltv_to_trigger": 0.0,
+    "cash_need_cover": 0.3057,
+    "uncalled_share": 0.1797,
+    "risk_tolerance": 5.0,
+    "horizon_years": 50.0,
+    "risk_gap": 0.3053
+   },
+   "similar": [
+    {
+     "client_id": "CL-0002",
+     "name": "Ravi Chandrasekaran",
+     "similarity": 0.5,
+     "shared": [
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.2745,
+       "b": 0.7172
+      },
+      {
+       "key": "risk_gap",
+       "label": "Risk assets above target",
+       "unit": "points",
+       "a": 0.3053,
+       "b": 0.2925
+      },
+      {
+       "key": "asset:Alternatives",
+       "label": "Alternatives",
+       "unit": "share",
+       "a": 0.3786,
+       "b": 0.6835
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0006",
+     "name": "Nguyen Thi Bao Tran",
+     "similarity": 0.4,
+     "shared": [
+      {
+       "key": "uncalled_share",
+       "label": "Uncalled fund commitments",
+       "unit": "share",
+       "a": 0.1797,
+       "b": 0.166
+      },
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.2745,
+       "b": 0.1933
+      },
+      {
+       "key": "cash_need_cover",
+       "label": "Cash due in 24 months against daily-liquid assets",
+       "unit": "ratio",
+       "a": 0.3057,
+       "b": 0.6395
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0020",
+     "name": "Grace Adeyemi-Lim",
+     "similarity": 0.29,
+     "shared": [
+      {
+       "key": "uncalled_share",
+       "label": "Uncalled fund commitments",
+       "unit": "share",
+       "a": 0.1797,
+       "b": 0.0472
+      },
+      {
+       "key": "horizon_years",
+       "label": "Investment horizon",
+       "unit": "years",
+       "a": 50.0,
+       "b": 28.0
+      },
+      {
+       "key": "cash_need_cover",
+       "label": "Cash due in 24 months against daily-liquid assets",
+       "unit": "ratio",
+       "a": 0.3057,
+       "b": 0.3417
+      }
+     ]
+    }
+   ],
+   "goal_gap": null,
+   "goal_themes": null,
+   "biggest_moves": [
+    {
+     "key": "asset:Equity",
+     "label": "Equity",
+     "from": 0.3296,
+     "to": 0.3427
+    },
+    {
+     "key": "asset:Fixed Income",
+     "label": "Fixed income",
+     "from": 0.1945,
+     "to": 0.1834
+    }
+   ],
+   "map": {
+    "x": -0.555,
+    "y": -0.427
+   },
+   "name": "Fong Enterprises Family Office",
+   "score": 50,
+   "lane": "week",
+   "tension": "Private-market commitments vs gated liquidity"
+  },
+  "CL-0018": {
+   "values": {
+    "theme:energy": 0.0,
+    "theme:shipping": 0.0,
+    "theme:property": 0.0,
+    "theme:plantation": 0.0,
+    "theme:healthcare": 0.0,
+    "theme:technology": 0.0,
+    "theme:luxury": 0.1628,
+    "theme:commodities": 0.1404,
+    "theme:industrial": 0.0,
+    "asset:Equity": 0.504,
+    "asset:Fixed Income": 0.2298,
+    "asset:Structured Products": 0.0,
+    "asset:Alternatives": 0.0,
+    "asset:Commodities": 0.1404,
+    "asset:Cash and Equivalents": 0.1258,
+    "currency_mismatch": 0.468,
+    "daily_liquid": 1.0,
+    "gated": 0.0,
+    "ltv_to_trigger": 0.0,
+    "cash_need_cover": 0.0412,
+    "uncalled_share": 0.0,
+    "risk_tolerance": 5.0,
+    "horizon_years": 22.0,
+    "risk_gap": 0.1944
+   },
+   "similar": [
+    {
+     "client_id": "CL-0016",
+     "name": "Yamamoto Kenji",
+     "similarity": 0.82,
+     "shared": [
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 1.0,
+       "b": 1.0
+      },
+      {
+       "key": "asset:Cash and Equivalents",
+       "label": "Cash",
+       "unit": "share",
+       "a": 0.1258,
+       "b": 0.078
+      },
+      {
+       "key": "currency_mismatch",
+       "label": "Held outside base currency",
+       "unit": "share",
+       "a": 0.468,
+       "b": 0.5641
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0008",
+     "name": "Chen Wei Ling",
+     "similarity": 0.67,
+     "shared": [
+      {
+       "key": "asset:Cash and Equivalents",
+       "label": "Cash",
+       "unit": "share",
+       "a": 0.1258,
+       "b": 0.1361
+      },
+      {
+       "key": "asset:Commodities",
+       "label": "Commodities",
+       "unit": "share",
+       "a": 0.1404,
+       "b": 0.0429
+      },
+      {
+       "key": "theme:commodities",
+       "label": "Commodities",
+       "unit": "share",
+       "a": 0.1404,
+       "b": 0.0429
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0005",
+     "name": "Aishah binti Rahman",
+     "similarity": 0.59,
+     "shared": [
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 1.0,
+       "b": 0.9428
+      },
+      {
+       "key": "currency_mismatch",
+       "label": "Held outside base currency",
+       "unit": "share",
+       "a": 0.468,
+       "b": 0.6132
+      },
+      {
+       "key": "asset:Equity",
+       "label": "Equity",
+       "unit": "share",
+       "a": 0.504,
+       "b": 0.6774
+      }
+     ]
+    }
+   ],
+   "goal_gap": [
+    {
+     "date": "2025-12-31",
+     "pct": 18.3
+    },
+    {
+     "date": "2026-02-27",
+     "pct": 18.0
+    },
+    {
+     "date": "2026-03-31",
+     "pct": 16.8
+    },
+    {
+     "date": "2026-06-30",
+     "pct": 16.5
+    },
+    {
+     "date": "2026-08-26",
+     "pct": 16.3
+    }
+   ],
+   "goal_themes": "luxury",
+   "biggest_moves": [
+    {
+     "key": "currency_mismatch",
+     "label": "Held outside base currency",
+     "from": 0.4345,
+     "to": 0.468
+    },
+    {
+     "key": "theme:luxury",
+     "label": "Luxury",
+     "from": 0.1827,
+     "to": 0.1628
+    },
+    {
+     "key": "theme:commodities",
+     "label": "Commodities",
+     "from": 0.1257,
+     "to": 0.1404
+    }
+   ],
+   "map": {
+    "x": 0.754,
+    "y": -0.017
+   },
+   "name": "Elena Marchetti-Wong",
+   "score": 43,
+   "lane": "monitor",
+   "tension": "Diversification goal vs luxury exposure"
+  },
+  "CL-0019": {
+   "values": {
+    "theme:energy": 0.2184,
+    "theme:shipping": 0.332,
+    "theme:property": 0.0,
+    "theme:plantation": 0.0,
+    "theme:healthcare": 0.0,
+    "theme:technology": 0.0,
+    "theme:luxury": 0.0,
+    "theme:commodities": 0.0,
+    "theme:industrial": 0.332,
+    "asset:Equity": 0.5797,
+    "asset:Fixed Income": 0.1567,
+    "asset:Structured Products": 0.129,
+    "asset:Alternatives": 0.06,
+    "asset:Commodities": 0.0,
+    "asset:Cash and Equivalents": 0.0745,
+    "currency_mismatch": 0.2431,
+    "daily_liquid": 0.811,
+    "gated": 0.129,
+    "ltv_to_trigger": 0.0,
+    "cash_need_cover": 0.1914,
+    "uncalled_share": 0.0,
+    "risk_tolerance": 6.0,
+    "horizon_years": 25.0,
+    "risk_gap": 0.2488
+   },
+   "similar": [
+    {
+     "client_id": "CL-0015",
+     "name": "Kim Do-Yoon",
+     "similarity": 0.4,
+     "shared": [
+      {
+       "key": "asset:Structured Products",
+       "label": "Structured products",
+       "unit": "share",
+       "a": 0.129,
+       "b": 0.1284
+      },
+      {
+       "key": "horizon_years",
+       "label": "Investment horizon",
+       "unit": "years",
+       "a": 25.0,
+       "b": 25.0
+      },
+      {
+       "key": "theme:shipping",
+       "label": "Shipping",
+       "unit": "share",
+       "a": 0.332,
+       "b": 0.1284
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0002",
+     "name": "Ravi Chandrasekaran",
+     "similarity": 0.3,
+     "shared": [
+      {
+       "key": "risk_tolerance",
+       "label": "Risk tolerance score",
+       "unit": "score",
+       "a": 6.0,
+       "b": 8.0
+      },
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.129,
+       "b": 0.7172
+      },
+      {
+       "key": "cash_need_cover",
+       "label": "Cash due in 24 months against daily-liquid assets",
+       "unit": "ratio",
+       "a": 0.1914,
+       "b": 0.4694
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0013",
+     "name": "Zhang Meiling",
+     "similarity": 0.23,
+     "shared": [
+      {
+       "key": "asset:Structured Products",
+       "label": "Structured products",
+       "unit": "share",
+       "a": 0.129,
+       "b": 0.0709
+      },
+      {
+       "key": "risk_tolerance",
+       "label": "Risk tolerance score",
+       "unit": "score",
+       "a": 6.0,
+       "b": 8.0
+      },
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.129,
+       "b": 0.1362
+      }
+     ]
+    }
+   ],
+   "goal_gap": [
+    {
+     "date": "2025-12-31",
+     "pct": 29.4
+    },
+    {
+     "date": "2026-02-27",
+     "pct": 29.5
+    },
+    {
+     "date": "2026-03-31",
+     "pct": 34.1
+    },
+    {
+     "date": "2026-06-30",
+     "pct": 41.1
+    },
+    {
+     "date": "2026-08-26",
+     "pct": 42.1
+    }
+   ],
+   "goal_themes": "energy and shipping",
+   "biggest_moves": [
+    {
+     "key": "currency_mismatch",
+     "label": "Held outside base currency",
+     "from": 0.112,
+     "to": 0.2431
+    },
+    {
+     "key": "theme:energy",
+     "label": "Energy",
+     "from": 0.0889,
+     "to": 0.2184
+    },
+    {
+     "key": "asset:Structured Products",
+     "label": "Structured products",
+     "from": 0.0,
+     "to": 0.129
+    }
+   ],
+   "map": {
+    "x": -0.217,
+    "y": -0.437
+   },
+   "name": "Abdullah Al-Mansoori",
+   "score": 55,
+   "lane": "week",
+   "tension": "Diversification goal vs shipping and energy exposure"
+  },
+  "CL-0020": {
+   "values": {
+    "theme:energy": 0.0,
+    "theme:shipping": 0.0,
+    "theme:property": 0.0,
+    "theme:plantation": 0.0,
+    "theme:healthcare": 0.2936,
+    "theme:technology": 0.1398,
+    "theme:luxury": 0.0,
+    "theme:commodities": 0.0,
+    "theme:industrial": 0.0,
+    "asset:Equity": 0.7508,
+    "asset:Fixed Income": 0.1413,
+    "asset:Structured Products": 0.0,
+    "asset:Alternatives": 0.0633,
+    "asset:Commodities": 0.0,
+    "asset:Cash and Equivalents": 0.0446,
+    "currency_mismatch": 0.1193,
+    "daily_liquid": 0.9367,
+    "gated": 0.0633,
+    "ltv_to_trigger": 0.0,
+    "cash_need_cover": 0.3417,
+    "uncalled_share": 0.0472,
+    "risk_tolerance": 7.0,
+    "horizon_years": 28.0,
+    "risk_gap": 0.2241
+   },
+   "similar": [
+    {
+     "client_id": "CL-0017",
+     "name": "Fong Enterprises Family Office",
+     "similarity": 0.29,
+     "shared": [
+      {
+       "key": "uncalled_share",
+       "label": "Uncalled fund commitments",
+       "unit": "share",
+       "a": 0.0472,
+       "b": 0.1797
+      },
+      {
+       "key": "horizon_years",
+       "label": "Investment horizon",
+       "unit": "years",
+       "a": 28.0,
+       "b": 50.0
+      },
+      {
+       "key": "cash_need_cover",
+       "label": "Cash due in 24 months against daily-liquid assets",
+       "unit": "ratio",
+       "a": 0.3417,
+       "b": 0.3057
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0001",
+     "name": "Hartono Wijaya Kusuma",
+     "similarity": 0.26,
+     "shared": [
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 0.9367,
+       "b": 0.8942
+      },
+      {
+       "key": "horizon_years",
+       "label": "Investment horizon",
+       "unit": "years",
+       "a": 28.0,
+       "b": 25.0
+      },
+      {
+       "key": "risk_tolerance",
+       "label": "Risk tolerance score",
+       "unit": "score",
+       "a": 7.0,
+       "b": 6.0
+      }
+     ]
+    },
+    {
+     "client_id": "CL-0013",
+     "name": "Zhang Meiling",
+     "similarity": 0.23,
+     "shared": [
+      {
+       "key": "risk_tolerance",
+       "label": "Risk tolerance score",
+       "unit": "score",
+       "a": 7.0,
+       "b": 8.0
+      },
+      {
+       "key": "asset:Equity",
+       "label": "Equity",
+       "unit": "share",
+       "a": 0.7508,
+       "b": 0.7573
+      },
+      {
+       "key": "theme:technology",
+       "label": "Technology",
+       "unit": "share",
+       "a": 0.1398,
+       "b": 0.5706
+      }
+     ]
+    }
+   ],
+   "goal_gap": null,
+   "goal_themes": null,
+   "biggest_moves": [
+    {
+     "key": "asset:Equity",
+     "label": "Equity",
+     "from": 0.7381,
+     "to": 0.7508
+    },
+    {
+     "key": "theme:technology",
+     "label": "Technology",
+     "from": 0.1277,
+     "to": 0.1398
+    },
+    {
+     "key": "asset:Fixed Income",
+     "label": "Fixed income",
+     "from": 0.152,
+     "to": 0.1413
+    }
+   ],
+   "map": {
+    "x": 0.126,
+    "y": -0.719
+   },
+   "name": "Grace Adeyemi-Lim",
+   "score": 24,
+   "lane": "monitor",
+   "tension": "Healthcare wealth doubled inside the portfolio"
+  }
+ }
+}

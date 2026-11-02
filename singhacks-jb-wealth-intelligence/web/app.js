@@ -411,6 +411,7 @@ function breachPanelHTML(item) {
         ${escalation.exposed_holdings?.length ? `<span><b>Holdings it touches:</b> ${esc(escalation.exposed_holdings.join(", "))}</span>` : ""}
         <span>${sourceTag("news")} Headline: “${esc(escalation.headline)}” · ${esc(escalation.severity)} · ${fullDate(escalation.date)}${escalation.source_url ? ` · <a href="${esc(escalation.source_url)}" target="_blank" rel="noopener noreferrer">Open source ↗</a>` : ""}</span>
         ${escalation.stress ? `<small class="breach-stress">${sourceTag("sim")} ${esc(escalation.stress)}</small>` : ""}
+        ${alsoCheckHTML(item.client_id)}
       </div>
       <div class="breach-actions">${actions}</div>
     </div>`;
@@ -795,6 +796,66 @@ function detectedFromHTML(clientId) {
   return `<p class="detected-from"><strong>Why this client is flagged:</strong> ${esc(card.tension)}. Detected from ${esc(sources.join(", "))}.</p>`;
 }
 
+function clientVector(clientId) {
+  return state.data.client_vectors?.clients?.[clientId];
+}
+
+function featureValue(unit, value) {
+  if (unit === "share") return `${Math.round(value * 100)}%`;
+  if (unit === "points") return `${value > 0 ? "+" : ""}${Math.round(value * 100)} pts`;
+  if (unit === "ratio") return `${value.toFixed(1)}×`;
+  if (unit === "years") return `${value} yrs`;
+  return `${value}/10`;
+}
+
+function similarReasons(item) {
+  if (!item.shared.length) return "Alike across the whole profile";
+  return item.shared.map((reason) => `${reason.label} ${featureValue(reason.unit, reason.a)} vs ${featureValue(reason.unit, reason.b)}`).join(" · ");
+}
+
+// Names the clients whose books look most like this one, so one flag prompts a check of its lookalikes.
+function alsoCheckHTML(clientId) {
+  const vector = clientVector(clientId);
+  if (!vector?.similar?.length) return "";
+  const links = vector.similar.map((item) => `<a href="${routeFor("client", item.client_id)}" data-open-client="${esc(item.client_id)}">${esc(item.name)}</a>`).join(", ");
+  return `<span><b>Similar books to check:</b> ${links}</span>`;
+}
+
+function goalDriftChart(points) {
+  const width = 300, height = 92, pad = 22;
+  const values = points.map((point) => point.pct);
+  const top = Math.max(...values, 1) * 1.15;
+  const x = (i) => pad + (i * (width - 2 * pad)) / Math.max(points.length - 1, 1);
+  const y = (v) => height - 18 - (v / top) * (height - 34);
+  const line = points.map((point, i) => `${i ? "L" : "M"}${x(i).toFixed(1)} ${y(point.pct).toFixed(1)}`).join(" ");
+  return `<svg class="drift-chart" viewBox="0 0 ${width} ${height}" role="img" aria-label="Share in themes the client asked to leave, from ${values[0]}% to ${values[values.length - 1]}%">
+    <line x1="${pad}" y1="${height - 18}" x2="${width - pad}" y2="${height - 18}" class="drift-axis"/>
+    <path d="${line}" class="drift-line"/>
+    ${points.map((point, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(point.pct).toFixed(1)}" r="${i === points.length - 1 ? 4.5 : 3}" class="drift-dot"/><text x="${x(i).toFixed(1)}" y="${(y(point.pct) - 8).toFixed(1)}" text-anchor="middle" class="drift-value">${point.pct}%</text><text x="${x(i).toFixed(1)}" y="${height - 4}" text-anchor="middle" class="drift-date">${monthYear(point.date)}</text>`).join("")}
+  </svg>`;
+}
+
+function clientVectorHTML(clientId) {
+  const vector = clientVector(clientId);
+  if (!vector) return "";
+  const drift = vector.goal_gap
+    ? `<div class="vector-block"><small>DRIFT FROM STATED GOAL</small><p>Share of the portfolio in what the client asked to move away from (${esc(vector.goal_themes)}), looked through.</p>${goalDriftChart(vector.goal_gap)}</div>`
+    : `<div class="vector-block"><small>BIGGEST CHANGES SINCE ${esc(monthYear(state.data.client_vectors.snapshots[0]).toUpperCase())}</small>${vector.biggest_moves.length ? `<ul class="vector-moves">${vector.biggest_moves.map((move) => `<li><span>${esc(move.label)}</span><b>${featureValue("share", move.from)} → ${featureValue("share", move.to)}</b></li>`).join("")}</ul>` : `<p>No dimension moved by more than one point.</p>`}</div>`;
+  const similar = vector.similar.map((item) => `
+      <a class="similar-row" href="${routeFor("client", item.client_id)}" data-open-client="${esc(item.client_id)}">
+        <span class="similar-name">${esc(item.name)}</span><span class="similar-score">${Math.round(item.similarity * 100)}% alike</span>
+        <small>${esc(similarReasons(item))}</small>
+      </a>`).join("");
+  return `
+    <section class="panel vector-panel">
+      <div class="panel-title"><h3>Client vector ${sourceTag("calc")}</h3><small>${state.data.client_vectors.features.length} NAMED DIMENSIONS · CALCULATED IN-HOUSE · NEVER SENT TO A MODEL</small></div>
+      <div class="vector-grid">
+        ${drift}
+        <div class="vector-block"><small>CLIENTS LIKE THIS ONE</small>${similar}<p class="vector-note">Similarity across exposures, liquidity, obligations and stated profile. A measure of how alike two books look, not a prediction.</p></div>
+      </div>
+    </section>`;
+}
+
 // Every section says where its content comes from, so simulated and real data are never confused.
 const SOURCE_TAGS = {
   record: "Synthetic demo data",
@@ -839,6 +900,7 @@ function renderClient(clientId) {
       <div class="tension-item"><small>UPCOMING CONSTRAINT</small>${sourceTag("record")}<p>${esc(client.tension.future_demands)}</p></div>
     </div>
     ${detectedFromHTML(clientId)}
+    ${clientVectorHTML(clientId)}
 
     <div class="analysis-grid">
       <section class="panel">

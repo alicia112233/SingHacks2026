@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Book map · TESSERA</title>
+<meta name="description" content="Every TESSERA client as a vector of named numbers, placed on a map so lookalike books sit together.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+.bm-head { padding-block: 48px 24px; display: flex; flex-direction: column; gap: 14px }
+.bm { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 20px; align-items: start; padding-bottom: 48px }
+.mapcard, .detail { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 18px }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .84rem; color: var(--muted); margin-bottom: 8px }
+.legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; background: var(--c) }
+.mapsvg { display: block; width: 100%; height: auto; touch-action: manipulation }
+.mapsvg text { font-family: var(--body) }
+.mapsvg .ax { stroke: var(--line); stroke-width: 1 }
+.mapsvg .axl { font-family: var(--mono); font-size: 10.5px; fill: var(--faint); paint-order: stroke; stroke: var(--card); stroke-width: 4px }
+.mapsvg .nm { font-size: 11px; fill: var(--muted); pointer-events: none; paint-order: stroke; stroke: var(--card); stroke-width: 4px; stroke-linejoin: round }
+.mapsvg .nm.sel { fill: var(--fg); font-weight: 600 }
+.mapsvg .pt { cursor: pointer; stroke: var(--card); stroke-width: 2; transition: r .15s }
+.mapsvg .pt:hover, .mapsvg .pt:focus { r: 11; outline: none }
+.mapsvg .ring { fill: none; stroke: var(--fg); stroke-width: 2 }
+.mapsvg .link { stroke: var(--gold); stroke-width: 2; stroke-dasharray: 4 4 }
+.mapnote { font-size: .84rem; color: var(--faint); margin-top: 8px }
+
+.detail { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 80px }
+.detail h2 { font-family: var(--display); font-weight: 500; font-size: 1.8rem; line-height: 1.1 }
+.dmeta { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: .9rem; color: var(--muted) }
+.lanechip { font-family: var(--mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; padding: 2px 9px; border-radius: 999px; color: var(--card); background: var(--c) }
+.dsec { display: flex; flex-direction: column; gap: 6px }
+.dsec > small { font-family: var(--mono); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--faint) }
+.dims { display: flex; flex-direction: column; gap: 5px }
+.dim { display: grid; grid-template-columns: minmax(0, 1fr) 56px; gap: 2px 10px; font-size: .84rem; align-items: center }
+.dim span:first-child { color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis }
+.dim b { font-family: var(--mono); font-weight: 500; text-align: right; font-size: .8rem }
+.dim i { grid-column: 1 / 3; height: 5px; border-radius: 3px; background: var(--line); overflow: hidden }
+.dim i::after { content: ""; display: block; height: 100%; width: var(--w); background: var(--green); border-radius: 3px }
+.sim { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); cursor: pointer; text-align: left; font: inherit; color: inherit }
+.sim:hover { border-color: var(--gold) }
+.sim .top { display: flex; justify-content: space-between; gap: 10px; font-weight: 600; font-size: .92rem }
+.sim .top span:last-child { color: var(--gold); font-family: var(--mono); font-size: .8rem }
+.sim small { color: var(--muted); font-size: .8rem; line-height: 1.4 }
+.drift { width: 100%; height: auto }
+.drift text { font-family: var(--mono); font-size: 10px; fill: var(--faint) }
+.drift .v { fill: var(--fg); font-weight: 500 }
+
+.how { border-top: 1px solid var(--line); padding-block: 48px 56px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); gap: 32px }
+.how h2 { font-family: var(--display); font-weight: 500; font-size: clamp(1.7rem, 3.2vw, 2.3rem); line-height: 1.1; margin-bottom: 12px }
+.how p { color: var(--muted); margin-bottom: 10px; max-width: 60ch }
+.groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px }
+.group { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px }
+.group h3 { font-size: .95rem; font-weight: 600; margin-bottom: 6px }
+.group ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: .88rem }
+@media (max-width: 860px) {
+  .bm, .how { grid-template-columns: minmax(0, 1fr) }
+  .detail { position: static }
+  .groups { grid-template-columns: minmax(0, 1fr) }
+}
+</style>
+</head>
+<body>
+<nav class="sitenav" aria-label="Site">
+  <div class="wrap">
+    <a class="brand" href="index.html"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="11" height="11" rx="2" fill="#1F4A3F"/><rect x="14" y="1" width="11" height="11" rx="2" fill="#8A6A2C"/><rect x="1" y="14" width="11" height="11" rx="2" fill="#4A5A70"/><rect x="14" y="14" width="11" height="11" rx="2" fill="#A8483C"/></svg><span>TESSERA</span></a>
+    <div class="navlinks">
+      <a href="index.html">Explainers</a>
+      <a href="walkthrough.html">Walkthrough</a>
+      <a href="https://claude.ai/artifact/A9A354YmGx1mBfQHcoURZR">Slides ↗</a>
+      <a href="map.html">Project map</a>
+      <a href="bookmap.html" aria-current="page">Book map</a>
+      <a href="evolution.html">How it evolved</a>
+    </div>
+    <div class="navright"><span class="team">SAPTrio</span><a href="https://github.com/alicia112233/SingHacks2026">GitHub ↗</a></div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="bm-head">
+    <p class="kicker">Book map · customer vectors</p>
+    <h1 class="title">Every client is a vector. Lookalike books sit together.</h1>
+    <p class="lede">TESSERA describes each client with the same named numbers: exposures after looking through funds and notes, how easily the portfolio turns to cash, what the client owes, and what they told us. Comparing those numbers shows which books look alike, and how far each one has drifted from what the client asked for. Tap a client.</p>
+  </header>
+
+  <div class="bm">
+    <section class="mapcard" aria-label="Map of the book">
+      <div class="legend">
+        <span style="--c:var(--red)">May be exposed</span>
+        <span style="--c:#C0614F">Act now</span>
+        <span style="--c:var(--gold)">This week</span>
+        <span style="--c:var(--slate)">Monitor</span>
+      </div>
+      <svg class="mapsvg" id="mapsvg" viewBox="0 0 640 540" role="group" aria-label="Clients placed by similarity"></svg>
+      <p class="mapnote" id="mapnote">Clients are placed on the two directions along which the book differs most. Dashed lines join the selected client to its three closest lookalikes.</p>
+    </section>
+    <aside class="detail" id="detail" aria-live="polite"></aside>
+  </div>
+</main>
+
+<section class="wrap how" aria-label="How the vector is built">
+  <div>
+    <p class="kicker">How it works</p>
+    <h2>Named numbers, calculated inside the bank</h2>
+    <p>Each client gets the same list of dimensions, calculated by code from data the bank already holds. Each dimension is ranked across the book, so one very large position cannot drown out everything else, and each group carries equal weight.</p>
+    <p>Similarity is the cosine between two clients' vectors. Every match comes with its reasons: the dimensions where both clients sit above the book average.</p>
+    <p><b>Why not an AI embedding?</b> An embedding model would need client data sent to it, and its dimensions cannot be explained. Named numbers stay inside the bank, and an RM can always see why two clients look alike. This is a similarity measure, not a prediction.</p>
+  </div>
+  <div class="groups" id="groups"></div>
+</section>
+
+<footer class="site">
+  <div class="wrap">
+    <p>TESSERA by SAPTrio. Synthetic clients from the Julius Bär SingHacks case dataset. Vectors as at 26 Aug 2026, exported from TESSERA with <code>scripts/export_book_map.py</code>.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var LANE = {
+    exposed: { label: 'May be exposed', c: 'var(--red)' }, now: { label: 'Act now', c: '#C0614F' },
+    week: { label: 'This week', c: 'var(--gold)' }, monitor: { label: 'Monitor', c: 'var(--slate)' }
+  };
+  var W = 640, H = 540, PAD = 64;
+  var svg = document.getElementById('mapsvg'), detail = document.getElementById('detail');
+  var data, feats, selected = 'CL-0019';
+
+  function el(tag, attrs, text) {
+    var e = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function px(p) { return { x: PAD + (p.x + 1) / 2 * (W - 2 * PAD), y: H - PAD - (p.y + 1) / 2 * (H - 2 * PAD) }; }
+  function fmt(unit, v) {
+    if (unit === 'share') return Math.round(v * 100) + '%';
+    if (unit === 'points') return (v > 0 ? '+' : '') + Math.round(v * 100) + ' pts';
+    if (unit === 'ratio') return v.toFixed(1) + '×';
+    if (unit === 'years') return v + ' yrs';
+    return v + '/10';
+  }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  function drawMap() {
+    svg.innerHTML = '';
+    var c = data.clients, ax = data.axes;
+    svg.appendChild(el('line', { x1: PAD - 20, y1: H / 2, x2: W - PAD + 20, y2: H / 2, class: 'ax' }));
+    svg.appendChild(el('line', { x1: W / 2, y1: PAD - 30, x2: W / 2, y2: H - PAD + 20, class: 'ax' }));
+    svg.appendChild(el('text', { x: 8, y: H - 28, class: 'axl' }, '← ' + ax.x.low.join(', ').toLowerCase()));
+    svg.appendChild(el('text', { x: W - 8, y: H - 28, class: 'axl', 'text-anchor': 'end' }, ax.x.high.join(', ').toLowerCase() + ' →'));
+    svg.appendChild(el('text', { x: W / 2 + 8, y: 18, class: 'axl' }, '↑ ' + ax.y.high.join(', ').toLowerCase()));
+    svg.appendChild(el('text', { x: W / 2 + 8, y: H - 10, class: 'axl' }, '↓ ' + ax.y.low.join(', ').toLowerCase()));
+
+    var sel = c[selected], sp = px(sel.map);
+    sel.similar.forEach(function (s) { var q = px(c[s.client_id].map); svg.appendChild(el('line', { x1: sp.x, y1: sp.y, x2: q.x, y2: q.y, class: 'link' })); });
+
+    // Place name labels greedily so they do not sit on top of each other.
+    var placed = [];
+    function label(p, text) {
+      var w = text.length * 6.4 + 4, tries = [[13, 4, 'start'], [-13, 4, 'end'], [13, 16, 'start'], [-13, 16, 'end'], [13, -8, 'start'], [-13, -8, 'end']];
+      for (var i = 0; i < tries.length; i++) {
+        var t = tries[i], x0 = t[2] === 'start' ? p.x + t[0] : p.x + t[0] - w, y0 = p.y + t[1] - 10;
+        var box = { x: x0, y: y0, w: w, h: 12 };
+        var clash = x0 < 2 || x0 + w > W - 2 || placed.some(function (b) { return box.x < b.x + b.w && b.x < box.x + box.w && box.y < b.y + b.h && b.y < box.y + box.h; });
+        if (!clash) { placed.push(box); return { x: p.x + t[0], y: p.y + t[1], anchor: t[2] }; }
+      }
+      return null;
+    }
+    var order = Object.keys(c).sort(function (a, b) { return (b === selected) - (a === selected); });
+    var labels = {};
+    order.forEach(function (id) { labels[id] = label(px(c[id].map), c[id].name.split(' ')[0]); });
+
+    Object.keys(c).forEach(function (id) {
+      var v = c[id], p = px(v.map), isSel = id === selected;
+      var dot = el('circle', { cx: p.x, cy: p.y, r: isSel ? 10 : 8, class: 'pt', fill: LANE[v.lane].c, tabindex: 0, role: 'button', 'aria-label': v.name + ', ' + LANE[v.lane].label + ', score ' + v.score });
+      dot.addEventListener('click', function () { select(id); });
+      dot.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(id); } });
+      svg.appendChild(dot);
+      if (isSel) svg.appendChild(el('circle', { cx: p.x, cy: p.y, r: 15, class: 'ring' }));
+      var lb = labels[id];
+      if (lb) svg.appendChild(el('text', { x: lb.x, y: lb.y, class: 'nm' + (isSel || sel.similar.some(function (s) { return s.client_id === id; }) ? ' sel' : ''), 'text-anchor': lb.anchor }, v.name.split(' ')[0]));
+    });
+  }
+
+  function driftSVG(points) {
+    var w = 320, h = 96, pad = 24, top = Math.max.apply(null, points.map(function (p) { return p.pct; })) * 1.2 || 1;
+    var x = function (i) { return pad + i * (w - 2 * pad) / (points.length - 1); }, y = function (v) { return h - 20 - v / top * (h - 38); };
+    var d = points.map(function (p, i) { return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p.pct).toFixed(1); }).join(' ');
+    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '<svg class="drift" viewBox="0 0 ' + w + ' ' + h + '" role="img" aria-label="Goal drift from ' + points[0].pct + '% to ' + points[points.length - 1].pct + '%">' +
+      '<line x1="' + pad + '" y1="' + (h - 20) + '" x2="' + (w - pad) + '" y2="' + (h - 20) + '" stroke="var(--line)"/>' +
+      '<path d="' + d + '" fill="none" stroke="var(--red)" stroke-width="2.5" stroke-linejoin="round"/>' +
+      points.map(function (p, i) {
+        var dt = new Date(p.date + 'T00:00:00');
+        return '<circle cx="' + x(i) + '" cy="' + y(p.pct) + '" r="3.5" fill="var(--red)"/><text class="v" x="' + x(i) + '" y="' + (y(p.pct) - 8) + '" text-anchor="middle">' + p.pct + '%</text><text x="' + x(i) + '" y="' + (h - 5) + '" text-anchor="middle">' + months[dt.getMonth()] + '</text>';
+      }).join('') + '</svg>';
+  }
+
+  function renderDetail() {
+    var v = data.clients[selected], lane = LANE[v.lane];
+    var share = feats.filter(function (f) { return f.unit === 'share'; });
+    var top = share.map(function (f) { return { f: f, v: v.values[f.key] }; }).filter(function (x) { return x.v > 0.005; })
+      .sort(function (a, b) { return b.v - a.v; }).slice(0, 6);
+    var html = '<div><h2>' + esc(v.name) + '</h2></div>' +
+      '<div class="dmeta"><span class="lanechip" style="--c:' + lane.c + '">' + lane.label + '</span><span>Urgency ' + v.score + ' / 99</span></div>' +
+      (v.tension ? '<p style="color:var(--muted);font-size:.92rem">' + esc(v.tension) + '</p>' : '');
+    if (v.goal_gap) html += '<div class="dsec"><small>Drift from stated goal</small><p style="font-size:.86rem;color:var(--muted)">Share in what the client asked to move away from (' + esc(v.goal_themes) + ')</p>' + driftSVG(v.goal_gap) + '</div>';
+    html += '<div class="dsec"><small>Largest dimensions</small><div class="dims">' + top.map(function (x) {
+      return '<div class="dim" style="--w:' + Math.min(100, x.v * 100).toFixed(1) + '%"><span>' + esc(x.f.label) + '</span><b>' + fmt(x.f.unit, x.v) + '</b><i></i></div>';
+    }).join('') + '</div></div>';
+    html += '<div class="dsec"><small>Clients like this one</small>' + v.similar.map(function (s) {
+      var why = s.shared.length ? s.shared.map(function (r) { return r.label + ' ' + fmt(r.unit, r.a) + ' vs ' + fmt(r.unit, r.b); }).join(' · ') : 'Alike across the whole profile';
+      return '<button type="button" class="sim" data-id="' + s.client_id + '"><span class="top"><span>' + esc(s.name) + '</span><span>' + Math.round(s.similarity * 100) + '% alike</span></span><small>' + esc(why) + '</small></button>';
+    }).join('') + '</div>';
+    detail.innerHTML = html;
+    detail.querySelectorAll('.sim').forEach(function (b) { b.addEventListener('click', function () { select(b.dataset.id); }); });
+  }
+
+  function renderGroups() {
+    var groups = {};
+    feats.forEach(function (f) { (groups[f.group] = groups[f.group] || []).push(f.label); });
+    document.getElementById('groups').innerHTML = Object.keys(groups).map(function (g) {
+      return '<div class="group"><h3>' + esc(g) + ' · ' + groups[g].length + '</h3><ul>' + groups[g].map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul></div>';
+    }).join('');
+  }
+
+  function select(id) {
+    selected = id;
+    drawMap(); renderDetail();
+    try { history.replaceState(null, '', '#' + id); } catch (e) {}
+  }
+
+  fetch('data/book-map.json').then(function (r) { return r.json(); }).then(function (json) {
+    data = json; feats = json.features;
+    var hash = location.hash.slice(1);
+    if (data.clients[hash]) selected = hash;
+    renderGroups(); select(selected);
+  }).catch(function () {
+    detail.innerHTML = '<p>The book map data did not load. Run <code>python scripts/export_book_map.py</code> and serve the site folder.</p>';
+  });
+})();
+</script>
+</body>
+</html>
