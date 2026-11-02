@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TESSERA Explainers · SAPTrio</title>
+<meta name="description" content="TESSERA by SAPTrio: finding the client conversation a portfolio report misses. Walkthrough, slides, project map and how our thinking changed.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+.intro { padding-block: 64px 40px; display: flex; flex-direction: column; gap: 18px }
+.intro h1 mark { background: linear-gradient(transparent 58%, var(--gold-soft) 58%); color: inherit; padding: 0 .08em }
+.motto { font-family: var(--display); font-size: 1.4rem; font-style: italic }
+.cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; padding-bottom: 72px }
+.card { --c: var(--green); position: relative; display: flex; flex-direction: column; gap: 12px; padding: 30px 30px 26px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; text-decoration: none; transition: transform .15s, box-shadow .15s, border-color .15s; min-width: 0 }
+.card::before { content: ""; position: absolute; top: -1px; left: 26px; width: 120px; height: 5px; border-radius: 0 0 4px 4px; background: var(--c) }
+.card:hover { transform: translateY(-3px); box-shadow: 0 10px 28px rgba(24,32,28,.10); border-color: var(--line-2) }
+.card .k { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: .76rem; font-weight: 500; letter-spacing: .14em; text-transform: uppercase; color: var(--c) }
+.card .k::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c) }
+.card h2 { font-family: var(--display); font-weight: 600; font-size: 2rem; line-height: 1.1 }
+.card p.d { color: var(--muted); flex: 1 }
+.card .go { display: flex; justify-content: space-between; align-items: center; font-family: var(--mono); font-size: .9rem; font-weight: 500; padding-top: 10px }
+.card .go span:last-child { color: var(--c); transition: transform .15s }
+.card:hover .go span:last-child { transform: translateX(4px) }
+.c1 { --c: var(--red) } .c2 { --c: var(--gold) } .c3 { --c: var(--green) } .c4 { --c: var(--slate) }
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding-bottom: 64px }
+.fact { border-top: 2px solid var(--fg); padding-top: 10px; display: flex; flex-direction: column; gap: 4px }
+.fact b { font-family: var(--display); font-size: 1.5rem; font-weight: 500; line-height: 1.2 }
+.fact span { font-size: .92rem; color: var(--muted) }
+@media (max-width: 760px) { .cards, .facts { grid-template-columns: minmax(0, 1fr) } }
+</style>
+</head>
+<body>
+<nav class="sitenav" aria-label="Site">
+  <div class="wrap">
+    <a class="brand" href="index.html"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="11" height="11" rx="2" fill="#1F4A3F"/><rect x="14" y="1" width="11" height="11" rx="2" fill="#8A6A2C"/><rect x="1" y="14" width="11" height="11" rx="2" fill="#4A5A70"/><rect x="14" y="14" width="11" height="11" rx="2" fill="#A8483C"/></svg><span>TESSERA</span></a>
+    <div class="navlinks">
+      <a href="index.html" aria-current="page">Explainers</a>
+      <a href="walkthrough.html">Walkthrough</a>
+      <a href="https://claude.ai/artifact/A9A354YmGx1mBfQHcoURZR">Slides ↗</a>
+      <a href="map.html">Project map</a>
+      <a href="evolution.html">How it evolved</a>
+    </div>
+    <div class="navright"><span class="team">SAPTrio</span><a href="https://github.com/alicia112233/SingHacks2026">GitHub ↗</a></div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <section class="intro">
+    <p class="kicker">SAPTrio · SingHacks 2026 · Julius Bär Wealth Intelligence</p>
+    <h1 class="title">Finding the client conversation a <mark>portfolio report misses.</mark></h1>
+    <p class="lede">TESSERA reads each client's own record, finds where their stated goals and their portfolio disagree, and watches public news for anything that touches what they hold. The relationship manager gets a ranked queue and a brief for the conversation. Four ways in, from a two-minute animated walkthrough to how our thinking changed.</p>
+    <p class="motto">Code calculates. AI reads. The RM decides.</p>
+  </section>
+
+  <nav class="cards" aria-label="Explainers">
+    <a class="card c1" href="walkthrough.html">
+      <span class="k">Start here</span>
+      <h2>Inside TESSERA</h2>
+      <p class="d">Watch a headline travel through the system: public feeds, three outside models voting on it, the match against a client's holdings inside the bank, and the urgency score changing. Two real cases from the demo data.</p>
+      <span class="go"><span>Open the walkthrough</span><span>→</span></span>
+    </a>
+    <a class="card c2" href="https://claude.ai/artifact/A9A354YmGx1mBfQHcoURZR">
+      <span class="k">The talk</span>
+      <h2>Slide deck</h2>
+      <p class="d">The six-slide, three-minute finals deck. Box titles on the workflow slide open the project map, and the speaker notes hold the script.</p>
+      <span class="go"><span>Open the deck</span><span>↗</span></span>
+    </a>
+    <a class="card c3" href="map.html">
+      <span class="k">Architecture</span>
+      <h2>Project map</h2>
+      <p class="d">Seven steps from client record to ledger. Each shows what goes in, what comes out, the exact rule in the code, and what happens to one client at that step.</p>
+      <span class="go"><span>Open the map</span><span>→</span></span>
+    </a>
+    <a class="card c4" href="evolution.html">
+      <span class="k">Build log</span>
+      <h2>How it evolved</h2>
+      <p class="d">At SingHacks, outside AI models reviewed client actions from anonymised portfolio numbers. User testing showed us that is still client data. Here is how our thinking changed, and what we rebuilt.</p>
+      <span class="go"><span>Read how it evolved</span><span>→</span></span>
+    </a>
+  </nav>
+
+  <section class="facts" aria-label="Key facts">
+    <div class="fact"><b>0 client-specific rules</b><span>Detection reads any client's record, so a new client is checked the same way on day one.</span></div>
+    <div class="fact"><b>Public data only leaves the bank</b><span>Outside models see headlines. Client data goes only to the bank's own model.</span></div>
+    <div class="fact"><b>The RM decides</b><span>Every approve, edit or dismiss goes into an append-only ledger.</span></div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <p>TESSERA by SAPTrio for the Julius Bär Wealth Intelligence challenge, SingHacks 2026. All clients are synthetic, from the case dataset.</p>
+    <p>In the demo, a labelled stand-in plays the bank's in-house model.</p>
+  </div>
+</footer>
+</body>
+</html>

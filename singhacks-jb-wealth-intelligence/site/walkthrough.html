@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Walkthrough · TESSERA</title>
+<meta name="description" content="Watch a public headline travel through TESSERA: three outside models vote, code matches it to a client's holdings inside the bank, and the urgency score changes.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<link rel="stylesheet" href="assets/walkthrough.css">
+</head>
+<body>
+<nav class="sitenav" aria-label="Site">
+  <div class="wrap">
+    <a class="brand" href="index.html"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="11" height="11" rx="2" fill="#1F4A3F"/><rect x="14" y="1" width="11" height="11" rx="2" fill="#8A6A2C"/><rect x="1" y="14" width="11" height="11" rx="2" fill="#4A5A70"/><rect x="14" y="14" width="11" height="11" rx="2" fill="#A8483C"/></svg><span>TESSERA</span></a>
+    <div class="navlinks">
+      <a href="index.html">Explainers</a>
+      <a href="walkthrough.html" aria-current="page">Walkthrough</a>
+      <a href="https://claude.ai/artifact/A9A354YmGx1mBfQHcoURZR">Slides ↗</a>
+      <a href="map.html">Project map</a>
+      <a href="evolution.html">How it evolved</a>
+    </div>
+    <div class="navright"><span class="team">SAPTrio</span><a href="https://github.com/alicia112233/SingHacks2026">GitHub ↗</a></div>
+  </div>
+</nav>
+
+<main class="wrap">
+  <header class="wt-head">
+    <p class="kicker">Walkthrough</p>
+    <h1 class="title">One headline, followed all the way through</h1>
+    <p class="lede">Pick a client, then press play. Public news comes in at the top, outside models read it, and everything below the dashed line happens inside the bank. Both cases use real scores from the demo data.</p>
+  </header>
+
+  <div class="scen" role="tablist" aria-label="Choose a case">
+    <button role="tab" id="tab-abdullah" data-scen="abdullah" aria-selected="true"><b>Abdullah</b><span>A slow-building clash with his own goal</span></button>
+    <button role="tab" id="tab-ravi" data-scen="ravi" aria-selected="false"><b>Ravi</b><span>A sudden exposure on a pledged portfolio</span></button>
+  </div>
+
+  <section class="player" aria-label="Animated walkthrough">
+    <div class="term">
+      <div class="term-lines" aria-live="polite">
+        <p class="t-prev" id="t-prev"></p>
+        <p class="t-now"><span id="t-now"></span><i class="caret"></i></p>
+      </div>
+      <div class="ctrl">
+        <button id="play" class="btn-play" aria-label="Play"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path id="play-icon" d="M3 1.5 L12 7 L3 12.5 Z" fill="currentColor"/></svg><span id="play-label">play</span></button>
+        <button id="restart" class="btn-icon" aria-label="Restart">↻</button>
+      </div>
+    </div>
+
+    <div class="stage-scroll">
+      <div class="stage" id="stage">
+        <svg class="wires" id="wires" width="1120" height="660" viewBox="0 0 1120 660" aria-hidden="true"></svg>
+
+        <div class="zone zone-public"><span>Public · C1–C2</span></div>
+        <div class="zone zone-bank"><span>Inside the bank · C3–C4</span></div>
+
+        <div class="box src" id="src-yahoo" style="left:24px;top:44px"><img src="assets/logos/yahoo-finance.svg" alt="" onerror="this.remove()"><b>Yahoo Finance</b><small>RSS</small></div>
+        <div class="box src" id="src-cnbc" style="left:153px;top:44px"><img src="assets/logos/cnbc.svg" alt="" onerror="this.remove()"><b>CNBC</b><small>RSS</small></div>
+        <div class="box src" id="src-bt" style="left:282px;top:44px"><img src="assets/logos/business-times.svg" alt="" onerror="this.remove()"><b>The Business Times</b><small>RSS</small></div>
+        <div class="box src" id="src-gnews" style="left:411px;top:44px"><img src="assets/logos/google-news.svg" alt="" onerror="this.remove()"><b>Google News</b><small>search feed</small></div>
+        <div class="box src src-bank" id="src-bank" style="left:540px;top:44px"><b>Bank market reviews</b><small>add as a feed</small></div>
+
+        <div class="box packet" id="packet" style="left:24px;top:110px"></div>
+
+        <div class="box model" id="m-gpt" style="left:690px;top:44px"><b>GPT-5.4</b><small id="v-gpt">waiting</small></div>
+        <div class="box model" id="m-claude" style="left:828px;top:44px"><b>Claude Sonnet 4.6</b><small id="v-claude">waiting</small></div>
+        <div class="box model" id="m-gemini" style="left:966px;top:44px"><b>Gemini 3.7 Flash</b><small id="v-gemini">waiting</small></div>
+        <div class="box vote" id="vote" style="left:690px;top:110px"></div>
+
+        <div class="box portfolio" id="portfolio" style="left:24px;top:236px"></div>
+
+        <div class="box engine" id="engine" style="left:392px;top:236px">
+          <p class="bx-k">TESSERA engine · code</p>
+          <ol>
+            <li id="e1">Match topics to holdings</li>
+            <li id="e2">Recalculate urgency</li>
+            <li id="e3">Propose an action</li>
+          </ol>
+        </div>
+
+        <div class="box score" id="score" style="left:750px;top:236px"></div>
+
+        <div class="box inhouse" id="inhouse" style="left:392px;top:454px"></div>
+        <div class="box rm" id="rm" style="left:620px;top:454px"></div>
+        <div class="box ledger" id="ledger" style="left:838px;top:454px"></div>
+      </div>
+    </div>
+
+    <div class="caption">
+      <p class="mono step-of" id="step-of">Step 1 of 8</p>
+      <h2 id="cap-title">A headline lands from a public feed.</h2>
+      <p id="cap-detail" class="cap-detail"></p>
+      <div class="steps" id="steps" role="group" aria-label="Steps"></div>
+    </div>
+  </section>
+
+  <section class="notes">
+    <p><b>What is real here.</b> Clients, holdings and scores come from TESSERA's run on the synthetic Julius Bär case dataset. The headlines are real public headlines from 29 Oct 2026. The three models' individual votes are illustrative, since this demo run used the keyword fallback, and the in-house angle scores are illustrative too. The consensus rule is the one in the code.</p>
+    <p><b>Keys.</b> <kbd>Space</kbd> play or pause · <kbd>←</kbd> <kbd>→</kbd> step · <kbd>R</kbd> restart.</p>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <p>TESSERA by SAPTrio. Synthetic clients from the Julius Bär SingHacks case dataset. Publisher names identify public feeds; TESSERA is not affiliated with them.</p>
+  </div>
+</footer>
+<script src="assets/walkthrough.js"></script>
+</body>
+</html>

@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project map · TESSERA</title>
+<meta name="description" content="Seven steps from client record to ledger: what goes in, what comes out, the exact rule, and what happens to one client.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="assets/site.css">
+<style>
+/* Layout: the deck's workflow diagram as the opener, then one section per box, with a sticky step bar that tracks where you are. */
+:root {
+  --bg: #F6F2EA; --bg-2: #EFE9DD; --card: #FBF8F2; --line: #E1DACB; --line-2: #B9B2A3;
+  --fg: #18201C; --muted: #4B524D; --faint: #6B6F69;
+  --green: #1F4A3F; --green-soft: #DCE6E1; --on-green: #F4EFE6;
+  --gold: #8A6A2C; --red: #A8483C; --slate: #4A5A70; --slate-soft: #E6EBF0;
+  --display: 'EB Garamond', Georgia, serif;
+  --body: 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif;
+  --mono: 'IBM Plex Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #141A17; --bg-2: #1A221E; --card: #1E2622; --line: #2C3631; --line-2: #45514A;
+  --fg: #ECE6DA; --muted: #B5B9B1; --faint: #8E938B;
+  --green: #7FB59F; --green-soft: #22352D; --on-green: #10201A;
+  --gold: #D4B26A; --red: #E08A7C; --slate: #9DB0CC; --slate-soft: #1F2733; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #141A17; --bg-2: #1A221E; --card: #1E2622; --line: #2C3631; --line-2: #45514A;
+  --fg: #ECE6DA; --muted: #B5B9B1; --faint: #8E938B;
+  --green: #7FB59F; --green-soft: #22352D; --on-green: #10201A;
+  --gold: #D4B26A; --red: #E08A7C; --slate: #9DB0CC; --slate-soft: #1F2733; color-scheme: dark }
+
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--fg); font: 16px/1.6 var(--body); }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)) }
+a { color: inherit }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; border-radius: 6px }
+h1, h2 { font-family: var(--display); font-weight: 500; line-height: 1.1; text-wrap: balance; margin: 0 }
+h1 { font-size: clamp(2.2rem, 5vw, 3.6rem) }
+h2 { font-size: clamp(1.8rem, 3.6vw, 2.6rem) }
+h3 { font-size: 1rem; font-weight: 600; margin: 0 }
+p { margin: 0 }
+.kicker { font-size: .78rem; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; color: var(--gold) }
+code, .mono { font-family: var(--mono); font-size: .86em }
+
+header.hero { padding-block: 48px 32px; display: flex; flex-direction: column; gap: 14px }
+.hero .lede { font-size: 1.15rem; color: var(--muted); max-width: 62ch }
+
+/* Workflow map */
+.map-scroll { overflow-x: auto; padding-block: 8px 40px }
+.map { position: relative; display: grid; grid-template-columns: 1fr 44px 1.1fr 44px 1fr 44px 1fr; grid-template-rows: auto 64px auto; min-width: 900px }
+.band { grid-column: 1 / 4; grid-row: 2 / 4; background: var(--slate-soft); border-radius: 14px; margin: 18px -12px -12px; }
+.band-label { grid-column: 1 / 4; grid-row: 2; align-self: end; padding: 0 0 10px; font-size: .8rem; font-weight: 600; color: var(--slate); position: relative }
+.box { position: relative; display: flex; flex-direction: column; gap: 4px; padding: 16px 18px; background: var(--card); border: 2px solid var(--line-2); border-radius: 12px; text-decoration: none; transition: transform .15s, box-shadow .15s }
+.box:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,.08) }
+.box .tag { font-size: .72rem; font-weight: 600; letter-spacing: .12em; text-transform: uppercase }
+.box b { font-size: 1.05rem; font-weight: 600 }
+.box span.d { font-size: .88rem; color: var(--muted); line-height: 1.4 }
+.box .n { position: absolute; top: -12px; right: -10px; width: 26px; height: 26px; border-radius: 50%; background: var(--fg); color: var(--bg); font-size: .78rem; font-weight: 600; display: grid; place-items: center }
+.box.on { outline: 3px solid var(--gold); outline-offset: 3px }
+.b-client { border-color: var(--line-2) } .b-client .tag { color: var(--red) }
+.b-code { border-color: var(--green) } .b-code .tag { color: var(--green) }
+.b-inhouse { background: var(--green); border-color: var(--green) } .b-inhouse .tag, .b-inhouse b, .b-inhouse span.d { color: var(--on-green) }
+.b-rm { border-color: var(--gold) } .b-rm .tag { color: var(--gold) }
+.b-public { border-color: var(--slate) } .b-public .tag { color: var(--slate) }
+.b-ledger .tag { color: var(--faint) }
+.arrow { display: grid; place-items: center; color: var(--fg) }
+.arrow svg { display: block }
+.arrow-v { grid-row: 2; display: grid; place-items: center; position: relative }
+
+/* Step bar */
+.steps { position: sticky; top: 64px; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line) }
+.steps .wrap { display: flex; gap: 6px; overflow-x: auto; padding-block: 10px; scrollbar-width: none }
+.steps a { flex: none; display: flex; align-items: center; gap: 8px; padding: 6px 12px 6px 6px; border-radius: 999px; text-decoration: none; font-size: .86rem; color: var(--muted); border: 1px solid transparent }
+.steps a i { font-style: normal; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--bg-2); font-size: .75rem; font-weight: 600; color: var(--fg) }
+.steps a.on { border-color: var(--line-2); color: var(--fg); background: var(--card) }
+.steps a.on i { background: var(--fg); color: var(--bg) }
+
+/* Sections */
+section.step { padding-block: 64px; border-bottom: 1px solid var(--line); scroll-margin-top: 124px }
+section.step:nth-of-type(even) { background: var(--bg-2) }
+.step .head { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; max-width: 760px }
+.step .head .summary { font-size: 1.1rem; color: var(--muted) }
+.chips { display: flex; flex-wrap: wrap; gap: 8px }
+.chip { font-size: .75rem; font-weight: 600; letter-spacing: .06em; padding: 3px 10px; border-radius: 999px; border: 1px solid currentColor }
+.chip.c34 { color: var(--red) } .chip.c12 { color: var(--slate) } .chip.code { color: var(--green) } .chip.ai { color: var(--slate) } .chip.inh { color: var(--green) } .chip.rm { color: var(--gold) }
+.grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 32px; align-items: start }
+.col { display: flex; flex-direction: column; gap: 20px; min-width: 0 }
+.io { display: grid; grid-template-columns: 1fr 1fr; gap: 12px }
+.io div { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; min-width: 0 }
+.io h3 { font-size: .75rem; letter-spacing: .12em; text-transform: uppercase; color: var(--faint) }
+.io p { font-size: .94rem }
+ul.rules { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 10px }
+ul.rules li { padding-left: 22px; position: relative; max-width: 65ch }
+ul.rules li::before { content: ""; position: absolute; left: 4px; top: .62em; width: 8px; height: 8px; border-radius: 2px; background: var(--green) }
+table { border-collapse: collapse; width: 100%; font-size: .92rem; font-variant-numeric: tabular-nums }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top }
+th { font-size: .74rem; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); font-weight: 600 }
+td.num { text-align: right; font-family: var(--mono) }
+.tbl { overflow-x: auto }
+.trace { background: var(--card); border: 1px solid var(--line); border-left: 4px solid var(--gold); border-radius: 4px 12px 12px 4px; padding: 18px 20px; display: flex; flex-direction: column; gap: 8px }
+.trace .kicker { font-size: .72rem }
+.trace p { font-size: .96rem }
+.trace .big { font-family: var(--display); font-size: 2rem; line-height: 1.1 }
+.where { font-size: .86rem; color: var(--faint) }
+.nav { display: flex; justify-content: space-between; gap: 12px; margin-top: 32px; font-size: .9rem }
+.nav a { text-decoration: none; color: var(--muted) } .nav a:hover { color: var(--fg) }
+
+/* Score bars */
+.bars { display: flex; flex-direction: column; gap: 8px }
+.bar { display: grid; grid-template-columns: 120px 1fr 44px; gap: 10px; align-items: center; font-size: .88rem }
+.bar .track { height: 12px; background: var(--line); border-radius: 6px; overflow: hidden }
+.bar .fill { height: 100%; background: var(--green); border-radius: 6px }
+.bar .fill.ai { background: var(--slate) }
+.bar span:last-child { font-family: var(--mono); text-align: right; color: var(--muted) }
+
+footer { padding-block: 40px 64px; color: var(--faint); font-size: .86rem; display: flex; flex-direction: column; gap: 8px }
+
+@media (max-width: 760px) {
+  .map-scroll { overflow: visible }
+  .map { display: flex; flex-direction: column; gap: 14px; min-width: 0 }
+  .map .arrow, .map .arrow-v, .band { display: none }
+  .band-label { display: none }
+  .map .box { order: var(--o) }
+  .grid, .io { grid-template-columns: minmax(0, 1fr) }
+  .bar { grid-template-columns: 96px 1fr 40px }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important } }
+html { scroll-behavior: smooth }
+</style>
+</head>
+<body>
+<nav class="sitenav" aria-label="Site">
+  <div class="wrap">
+    <a class="brand" href="index.html"><svg width="26" height="26" viewBox="0 0 26 26" aria-hidden="true"><rect x="1" y="1" width="11" height="11" rx="2" fill="#1F4A3F"/><rect x="14" y="1" width="11" height="11" rx="2" fill="#8A6A2C"/><rect x="1" y="14" width="11" height="11" rx="2" fill="#4A5A70"/><rect x="14" y="14" width="11" height="11" rx="2" fill="#A8483C"/></svg><span>TESSERA</span></a>
+    <div class="navlinks">
+      <a href="index.html">Explainers</a>
+      <a href="walkthrough.html">Walkthrough</a>
+      <a href="https://claude.ai/artifact/A9A354YmGx1mBfQHcoURZR">Slides ↗</a>
+      <a href="map.html" aria-current="page">Project map</a>
+      <a href="evolution.html">How it evolved</a>
+    </div>
+    <div class="navright"><span class="team">SAPTrio</span><a href="https://github.com/alicia112233/SingHacks2026">GitHub ↗</a></div>
+  </div>
+</nav>
+<header class="wrap hero">
+  <p class="kicker">Project map</p>
+  <h1>Code calculates. AI reads. The RM decides.</h1>
+  <p class="lede">Each box in the finals deck's workflow slide opens here. Tap a box to see what goes in, what comes out, the exact rule, and what happens to one client, Abdullah, at that step.</p>
+</header>
+
+<div class="wrap map-scroll">
+  <nav class="map" aria-label="TESSERA workflow">
+    <div class="band" aria-hidden="true"></div>
+    <p class="band-label">Outside the bank: public data only</p>
+
+    <a class="box b-client" href="#records" data-s="records" style="grid-column:1;grid-row:1;--o:1"><span class="n">1</span><span class="tag">C3–C4 · Client</span><b>Client records</b><span class="d">Portfolios, goals, RM notes</span></a>
+    <div class="arrow" style="grid-column:2;grid-row:1" aria-hidden="true"><svg width="40" height="14" viewBox="0 0 40 14"><path d="M2 7 H32" stroke="currentColor" stroke-width="2.5" fill="none"/><path d="M30 2 L38 7 L30 12 Z" fill="currentColor"/></svg></div>
+    <a class="box b-code" href="#detect" data-s="detect" style="grid-column:3;grid-row:1;--o:4"><span class="n">4</span><span class="tag">Code</span><b>Detect and score</b><span class="d">Contradictions, exposure, urgency</span></a>
+    <div class="arrow" style="grid-column:4;grid-row:1" aria-hidden="true"><svg width="40" height="14" viewBox="0 0 40 14"><path d="M2 7 H32" stroke="currentColor" stroke-width="2.5" fill="none"/><path d="M30 2 L38 7 L30 12 Z" fill="currentColor"/></svg></div>
+    <a class="box b-inhouse" href="#review" data-s="review" style="grid-column:5;grid-row:1;--o:5"><span class="n">5</span><span class="tag">In-house model</span><b>Reviews actions</b><span class="d">Three angles. Only lowers confidence.</span></a>
+    <div class="arrow" style="grid-column:6;grid-row:1" aria-hidden="true"><svg width="40" height="14" viewBox="0 0 40 14"><path d="M2 7 H32" stroke="currentColor" stroke-width="2.5" fill="none"/><path d="M30 2 L38 7 L30 12 Z" fill="currentColor"/></svg></div>
+    <a class="box b-rm" href="#rm" data-s="rm" style="grid-column:7;grid-row:1;--o:6"><span class="n">6</span><span class="tag">RM</span><b>Decides</b><span class="d">Approve, edit or dismiss</span></a>
+
+    <div class="arrow-v" style="grid-column:3" aria-hidden="true"><svg width="14" height="56" viewBox="0 0 14 56"><path d="M7 54 V10" stroke="currentColor" stroke-width="2.5" fill="none"/><path d="M2 12 L7 3 L12 12 Z" fill="currentColor"/></svg></div>
+    <div class="arrow-v" style="grid-column:7" aria-hidden="true"><svg width="14" height="56" viewBox="0 0 14 56"><path d="M7 2 V46" stroke="currentColor" stroke-width="2.5" fill="none"/><path d="M2 44 L7 53 L12 44 Z" fill="currentColor"/></svg></div>
+
+    <a class="box b-public" href="#news" data-s="news" style="grid-column:1;grid-row:3;--o:2"><span class="n">2</span><span class="tag">C1–C2 · Public</span><b>Market news</b><span class="d">Yahoo Finance, CNBC, The Business Times</span></a>
+    <div class="arrow" style="grid-column:2;grid-row:3" aria-hidden="true"><svg width="40" height="14" viewBox="0 0 40 14"><path d="M2 7 H32" stroke="currentColor" stroke-width="2.5" fill="none"/><path d="M30 2 L38 7 L30 12 Z" fill="currentColor"/></svg></div>
+    <a class="box b-public" href="#triage" data-s="triage" style="grid-column:3;grid-row:3;--o:3"><span class="n">3</span><span class="tag">External models</span><b>Triage headlines</b><span class="d">GPT, Claude, Gemini vote on each one</span></a>
+    <a class="box b-ledger" href="#ledger" data-s="ledger" style="grid-column:7;grid-row:3;--o:7"><span class="n">7</span><span class="tag">Ledger</span><b>Recorded</b><span class="d">Every decision, append-only</span></a>
+  </nav>
+</div>
+
+<nav class="steps" aria-label="Steps">
+  <div class="wrap">
+    <a href="#records" data-s="records"><i>1</i>Client records</a>
+    <a href="#news" data-s="news"><i>2</i>Market news</a>
+    <a href="#triage" data-s="triage"><i>3</i>Triage</a>
+    <a href="#detect" data-s="detect"><i>4</i>Detect and score</a>
+    <a href="#review" data-s="review"><i>5</i>In-house review</a>
+    <a href="#rm" data-s="rm"><i>6</i>RM decides</a>
+    <a href="#ledger" data-s="ledger"><i>7</i>Ledger</a>
+  </div>
+</nav>
+
+<main>
+<section class="step" id="records">
+  <div class="wrap">
+    <div class="head">
+      <p class="kicker">Step 1 · Client records</p>
+      <h2>Everything starts from the client's own record</h2>
+      <p class="summary">TESSERA reads what the bank already holds about a client. This data is confidential (C3 to C4) and never leaves the bank.</p>
+      <div class="chips"><span class="chip c34">C3–C4 client data</span><span class="chip code">Read by code only</span></div>
+    </div>
+    <div class="grid">
+      <div class="col">
+        <div class="io">
+          <div><h3>Goes in</h3><p>Clients, portfolios, holdings, instruments, mandates, commitments, credit facilities, planned cash needs, and the event log with RM notes.</p></div>
+          <div><h3>Comes out</h3><p>One joined view per client: what they said they want, what they hold, and what they owe or need soon.</p></div>
+        </div>
+        <ul class="rules">
+          <li>Structured notes and funds are looked through to their underlying holdings, so a sector bet inside a note still counts.</li>
+          <li>Stated goals come from the client's own words: source of wealth, objectives and RM notes.</li>
+          <li>No model reads this data to find a problem. Finding contradictions is arithmetic on holdings.</li>
+        </ul>
+        <p class="where">In the demo: synthetic clients from the Julius Bär SingHacks case dataset (<code>data/*.csv</code>).</p>
+      </div>
+      <div class="trace">
+        <p class="kicker">Abdullah at this step</p>
+        <p>He told his RM: <b>“Build wealth outside the Gulf and outside shipping.”</b></p>
+        <p>He holds a structured note, a USD 5m family office commitment for 2027, and USD 2.4m in cash.</p>
+      </div>
+    </div>
+    <div class="nav"><span></span><a href="#news">Next: Market news →</a></div>
+  </div>
+</section>
+
+<section class="step" id="news">
+  <div class="wrap">
+    <div class="head">
+      <p class="kicker">Step 2 · Market news</p>
+      <h2>Public headlines, refreshed on a schedule</h2>
+      <p class="summary">TESSERA pulls financial headlines from public feeds. This is public data (C1 to C2), so it is safe to send outside the bank.</p>
+      <div class="chips"><span class="chip c12">C1–C2 public data</span></div>
+    </div>
+    <div class="grid">
+      <div class="col">
+        <div class="io">
+          <div><h3>Goes in</h3><p>RSS feeds from Yahoo Finance, CNBC and The Business Times, plus optional Google News searches set by the bank.</p></div>
+          <div><h3>Comes out</h3><p>A list of events, each with a headline, publisher and date. Nothing about any client.</p></div>
+        </div>
+        <ul class="rules">
+          <li>Each refresh keeps new events and skips ones already stored.</li>
+          <li>Extra feeds can be added by configuration, with no code change.</li>
+        </ul>
+        <p class="where">Feeds are set in <code>TESSERA_NEWS_FEEDS</code>.</p>
+      </div>
+      <div class="trace">
+        <p class="kicker">Abdullah at this step</p>
+        <p>Nothing about him is involved. The feed is the same for every client in the book.</p>
+      </div>
+    </div>
+    <div class="nav"><a href="#records">← Client records</a><a href="#triage">Next: Triage →</a></div>
+  </div>
+</section>
+
+<section class="step" id="triage">
+  <div class="wrap">
+    <div class="head">
+      <p class="kicker">Step 3 · External models triage headlines</p>
+      <h2>Three public models vote on each headline</h2>
+      <p class="summary">External models only ever see public headlines. They decide whether a headline matters for wealth clients, which topics it touches, and how severe it is.</p>
+      <div class="chips"><span class="chip c12">Public data only</span><span class="chip ai">External AI</span></div>
+    </div>
+    <div class="grid">
+      <div class="col">
+        <div class="io">
+          <div><h3>Sent to each model</h3><p>Headline text, publisher and date. Nothing else.</p></div>
+          <div><h3>Comes back</h3><p>Relevant or not, topics (for example energy, shipping, rates) and a severity.</p></div>
+        </div>
+        <ul class="rules">
+          <li>Three models answer independently: GPT-5.4, Claude Sonnet 4.6 and Gemini 3.7 Flash.</li>
+          <li>Relevance and topics go by majority vote. Severity is the median of the three.</li>
+          <li>Each refresh triages the latest 60 events. If no model answers, fixed keyword rules decide instead.</li>
+          <li>News can add at most <b>8 points</b> to a client's urgency score.</li>
+        </ul>
+        <p class="where">Switched on with <code>TESSERA_NEWS_TRIAGE_ENABLED</code>; models set in <code>TESSERA_NEWS_MODELS</code>.</p>
+      </div>
+      <div class="trace">
+        <p class="kicker">Abdullah at this step</p>
+        <p>A headline about shipping or energy is tagged with those topics. The models never see his name, his holdings or his goals.</p>
+        <p>Matching the tag to his portfolio happens in the next step, inside the bank.</p>
+      </div>
+    </div>
+    <div class="nav"><a href="#news">← Market news</a><a href="#detect">Next: Detect and score →</a></div>
+  </div>
+</section>
+
+<section class="step" id="detect">
+  <div class="wrap">
+    <div class="head">
+      <p class="kicker">Step 4 · Code detects and scores</p>
+      <h2>Code finds the contradiction and ranks the client</h2>
+      <p class="summary">Deterministic code compares what each client said with what they hold, then scores how urgent it is. No client is named in the rules, so a new client is checked the same way on day one.</p>
+      <div class="chips"><span class="chip code">Code</span><span class="chip c34">Inside the bank</span></div>
+    </div>
+    <div class="grid">
+      <div class="col">
+        <h3>Five kinds of contradiction</h3>
+        <div class="tbl"><table>
+          <tr><th>Kind</th><th>What it catches</th></tr>
+          <tr><td>Wealth concentration</td><td>Portfolio doubles down on the business the client already owns</td></tr>
+          <tr><td>Liquidity</td><td>Cash needs or capital calls that liquid assets can't cover</td></tr>
+          <tr><td>Risk profile</td><td>Holdings riskier than the stated profile</td></tr>
+          <tr><td>Currency</td><td>Spending currency differs from what the portfolio holds</td></tr>
+          <tr><td>Duration</td><td>Income needed soon, money locked in long bonds</td></tr>
+        </table></div>
+        <h3>Urgency score, out of 99</h3>
+        <div class="bars" role="img" aria-label="Maximum points per part of the score">
+          <div class="bar"><span>Goal clash</span><div class="track"><div class="fill" style="width:100%"></div></div><span>40</span></div>
+          <div class="bar"><span>Liquidity</span><div class="track"><div class="fill" style="width:62.5%"></div></div><span>25</span></div>
+          <div class="bar"><span>Rules</span><div class="track"><div class="fill" style="width:50%"></div></div><span>20</span></div>
+          <div class="bar"><span>Time</span><div class="track"><div class="fill" style="width:37.5%"></div></div><span>15</span></div>
+          <div class="bar"><span>Fit</span><div class="track"><div class="fill" style="width:30%"></div></div><span>±12</span></div>
+          <div class="bar"><span>News (AI)</span><div class="track"><div class="fill ai" style="width:20%"></div></div><span>8</span></div>
+        </div>
+        <div class="tbl"><table>
+          <tr><th>Lane</th><th>When</th></tr>
+          <tr><td>May be exposed</td><td>A triaged headline hits a holding the client is exposed to. Goes to the top, whatever the score.</td></tr>
+          <tr><td>Act now</td><td>70 and above</td></tr>
+          <tr><td>This week</td><td>45 to 69</td></tr>
+          <tr><td>Monitor</td><td>Below 45</td></tr>
+        </table></div>
+        <p class="where">Weights are illustrative, not calibrated. Code: <code>tessera/contradictions.py</code>, <code>tessera/engine.py</code>.</p>
+      </div>
+      <div class="trace">
+        <p class="kicker">Abdullah at this step</p>
+        <p class="big">42.1%</p>
+        <p>of his portfolio is shipping and energy once the structured note is looked through. The same bet as the business he owns.</p>
+        <p class="big">55 · This week</p>
+        <p>Goal clash at maximum, but nothing is due this week, so he lands in This week, not Act now.</p>
+      </div>
+    </div>
+    <div class="nav"><a href="#triage">← Triage</a><a href="#review">Next: In-house review →</a></div>
+  </div>
+</section>
+
+<section class="step" id="review">
+  <div class="wrap">
+    <div class="head">
+      <p class="kicker">Step 5 · In-house model reviews actions</p>
+      <h2>The bank's own model checks each action from three angles</h2>
+      <p class="summary">Proposed actions use client data, so only a model the bank runs itself reviews them. It can lower confidence in an action, never raise it.</p>
+      <div class="chips"><span class="chip inh">In-house AI</span><span class="chip c34">Inside the bank</span></div>
+    </div>
+    <div class="grid">
+      <div class="col">
+        <div class="tbl"><table>
+          <tr><th>Angle</th><th>Asks</th></tr>
+          <tr><td>Suitability and compliance</td><td>Does the action fit the mandate and the rules?</td></tr>
+          <tr><td>Client fit</td><td>Does it match what this client said they want?</td></tr>
+          <tr><td>Evidence quality</td><td>Is every claim backed by the record?</td></tr>
+        </table></div>
+        <ul class="rules">
+          <li>Final score is the <b>lower</b> of the code's score and the median of the three angles.</li>
+          <li>If the angles are more than 20 points apart, the result is capped at 69.</li>
+          <li>If any angle blocks the action, the result is capped at 49, and the RM can't approve it.</li>
+          <li>The packet is de-identified and checked for leaks first. The RM can open “What the model saw”.</li>
+        </ul>
+        <p class="where">In the demo, a labelled stand-in plays the in-house model. In production, <code>TESSERA_INHOUSE_URL</code> points at the bank's own model server.</p>
+      </div>
+      <div class="trace">
+        <p class="kicker">Example from the demo</p>
+        <p>Angles scored 78, 74 and 82 (median 78). The code's score was 65.</p>
+        <p class="big">Consensus 65</p>
+        <p>The lower of the two wins, so the model could not push the action higher than the code allowed.</p>
+      </div>
+    </div>
+    <div class="nav"><a href="#detect">← Detect and score</a><a href="#rm">Next: RM decides →</a></div>
+  </div>
+</section>
+
+<section class="step" id="rm">
+  <div class="wrap">
+    <div class="head">
+      <p class="kicker">Step 6 · The RM decides</p>
+      <h2>Nothing reaches a client without the RM</h2>
+      <p class="summary">The RM gets a short brief and three choices. TESSERA prepares the conversation; the RM has it.</p>
+      <div class="chips"><span class="chip rm">Human decision</span></div>
+    </div>
+    <div class="grid">
+      <div class="col">
+        <div class="tbl"><table>
+          <tr><th>Choice</th><th>Rule</th></tr>
+          <tr><td>Approve</td><td>RM states the action taken (at least 10 characters). Blocked actions can't be approved.</td></tr>
+          <tr><td>Edit</td><td>RM writes the revised wording.</td></tr>
+          <tr><td>Dismiss</td><td>RM can ask for an alternative action instead.</td></tr>
+        </table></div>
+      </div>
+      <div class="trace">
+        <p class="kicker">Abdullah's brief</p>
+        <p><b>Open with</b> “The energy thesis has worked. That success has quietly rebuilt the same risk your Asia portfolio was meant to diversify.”</p>
+        <p><b>Ask</b> “If the Strait reopened next month, how much of this year’s gain are you willing to give back?”</p>
+        <p><b>Show</b> the look-through of the structured note, both scenarios, and the USD 5m need from 2027.</p>
+        <p><b>Avoid</b> implying we know when the Strait normalises, or valuing his operating business without data.</p>
+      </div>
+    </div>
+    <div class="nav"><a href="#review">← In-house review</a><a href="#ledger">Next: Ledger →</a></div>
+  </div>
+</section>
+
+<section class="step" id="ledger">
+  <div class="wrap">
+    <div class="head">
+      <p class="kicker">Step 7 · Ledger</p>
+      <h2>Every decision is written down and never overwritten</h2>
+      <p class="summary">Each approve, edit or dismiss is a new record. The current state is rebuilt from the full history, so compliance can see who decided what, when, and on what evidence.</p>
+      <div class="chips"><span class="chip code">Append-only</span><span class="chip c34">Inside the bank</span></div>
+    </div>
+    <div class="grid">
+      <div class="col">
+        <div class="io">
+          <div><h3>Each record holds</h3><p>Client, action title, decision, the RM's note, who decided, time, and the recommendation version.</p></div>
+          <div><h3>Stored in</h3><p>A local file in development. A Postgres table in production.</p></div>
+        </div>
+        <ul class="rules">
+          <li>Records are only added. A change of mind is a new record, not an edit.</li>
+          <li>A dismissed action stays visible in the history with its alternative.</li>
+        </ul>
+        <p class="where">Code: <code>tessera/services.py</code>, <code>tessera/review_state.py</code>.</p>
+      </div>
+      <div class="trace">
+        <p class="kicker">Abdullah at this step</p>
+        <p>His RM's decision on the family office action is stored with the 42.1% evidence it was based on.</p>
+      </div>
+    </div>
+    <div class="nav"><a href="#rm">← RM decides</a><a href="#records">Back to the start ↺</a></div>
+  </div>
+</section>
+</main>
+
+<footer class="wrap" style="border-top:1px solid var(--line)">
+  <p>TESSERA by SAPTrio, built for the Julius Bär Wealth Intelligence challenge at SingHacks 2026. All clients shown are synthetic, from the case dataset.</p>
+  <p>Data classes C1 to C4 as described by a Julius Bär Lead for RM Training. Score weights are illustrative.</p>
+</footer>
+
+<script>
+(function () {
+  var ids = ['records', 'news', 'triage', 'detect', 'review', 'rm', 'ledger'];
+  var marks = document.querySelectorAll('[data-s]');
+  function mark(id) {
+    marks.forEach(function (el) { el.classList.toggle('on', el.dataset.s === id); });
+    var chip = document.querySelector('.steps a.on');
+    if (chip && chip.scrollIntoView) chip.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
+  if ('IntersectionObserver' in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) { if (e.isIntersecting) mark(e.target.id); });
+    }, { rootMargin: '-45% 0px -50% 0px' });
+    ids.forEach(function (id) { var s = document.getElementById(id); if (s) io.observe(s); });
+  }
+  function go() {
+    var id = (location.hash || '').slice(1);
+    if (ids.indexOf(id) < 0) return;
+    document.getElementById(id).scrollIntoView({ block: 'start' });
+    mark(id);
+  }
+  window.addEventListener('hashchange', go);
+  setTimeout(go, 0);
+})();
+</script>
+</body>
+</html>

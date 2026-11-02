@@ -1,0 +1,57 @@
+/* TESSERA explainer site. Same palette and type as the finals deck. */
+:root {
+  --bg: #F6F2EA; --bg-2: #EFE9DD; --card: #FBF8F2; --line: #E1DACB; --line-2: #B9B2A3;
+  --fg: #18201C; --muted: #4B524D; --faint: #6B6F69;
+  --green: #1F4A3F; --green-soft: #DCE6E1; --on-green: #F4EFE6;
+  --gold: #8A6A2C; --gold-soft: #F1E6CC; --red: #A8483C; --red-soft: #F4DDD8;
+  --slate: #4A5A70; --slate-soft: #E6EBF0;
+  --display: 'EB Garamond', Georgia, serif;
+  --body: 'IBM Plex Sans', 'Segoe UI', Arial, sans-serif;
+  --mono: 'IBM Plex Mono', Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141A17; --bg-2: #1A221E; --card: #1E2622; --line: #2C3631; --line-2: #45514A;
+    --fg: #ECE6DA; --muted: #B5B9B1; --faint: #8E938B;
+    --green: #7FB59F; --green-soft: #22352D; --on-green: #10201A;
+    --gold: #D4B26A; --gold-soft: #3A3120; --red: #E08A7C; --red-soft: #3D2622;
+    --slate: #9DB0CC; --slate-soft: #1F2733; color-scheme: dark;
+  }
+}
+
+* { box-sizing: border-box }
+html { scroll-behavior: smooth }
+body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.6 var(--body) }
+p, h1, h2, h3 { margin: 0 }
+a { color: inherit }
+a:focus-visible, button:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; border-radius: 6px }
+.wrap { max-width: 1120px; margin: 0 auto; padding-left: max(20px, env(safe-area-inset-left, 0px)); padding-right: max(20px, env(safe-area-inset-right, 0px)) }
+.kicker { font-family: var(--mono); font-size: .78rem; font-weight: 500; letter-spacing: .16em; text-transform: uppercase; color: var(--gold) }
+.mono { font-family: var(--mono) }
+h1.title { font-family: var(--display); font-weight: 500; font-size: clamp(2.3rem, 5.4vw, 3.9rem); line-height: 1.05; text-wrap: balance }
+h2.title { font-family: var(--display); font-weight: 500; font-size: clamp(1.8rem, 3.6vw, 2.6rem); line-height: 1.1; text-wrap: balance }
+.lede { font-size: 1.12rem; color: var(--muted); max-width: 64ch }
+
+/* Site nav */
+.sitenav { position: sticky; top: 0; z-index: 20; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line) }
+.sitenav .wrap { display: flex; align-items: center; gap: 28px; height: 64px }
+.brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 600; font-size: 1.02rem; flex: none }
+.brand svg { display: block }
+.navlinks { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; height: 100% }
+.navlinks a { position: relative; display: flex; align-items: center; padding: 0 12px; text-decoration: none; color: var(--muted); white-space: nowrap; font-size: .95rem }
+.navlinks a:hover { color: var(--fg) }
+.navlinks a[aria-current="page"] { color: var(--fg); font-weight: 500 }
+.navlinks a[aria-current="page"]::after { content: ""; position: absolute; left: 12px; right: 12px; bottom: 0; height: 2px; background: var(--fg) }
+.navright { display: flex; gap: 18px; align-items: center; font-size: .9rem; color: var(--muted); flex: none }
+.navright a { text-decoration: none } .navright a:hover { color: var(--fg) }
+.team { font-family: var(--mono); font-size: .8rem; letter-spacing: .06em; padding: 3px 10px; border: 1px solid var(--line-2); border-radius: 999px }
+@media (max-width: 760px) {
+  .sitenav .wrap { gap: 12px }
+  .brand span { display: none }
+  .navright .team { display: none }
+}
+
+footer.site { border-top: 1px solid var(--line); padding-block: 28px 48px; color: var(--faint); font-size: .86rem }
+footer.site .wrap { display: flex; flex-direction: column; gap: 6px }
+
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; scroll-behavior: auto !important } }
