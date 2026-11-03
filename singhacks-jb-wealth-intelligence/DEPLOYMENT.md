@@ -33,6 +33,35 @@ its lookup index on first use. The database user therefore needs `CREATE TABLE`,
 more restricted production role, deploy the table separately and grant the
 runtime user only `SELECT` and `INSERT` afterward.
 
+The hosted API also uses `tessera_backend_outputs` for shared live news, the
+current intelligence and review snapshots, and individual chat responses. This
+table is private to the backend database connection. Temporary news files are
+disposable mirrors; each worker reloads shared news before calculating. News
+updates merge under a database lock so concurrent workers do not discard one
+another's headlines. Hosted alert state uses `tessera_urgency_alert_state`.
+
+Backfill existing local outputs and decisions, then inspect the cloud inventory:
+
+```powershell
+python scripts/sync_cloud_outputs.py              # dry run: list included files
+python scripts/sync_cloud_outputs.py --upload     # upload and verify SHA-256 readback
+python scripts/sync_cloud_outputs.py --inventory  # metadata in runtime/cloud-output-inventory.json
+```
+
+The backfill includes controlled CSV/JSON sources, runtime JSON/Markdown files,
+chat evaluation reports and exported book-map vectors. Local decisions retain
+their IDs, timestamps and evidence versions; existing cloud rows are retained
+and repeated imports skip duplicate IDs. Local alert state is imported only
+when a cloud client state is absent. Nothing is sent to Telegram by the import.
+Credentials, caches, screenshots and presentation files are excluded.
+
+For local runs to share these cloud stores, set
+`TESSERA_STORAGE_BACKEND=postgresql` in `.env.local` and restart `python app.py`.
+The default `local` backend remains available for offline development. The hosted
+API uses PostgreSQL automatically. To save newly generated reports and vector
+exports, run `python scripts/evaluate_chat.py --cloud` and
+`python scripts/export_book_map.py --cloud` respectively.
+
 Do not put the connection string in source control. `.env` and `.env.local` are
 ignored; `.env.example` contains only the variable shape.
 
@@ -135,7 +164,10 @@ curl.exe https://your-domain.example/api/intelligence
 curl.exe https://your-domain.example/api/decisions
 ```
 
-The health response must report `decision_storage` as `configured`. If Chroma is
+The health response must report `decision_storage` as `configured`,
+`backend_output_storage` as `available` and `market_news_storage` as `postgresql`.
+The output-store check makes a real database request and returns HTTP 503 if
+storage is unavailable. If Chroma is
 enabled, it must also report `vector_search` as `configured`. In the UI,
 open a client, dismiss an action, refresh the page, restore it, and confirm both
 events appear in the Evidence Ledger.
@@ -158,8 +190,9 @@ searches. No API keys are needed for these feeds. Set
 disable live news or `TESSERA_NEWS_FEEDS` to a comma-separated list of approved
 RSS URLs. Relevant, deduplicated stories become approved live events in the
 returned intelligence. Local state persists in `runtime/live_events.json`.
-Vercel uses temporary instance storage, so live events may not persist across
-instances; use a shared event store if durable hosted news history is needed.
+Hosted live events persist in PostgreSQL and are shared across instances and
+deployments. The API's temporary file is a calculation cache, not the durable
+news register.
 
 ## Production controls
 

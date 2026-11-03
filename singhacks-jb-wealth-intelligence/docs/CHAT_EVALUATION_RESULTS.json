@@ -1,0 +1,845 @@
+{
+  "suite_version": "chat-grounding-v1",
+  "fixture_sha256": "200f9e74062598eceb83e563c5409269bd9599362aab60dcf5648e55b993df9f",
+  "implementation_sha256": "4ee56d714a10670bad8ab402092348f8ef2460629d768655ceda5c34459cdd12",
+  "generated_at": "2026-11-03T08:56:21.074795+00:00",
+  "execution": "offline_extracts_and_simulated_gateway_contracts",
+  "live_model_evaluated": false,
+  "independent_source_truth_verified": false,
+  "passed": true,
+  "metrics": {
+    "answer_key_match": {
+      "passed": 11,
+      "total": 11,
+      "rate": 1.0
+    },
+    "answerability": {
+      "passed": 23,
+      "total": 23,
+      "rate": 1.0
+    },
+    "citation_source_precision": {
+      "passed": 11,
+      "total": 11,
+      "rate": 1.0
+    },
+    "client_isolation": {
+      "passed": 3,
+      "total": 3,
+      "rate": 1.0
+    },
+    "csv_aum_reconciliation": {
+      "passed": 20,
+      "total": 20,
+      "rate": 1.0
+    },
+    "csv_credit_reconciliation": {
+      "passed": 5,
+      "total": 5,
+      "rate": 1.0
+    },
+    "excluded_value_safety": {
+      "passed": 23,
+      "total": 23,
+      "rate": 1.0
+    },
+    "extract_fidelity": {
+      "passed": 11,
+      "total": 11,
+      "rate": 1.0
+    },
+    "news_provenance": {
+      "passed": 1,
+      "total": 1,
+      "rate": 1.0
+    },
+    "numerical_answer_key_match": {
+      "passed": 6,
+      "total": 6,
+      "rate": 1.0
+    },
+    "primary_source_recall_at_6": {
+      "passed": 11,
+      "total": 11,
+      "rate": 1.0
+    },
+    "simulated_model_contract": {
+      "passed": 8,
+      "total": 8,
+      "rate": 1.0
+    },
+    "unanswerable_refusal": {
+      "passed": 12,
+      "total": 12,
+      "rate": 1.0
+    }
+  },
+  "cases": [
+    {
+      "id": "aum",
+      "category": "numerical",
+      "passed": true,
+      "checks": {
+        "answerability": true,
+        "retrieval": true,
+        "answer_key": true,
+        "numerical": true,
+        "citations": true,
+        "extract_fidelity": true,
+        "excluded_values": true
+      },
+      "mode": "grounded_extract",
+      "answer": "Source extracts:\nRecorded evidence: Bank-held AUM is USD 20.0m as of 2026-08-26. Asset allocation: Equity 60.0%; Cash 40.0%. Currency mix: USD 75.0%; SGD 25.0%. [1]",
+      "citations": [
+        {
+          "number": 1,
+          "source": "holdings.csv \u2022 CL-9001 \u2022 2026-08-26",
+          "source_type": "portfolio_snapshot",
+          "source_date": "2026-08-26",
+          "excerpt": "Bank-held AUM is USD 20.0m as of 2026-08-26. Asset allocation: Equity 60.0%; Cash 40.0%. Currency mix: USD 75.0%; SGD 25.0%.",
+          "retrievers": [
+            "lexical"
+          ],
+          "source_id": "portfolio",
+          "source_url": null,
+          "publisher": null,
+          "published_at": null,
+          "retrieved_at": null,
+          "evidence_kind": "recorded_evidence",
+          "verification_status": "recorded_not_independently_verified",
+          "content_sha256": "8fdad26252e78a492b24a55c1e9772c6f2bfbb0d10bc4e39e8b68afd85dfbb92"
+        }
+      ]
+    },
+    {
+      "id": "allocation",
+      "category": "numerical",
+      "passed": true,
+      "checks": {
+        "answerability": true,
+        "retrieval": true,
+        "answer_key": true,
+        "numerical": true,
+        "citations": true,
+        "extract_fidelity": true,
+        "excluded_values": true
+      },
+      "mode": "grounded_extract",
+      "answer": "Source extracts:\nRecorded evidence: Bank-held AUM is USD 20.0m as of 2026-08-26. Asset allocation: Equity 60.0%; Cash 40.0%. Currency mix: USD 75.0%; SGD 25.0%. [1]",
+      "citations": [
+        {
+          "number": 1,
+          "source": "holdings.csv \u2022 CL-9001 \u2022 2026-08-26",
+          "source_type": "portfolio_snapshot",
+          "source_date": "2026-08-26",
+          "excerpt": "Bank-held AUM is USD 20.0m as of 2026-08-26. Asset allocation: Equity 60.0%; Cash 40.0%. Currency mix: USD 75.0%; SGD 25.0%.",
+          "retrievers": [
+            "lexical"
+          ],
+          "source_id": "portfolio",
+          "source_url": null,
+          "publisher": null,
+          "published_at": null,
+          "retrieved_at": null,
+          "evidence_kind": "recorded_evidence",
+          "verification_status": "recorded_not_independently_verified",
+          "content_sha256": "8fdad26252e78a492b24a55c1e9772c6f2bfbb0d10bc4e39e8b68afd85dfbb92"
+        }
+      ]
+    },
+    {
+      "id": "currencies",
+      "category": "numerical",
+      "passed": true,
+      "checks": {
+        "answerability": true,
+        "retrieval": true,
+        "answer_key": true,
+        "numerical": true,
+        "citations": true,
+        "extract_fidelity": true,
+        "excluded_values": true
+      },
+      "mode": "grounded_extract",
+      "answer": "Source extracts:\nRecorded evidence: Bank-held AUM is USD 20.0m as of 2026-08-26. Asset allocation: Equity 60.0%; Cash 40.0%. Currency mix: USD 75.0%; SGD 25.0%. [1]",
+      "citations": [
+        {
+          "number": 1,
+          "source": "holdings.csv \u2022 CL-9001 \u2022 2026-08-26",
+          "source_type": "portfolio_snapshot",
+          "source_date": "2026-08-26",
+          "excerpt": "Bank-held AUM is USD 20.0m as of 2026-08-26. Asset allocation: Equity 60.0%; Cash 40.0%. Currency mix: USD 75.0%; SGD 25.0%.",
+          "retrievers": [
+            "lexical"
+          ],
+          "source_id": "portfolio",
+          "source_url": null,
+          "publisher": null,
+          "published_at": null,
+          "retrieved_at": null,
+          "evidence_kind": "recorded_evidence",
+          "verification_status": "recorded_not_independently_verified",
+          "content_sha256": "8fdad26252e78a492b24a55c1e9772c6f2bfbb0d10bc4e39e8b68afd85dfbb92"
+        }
+      ]
+    },
+    {
+      "id": "credit",
+      "category": "numerical",
+      "passed": true,
+      "checks": {
+        "answerability": true,
+        "retrieval": true,
+        "answer_key": true,
+        "numerical": true,
+        "citations": true,
+        "extract_fidelity": true,
+        "excluded_values": true
+      },
+      "mode": "grounded_extract",
+      "answer": "Source extracts:\nRecorded evidence: Credit facility FAC-9001 has LTV 42.5% against a 60.0% trigger, leaving 17.5 percentage points and reported headroom of USD 3.5m. [1]",
+      "citations": [
+        {
+          "number": 1,
+          "source": "credit_facilities.csv \u2022 FAC-9001",
+          "source_type": "credit_facility",
+          "source_date": "2026-08-26",
+          "excerpt": "Credit facility FAC-9001 has LTV 42.5% against a 60.0% trigger, leaving 17.5 percentage points and reported headroom of USD 3.5m.",
+          "retrievers": [
+            "lexical"
+          ],
+          "source_id": "credit",
+          "source_url": null,
+          "publisher": null,
+          "published_at": null,
+          "retrieved_at": null,
+          "evidence_kind": "recorded_evidence",
+          "verification_status": "recorded_not_independently_verified",
+          "content_sha256": "6a98350c6f2c8fe4c4897c9ab8c3d27a0212934cf334d9adf2edfddf3fed808c"
+        }
+      ]
+    },
+    {
+      "id": "headroom",
+      "category": "numerical",
+      "passed": true,
+      "checks": {
+        "answerability": true,
+        "retrieval": true,
+        "answer_key": true,
+        "numerical": true,
+        "citations": true,
+        "extract_fidelity": true,
+        "excluded_values": true
+      },
+      "mode": "grounded_extract",
+      "answer": "Source extracts:\nRecorded evidence: Credit facility FAC-9001 has LTV 42.5% against a 60.0% trigger, leaving 17.5 percentage points and reported headroom of USD 3.5m. [1]",
+      "citations": [
+        {
+          "number": 1,
+          "source": "credit_facilities.csv \u2022 FAC-9001",
+          "source_type": "credit_facility",
+          "source_date": "2026-08-26",
+          "excerpt": "Credit facility FAC-9001 has LTV 42.5% against a 60.0% trigger, leaving 17.5 percentage points and reported headroom of USD 3.5m.",
+          "retrievers": [
+            "lexical"
+          ],
+          "source_id": "credit",
+          "source_url": null,
+          "publisher": null,
+          "published_at": null,
+          "retrieved_at": null,
+          "evidence_kind": "recorded_evidence",
+          "verification_status": "recorded_not_independently_verified",
+          "content_sha256": "6a98350c6f2c8fe4c4897c9ab8c3d27a0212934cf334d9adf2edfddf3fed808c"
+        }
+      ]
+    },
+    {
+      "id": "cash-deadline",
+      "category": "numerical",
+      "passed": true,
+      "checks": {
+        "answerability": true,
+        "retrieval": true,
+        "answer_key": true,
+        "numerical": true,
+        "citations": true,
+        "extract_fidelity": true,
+        "excluded_values": true
+      },
+      "mode": "grounded_extract",
+      "answer": "Source extracts:\nRecorded evidence: Cash need: Singapore property deposit; SGD 9,000,000 (USD 6.7m), due 2027-03-01 to 2027-04-01; certainty High; recurrence One-off. [1]",
+      "citations": [
+        {
+          "number": 1,
+          "source": "planned_cash_needs.csv \u2022 CASH-9001",
+          "source_type": "cash_need",
+          "source_date": "2027-03-01",
+          "excerpt": "Cash need: Singapore property deposit; SGD 9,000,000 (USD 6.7m), due 2027-03-01 to 2027-04-01; certainty High; recurrence One-off.",
+          "retrievers": [
+            "lexical"
+          ],
+          "source_id": "cash:0",
+          "source_url": null,
+          "publisher": null,
+          "published_at": null,
+          "retrieved_at": null,
+          "evidence_kind": "recorded_evidence",
+          "verification_status": "recorded_not_independently_verified",
+          "content_sha256": "fb1b58002ac3aba857a208348ac2e38a51afd84d93d11ed5773c9f3fb47a7914"
+        }
+      ]
+    },
+    {
+      "id": "mandate",
+      "category": "recorded",
+      "passed": true,
+      "checks": {
+        "answerability": true,
+        "retrieval": true,
+        "answer_key": true,
+        "citations": true,
+        "extract_fidelity": true,
+        "excluded_values": true
+      },
+      "mode": "grounded_extract",
+      "answer": "Source extracts:\nRecorded evidence: Mandate or concentration finding: Equity concentration limit is 65%. [1]",
+      "citations": [
+        {
+          "number": 1,
+          "source": "mandates.csv + portfolios.csv \u2022 CL-9001",
+          "source_type": "mandate_finding",
+          "source_date": "2026-08-26",
+          "excerpt": "Mandate or concentration finding: Equity concentration limit is 65%.",
+          "retrievers": [
+            "lexical"
+          ],
+          "source_id": "mandate:0",
+          "source_url": null,
+          "publisher": null,
+          "published_at": null,
+          "retrieved_at": null,
+          "evidence_kind": "recorded_evidence",
+          "verification_status": "recorded_not_independently_verified",
+          "content_sha256": "a178ee582a4661b147f130d9d8e02a84c94510974c6789c9ddffa5cd7e794d9a"
+        }
+      ]
+    },
+    {
+      "id": "profile",
+      "category": "recorded",
+      "passed": true,
+      "checks": {
+        "answerability": true,
+        "retrieval": true,
+        "answer_key": true,
+        "citations": true,
+        "extract_fidelity": true,
+        "excluded_values": true
+      },
+      "mode": "grounded_extract",
+      "answer": "Source extracts:\nRecorded evidence: Evaluation Client Alpha has a Balanced risk profile. Objectives: Preserve capital and fund education. Life stage: Accumulation. [1]",
+      "citations": [
+        {
+          "number": 1,
+          "source": "clients.csv \u2022 CL-9001",
+          "source_type": "client_profile",
+          "source_date": null,
+          "excerpt": "Evaluation Client Alpha has a Balanced risk profile. Objectives: Preserve capital and fund education. Life stage: Accumulation.",
+          "retrievers": [
+            "lexical"
+          ],
+          "source_id": "profile",
+          "source_url": null,
+          "publisher": null,
+          "published_at": null,
+          "retrieved_at": null,
+          "evidence_kind": "recorded_evidence",
+          "verification_status": "recorded_not_independently_verified",
+          "content_sha256": "faa0c5648e0e5fc2f831a52b688bf801392e6da8524d17874cd82189413a9f18"
+        }
+      ]
+    },
+    {
+      "id": "scenario",
+      "category": "derived",
+      "passed": true,
+      "checks": {
+        "answerability": true,
+        "retrieval": true,
+        "answer_key": true,
+        "citations": true,
+        "extract_fidelity": true,
+        "excluded_values": true
+      },
+      "mode": "grounded_extract",
+      "answer": "Source extracts:\nCalculated assessment: Scenario sensitivity Risk-off: portfolio impact -4.0% or USD -0.80m. . This is a sensitivity, not a forecast or probability. [1]",
+      "citations": [
+        {
+          "number": 1,
+          "source": "calculated scenario \u2022 holdings.csv \u2022 CL-9001 \u2022 2026-08-26",
+          "source_type": "scenario_sensitivity",
+          "source_date": "2026-08-26",
+          "excerpt": "Scenario sensitivity Risk-off: portfolio impact -4.0% or USD -0.80m. . This is a sensitivity, not a forecast or probability.",
+          "retrievers": [
+            "lexical"
+          ],
+          "source_id": "scenario:0",
+          "source_url": null,
+          "publisher": null,
+          "published_at": null,
+          "retrieved_at": null,
+          "evidence_kind": "derived_assessment",
+          "verification_status": "recorded_not_independently_verified",
+          "content_sha256": "136173d33b046ecd270b0163dc5f822d6cd7bbf2f866de44752817eabf652cc3"
+        }
+      ]
+    },
+    {
+      "id": "news",
+      "category": "news",
+      "passed": true,
+      "checks": {
+        "answerability": true,
+        "retrieval": true,
+        "answer_key": true,
+        "citations": true,
+        "extract_fidelity": true,
+        "news_provenance": true,
+        "excluded_values": true
+      },
+      "mode": "grounded_extract",
+      "answer": "Source extracts:\nExternal report (not independently verified): External news report dated 2026-08-25: Oil shipping routes disrupted [1]",
+      "citations": [
+        {
+          "number": 1,
+          "source": "CNBC \u2022 https://www.cnbc.com/evaluation-story",
+          "source_type": "live_news",
+          "source_date": "2026-08-25",
+          "excerpt": "External news report dated 2026-08-25: Oil shipping routes disrupted",
+          "retrievers": [
+            "lexical"
+          ],
+          "source_id": "event:0",
+          "source_url": "https://www.cnbc.com/evaluation-story",
+          "publisher": "CNBC",
+          "published_at": "2026-08-25T10:00:00Z",
+          "retrieved_at": "2026-08-25T10:01:00Z",
+          "evidence_kind": "external_report",
+          "verification_status": "external_report_not_verified",
+          "content_sha256": "a3ccc547adf9f280d9e8c373490dbea717c2f48acb15a1205314508b4ec77bb7"
+        }
+      ]
+    },
+    {
+      "id": "passport",
+      "category": "unanswerable",
+      "passed": true,
+      "checks": {
+        "answerability": true,
+        "abstention": true,
+        "excluded_values": true
+      },
+      "mode": "insufficient_evidence",
+      "answer": "I could not find enough relevant evidence for this question in the selected client's records and eligible sources. Please provide the missing record or ask a more specific question.",
+      "citations": []
+    },
+    {
+      "id": "medical",
+      "category": "unanswerable",
+      "passed": true,
+      "checks": {
+        "answerability": true,
+        "abstention": true,
+        "excluded_values": true
+      },
+      "mode": "insufficient_evidence",
+      "answer": "I could not find enough relevant evidence for this question in the selected client's records and eligible sources. Please provide the missing record or ask a more specific question.",
+      "citations": []
+    },
+    {
+      "id": "salary",
+      "category": "unanswerable",
+      "passed": true,
+      "checks": {
+        "answerability": true,
+        "abstention": true,
+        "excluded_values": true
+      },
+      "mode": "insufficient_evidence",
+      "answer": "I could not find enough relevant evidence for this question in the selected client's records and eligible sources. Please provide the missing record or ask a more specific question.",
+      "citations": []
+    },
+    {
+      "id": "unknown-portfolio-field",
+      "category": "unanswerable",
+      "passed": true,
+      "checks": {
+        "answerability": true,
+        "abstention": true,
+        "excluded_values": true
+      },
+      "mode": "insufficient_evidence",
+      "answer": "I could not find enough relevant evidence for this question in the selected client's records and eligible sources. Please provide the missing record or ask a more specific question.",
+      "citations": []
+    },
+    {
+      "id": "another-client-id",
+      "category": "isolation",
+      "passed": true,
+      "checks": {
+        "answerability": true,
+        "abstention": true,
+        "excluded_values": true,
+        "isolation": true
+      },
+      "mode": "insufficient_evidence",
+      "answer": "I could not find enough relevant evidence for this question in the selected client's records and eligible sources. Please provide the missing record or ask a more specific question.",
+      "citations": []
+    },
+    {
+      "id": "another-client-name",
+      "category": "isolation",
+      "passed": true,
+      "checks": {
+        "answerability": true,
+        "abstention": true,
+        "excluded_values": true,
+        "isolation": true
+      },
+      "mode": "insufficient_evidence",
+      "answer": "I could not find enough relevant evidence for this question in the selected client's records and eligible sources. Please provide the missing record or ask a more specific question.",
+      "citations": []
+    },
+    {
+      "id": "history-poisoning",
+      "category": "isolation",
+      "passed": true,
+      "checks": {
+        "answerability": true,
+        "retrieval": true,
+        "answer_key": true,
+        "citations": true,
+        "extract_fidelity": true,
+        "excluded_values": true,
+        "isolation": true
+      },
+      "mode": "grounded_extract",
+      "answer": "Source extracts:\nRecorded evidence: Bank-held AUM is USD 20.0m as of 2026-08-26. Asset allocation: Equity 60.0%; Cash 40.0%. Currency mix: USD 75.0%; SGD 25.0%. [1]",
+      "citations": [
+        {
+          "number": 1,
+          "source": "holdings.csv \u2022 CL-9001 \u2022 2026-08-26",
+          "source_type": "portfolio_snapshot",
+          "source_date": "2026-08-26",
+          "excerpt": "Bank-held AUM is USD 20.0m as of 2026-08-26. Asset allocation: Equity 60.0%; Cash 40.0%. Currency mix: USD 75.0%; SGD 25.0%.",
+          "retrievers": [
+            "lexical"
+          ],
+          "source_id": "portfolio",
+          "source_url": null,
+          "publisher": null,
+          "published_at": null,
+          "retrieved_at": null,
+          "evidence_kind": "recorded_evidence",
+          "verification_status": "recorded_not_independently_verified",
+          "content_sha256": "8fdad26252e78a492b24a55c1e9772c6f2bfbb0d10bc4e39e8b68afd85dfbb92"
+        }
+      ]
+    },
+    {
+      "id": "note-injection",
+      "category": "adversarial",
+      "passed": true,
+      "checks": {
+        "answerability": true,
+        "abstention": true,
+        "excluded_values": true
+      },
+      "mode": "insufficient_evidence",
+      "answer": "I could not find enough relevant evidence for this question in the selected client's records and eligible sources. Please provide the missing record or ask a more specific question.",
+      "citations": []
+    },
+    {
+      "id": "future-note",
+      "category": "freshness",
+      "passed": true,
+      "checks": {
+        "answerability": true,
+        "abstention": true,
+        "excluded_values": true
+      },
+      "mode": "insufficient_evidence",
+      "answer": "I could not find enough relevant evidence for this question in the selected client's records and eligible sources. Please provide the missing record or ask a more specific question.",
+      "citations": []
+    },
+    {
+      "id": "future-event",
+      "category": "freshness",
+      "passed": true,
+      "checks": {
+        "answerability": true,
+        "abstention": true,
+        "excluded_values": true
+      },
+      "mode": "insufficient_evidence",
+      "answer": "I could not find enough relevant evidence for this question in the selected client's records and eligible sources. Please provide the missing record or ask a more specific question.",
+      "citations": []
+    },
+    {
+      "id": "unreviewed-publisher",
+      "category": "news",
+      "passed": true,
+      "checks": {
+        "answerability": true,
+        "abstention": true,
+        "excluded_values": true
+      },
+      "mode": "insufficient_evidence",
+      "answer": "I could not find enough relevant evidence for this question in the selected client's records and eligible sources. Please provide the missing record or ask a more specific question.",
+      "citations": []
+    },
+    {
+      "id": "missing-aum",
+      "category": "unanswerable",
+      "passed": true,
+      "checks": {
+        "answerability": true,
+        "abstention": true,
+        "excluded_values": true
+      },
+      "mode": "insufficient_evidence",
+      "answer": "I could not find enough relevant evidence for this question in the selected client's records and eligible sources. Please provide the missing record or ask a more specific question.",
+      "citations": []
+    },
+    {
+      "id": "missing-credit",
+      "category": "unanswerable",
+      "passed": true,
+      "checks": {
+        "answerability": true,
+        "abstention": true,
+        "excluded_values": true
+      },
+      "mode": "insufficient_evidence",
+      "answer": "I could not find enough relevant evidence for this question in the selected client's records and eligible sources. Please provide the missing record or ask a more specific question.",
+      "citations": []
+    }
+  ],
+  "simulated_model_contracts": [
+    {
+      "id": "fabricated_valid_citation",
+      "passed": true
+    },
+    {
+      "id": "extra_answer_field",
+      "passed": true
+    },
+    {
+      "id": "unknown_citation",
+      "passed": true
+    },
+    {
+      "id": "negative_citation",
+      "passed": true
+    },
+    {
+      "id": "boolean_citation",
+      "passed": true
+    },
+    {
+      "id": "duplicate_citation",
+      "passed": true
+    },
+    {
+      "id": "valid_selection",
+      "passed": true
+    },
+    {
+      "id": "valid_abstention",
+      "passed": true
+    }
+  ],
+  "database_checks": [
+    {
+      "id": "csv-aum-CL-0001",
+      "metric": "csv_aum_reconciliation",
+      "passed": true,
+      "expected_usd": "46571821.48",
+      "snapshot_date": "2026-08-26"
+    },
+    {
+      "id": "csv-aum-CL-0002",
+      "metric": "csv_aum_reconciliation",
+      "passed": true,
+      "expected_usd": "46699200.0",
+      "snapshot_date": "2026-08-26"
+    },
+    {
+      "id": "csv-aum-CL-0003",
+      "metric": "csv_aum_reconciliation",
+      "passed": true,
+      "expected_usd": "22181135.66",
+      "snapshot_date": "2026-08-26"
+    },
+    {
+      "id": "csv-aum-CL-0004",
+      "metric": "csv_aum_reconciliation",
+      "passed": true,
+      "expected_usd": "33453055.03",
+      "snapshot_date": "2026-08-26"
+    },
+    {
+      "id": "csv-aum-CL-0005",
+      "metric": "csv_aum_reconciliation",
+      "passed": true,
+      "expected_usd": "19400737.88",
+      "snapshot_date": "2026-08-26"
+    },
+    {
+      "id": "csv-aum-CL-0006",
+      "metric": "csv_aum_reconciliation",
+      "passed": true,
+      "expected_usd": "18072993.49",
+      "snapshot_date": "2026-08-26"
+    },
+    {
+      "id": "csv-aum-CL-0007",
+      "metric": "csv_aum_reconciliation",
+      "passed": true,
+      "expected_usd": "40019276.0",
+      "snapshot_date": "2026-08-26"
+    },
+    {
+      "id": "csv-aum-CL-0008",
+      "metric": "csv_aum_reconciliation",
+      "passed": true,
+      "expected_usd": "11952546.03",
+      "snapshot_date": "2026-08-26"
+    },
+    {
+      "id": "csv-aum-CL-0009",
+      "metric": "csv_aum_reconciliation",
+      "passed": true,
+      "expected_usd": "31613603.44",
+      "snapshot_date": "2026-08-26"
+    },
+    {
+      "id": "csv-aum-CL-0010",
+      "metric": "csv_aum_reconciliation",
+      "passed": true,
+      "expected_usd": "8182936.10",
+      "snapshot_date": "2026-08-26"
+    },
+    {
+      "id": "csv-aum-CL-0011",
+      "metric": "csv_aum_reconciliation",
+      "passed": true,
+      "expected_usd": "35335041.43",
+      "snapshot_date": "2026-08-26"
+    },
+    {
+      "id": "csv-aum-CL-0012",
+      "metric": "csv_aum_reconciliation",
+      "passed": true,
+      "expected_usd": "28028704.72",
+      "snapshot_date": "2026-08-26"
+    },
+    {
+      "id": "csv-aum-CL-0013",
+      "metric": "csv_aum_reconciliation",
+      "passed": true,
+      "expected_usd": "36952084.12",
+      "snapshot_date": "2026-08-26"
+    },
+    {
+      "id": "csv-aum-CL-0014",
+      "metric": "csv_aum_reconciliation",
+      "passed": true,
+      "expected_usd": "26488970.55",
+      "snapshot_date": "2026-08-26"
+    },
+    {
+      "id": "csv-aum-CL-0015",
+      "metric": "csv_aum_reconciliation",
+      "passed": true,
+      "expected_usd": "14985635.85",
+      "snapshot_date": "2026-08-26"
+    },
+    {
+      "id": "csv-aum-CL-0016",
+      "metric": "csv_aum_reconciliation",
+      "passed": true,
+      "expected_usd": "14508066.73",
+      "snapshot_date": "2026-08-26"
+    },
+    {
+      "id": "csv-aum-CL-0017",
+      "metric": "csv_aum_reconciliation",
+      "passed": true,
+      "expected_usd": "87902980.0",
+      "snapshot_date": "2026-08-26"
+    },
+    {
+      "id": "csv-aum-CL-0018",
+      "metric": "csv_aum_reconciliation",
+      "passed": true,
+      "expected_usd": "22597824.97",
+      "snapshot_date": "2026-08-26"
+    },
+    {
+      "id": "csv-aum-CL-0019",
+      "metric": "csv_aum_reconciliation",
+      "passed": true,
+      "expected_usd": "32214266.33",
+      "snapshot_date": "2026-08-26"
+    },
+    {
+      "id": "csv-aum-CL-0020",
+      "metric": "csv_aum_reconciliation",
+      "passed": true,
+      "expected_usd": "19059758.28",
+      "snapshot_date": "2026-08-26"
+    },
+    {
+      "id": "csv-credit-CF-0001",
+      "metric": "csv_credit_reconciliation",
+      "passed": true
+    },
+    {
+      "id": "csv-credit-CF-0002",
+      "metric": "csv_credit_reconciliation",
+      "passed": true
+    },
+    {
+      "id": "csv-credit-CF-0003",
+      "metric": "csv_credit_reconciliation",
+      "passed": true
+    },
+    {
+      "id": "csv-credit-CF-0004",
+      "metric": "csv_credit_reconciliation",
+      "passed": true
+    },
+    {
+      "id": "csv-credit-CF-0005",
+      "metric": "csv_credit_reconciliation",
+      "passed": true
+    }
+  ],
+  "source_file_sha256": {
+    "clients.csv": "84d191760635c843d07c0365fb9ea6c3fd43b83a0f275d4ac44f047b0f23dd9d",
+    "commitments.csv": "2354e41d8a918e4af9a5d2715e0bb94b1a79004fca537b32173af3c15b28d96a",
+    "credit_facilities.csv": "89d7ecf4e371b2866695c99406b2dfc62975301bef1b15b157c686042eed4f63",
+    "event_log.csv": "67d032e6f22315a86cf65375e62f6ab0c2a5f3c77554637ce219506c7e81bbc8",
+    "holdings.csv": "8d76962051b67ba9fadb20560fe589a3e2e10fe480c6bbe1a8a132db67d102a4",
+    "instruments.csv": "f1ba152cde46edf594d705e72b9d4cd9417006a49ed5fdf6c80063bf39c50add",
+    "mandates.csv": "1dedc5283cbbc0b78bacebfa198972b26c22b199b3c19aa3eeda9429bb4a19bc",
+    "market_context.csv": "db06e3ef5889d417eb92fb06304839b7a51ff66c6948a4e4a3f8b0a09c048d04",
+    "planned_cash_needs.csv": "49888337ea04256113082708ccba2ac61a8a79c6bbfeca81b3e892946cf868be",
+    "portfolios.csv": "4e2176d9d45262d11e43cc0ef12fe7e3ea747ee869b2137c7524d94ab897f0b9",
+    "rm_notes.json": "dc460019164a800d447f6f54937a718cee536553f7a15d1c1f8dfe256547c661",
+    "transactions.csv": "a04350f02a74ab5e6048a204db4a75c585e0bec4a38708d0863d73e88421bbf4"
+  }
+}

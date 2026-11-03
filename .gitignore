@@ -12,3 +12,5 @@ runtime/
 .env*.local
 node_modules/
 outputs/
+
+.vscode/

@@ -36,11 +36,15 @@ class _Collection:
                     "source_ref": "rm_notes.json • N-1",
                     "source_type": "rm_note",
                     "source_date": "2026-06-01",
+                    "client_id": "CL-0012",
+                    "corpus": CORPUS,
                 },
                 {
                     "source_ref": "event_log.csv • future",
                     "source_type": "controlled_event",
                     "source_date": "2027-01-01",
+                    "client_id": "GLOBAL",
+                    "corpus": CORPUS,
                 },
             ]],
             "distances": [[0.1, 0.2]],
@@ -108,6 +112,27 @@ class RetrievalTests(unittest.TestCase):
         self.assertTrue(any(item.metadata["client_id"] == "CL-0012" for item in documents))
         self.assertTrue(any(item.metadata["client_id"] == "GLOBAL" for item in documents))
         self.assertTrue(all(item.metadata.get("source_ref") for item in documents))
+
+    def test_returned_rows_are_revalidated_even_if_database_ignores_filter(self):
+        collection = _Collection()
+        rows = [
+            {"client_id": "CL-OTHER", "corpus": CORPUS, "source_type": "rm_note", "source_date": "2026-01-01"},
+            {"client_id": "CL-0012", "corpus": "foreign", "source_type": "rm_note", "source_date": "2026-01-01"},
+            {"client_id": "GLOBAL", "corpus": CORPUS, "source_type": "rm_note", "source_date": "2026-01-01"},
+            {"client_id": "CL-0012", "corpus": CORPUS, "source_type": "rm_note", "source_date": "invalid"},
+            {"client_id": "CL-0012", "corpus": CORPUS, "source_type": "rm_note"},
+            {"client_id": "CL-0012", "corpus": CORPUS, "source_type": "invented"},
+            {"client_id": "GLOBAL", "corpus": CORPUS, "source_type": "mandate_rule", "source_ref": "mandates.csv"},
+        ]
+        collection.query = mock.Mock(return_value={
+            "ids": [[str(index) for index in range(len(rows))]],
+            "documents": [["Secret" for _ in rows]], "metadatas": [rows],
+            "distances": [[0.1 for _ in rows]],
+        })
+        evidence = ChromaKnowledgeService(_Client(collection), _Embedder()).search(
+            "query", "CL-0012", as_of="2026-08-26",
+        )
+        self.assertEqual([item["id"] for item in evidence], ["6"])
 
 
 if __name__ == "__main__":

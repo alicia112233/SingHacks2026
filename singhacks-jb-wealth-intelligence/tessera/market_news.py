@@ -16,6 +16,8 @@ from urllib.request import Request, urlopen
 from xml.etree import ElementTree
 
 from tessera import news_triage
+from tessera.cloud_outputs import LIVE_EVENTS_KEY, mirror_events
+from tessera.source_policy import content_hash, news_source_policy, safe_source_url
 
 
 _STATE_LOCK = threading.Lock()
@@ -92,7 +94,7 @@ def _event_date(value: str) -> str:
     try:
         return parsedate_to_datetime(value).date().isoformat()
     except (TypeError, ValueError, OverflowError):
-        return datetime.now(timezone.utc).date().isoformat()
+        return ""
 
 
 def _contains_keyword(text: str, keyword: str) -> bool:
@@ -109,6 +111,9 @@ def _approved_event(item: ElementTree.Element, feed_publisher: str = "") -> dict
     if source_name and title.endswith(f" - {source_name}"):
         title = title[: -len(source_name) - 3].rstrip()
     link = _text(item, "link")
+    publisher_node = item.find("source")
+    publisher_url = publisher_node.get("url", "") if publisher_node is not None else ""
+    publication = _text(item, "pubDate")
     text = f"{title} {_clean_fragment(raw_title)} {_clean_fragment(raw_summary)}".lower()
     matched = [keyword for keywords in TRANSMISSION_KEYWORDS.values() for keyword in keywords if _contains_keyword(text, keyword)]
     if len(set(matched)) < 2:
@@ -132,6 +137,13 @@ def _approved_event(item: ElementTree.Element, feed_publisher: str = "") -> dict
         "source": link,
         "publisher": source_name or feed_publisher,
         "source_type": "live_news",
+        "publisher_url": safe_source_url(publisher_url) or "",
+        "published_at": publication,
+        "retrieved_at": datetime.now(timezone.utc).isoformat(),
+        "content_sha256": content_hash(title),
+        "publisher_policy": news_source_policy(link, publisher_url),
+        "verification_status": "external_report_not_verified",
+        # This is relevance admission for the register, not factual verification.
         "status": "approved",
     }
 
@@ -144,9 +156,11 @@ def _read(path: Path) -> list[dict[str, str]]:
     return value if isinstance(value, list) else []
 
 
-def refresh(data_dir: str | Path, state_path: str | Path) -> dict[str, object]:
+def refresh(data_dir: str | Path, state_path: str | Path, output_store=None) -> dict[str, object]:
     """Fetch feeds and persist newly approved, deduplicated market events."""
 
+    if output_store is not None:
+        mirror_events(Path(state_path), output_store.read_json(LIVE_EVENTS_KEY, []))
     if not enabled():
         return {"status": "disabled", "added": 0, "events": _read(Path(state_path))}
     if frozen():
@@ -173,19 +187,34 @@ def refresh(data_dir: str | Path, state_path: str | Path) -> dict[str, object]:
         stored = _read(state)
         existing = [_normalise_event(item) for item in stored]
         known = {item.get("event_id") for item in existing}
+        by_id = {item.get("event_id"): item for item in existing}
+        provenance_updated = False
         added: list[dict[str, str]] = []
         for feed_url, root in zip(feeds, roots):
             if root is None:
                 continue
             for item in root.findall(".//item"):
                 event = _approved_event(item, FEED_PUBLISHERS.get(feed_url, ""))
+                if event:
+                    event["feed_url"] = feed_url
                 if event and event["event_id"] not in known:
                     known.add(event["event_id"])
                     added.append(event)
+                elif event and event["event_id"] in by_id:
+                    stored_event = by_id[event["event_id"]]
+                    # Preserve the first capture time and model triage on repeated fetches.
+                    event["retrieved_at"] = stored_event.get("retrieved_at") or event["retrieved_at"]
+                    if any(stored_event.get(key) != value for key, value in event.items()):
+                        stored_event.update(event)
+                        provenance_updated = True
         events = sorted(existing + added, key=lambda item: (item.get("event_date", ""), item.get("event_id", "")))
         # Only the newest headlines can score, so older ones are not sent for triage.
         triaged = news_triage.triage(events[-TRIAGE_RECENT:])
-        if added or triaged or existing != stored or not state.exists():
+        if output_store is not None:
+            events = output_store.merge_market_events(events)
+            mirror_events(state, events)
+            return {"status": "partial" if None in roots else "refreshed", "added": len(added), "events": events}
+        if added or triaged or provenance_updated or existing != stored or not state.exists():
             state.parent.mkdir(parents=True, exist_ok=True)
             temporary = state.with_suffix(".tmp")
             with temporary.open("w", encoding="utf-8") as handle:

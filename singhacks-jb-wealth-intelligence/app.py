@@ -8,6 +8,7 @@ import json
 import os
 import sys
 import threading
+import uuid
 from http import HTTPStatus
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -15,6 +16,8 @@ from typing import Any
 from urllib.parse import urlparse
 
 from tessera.chat import answer_chat, chat_configuration_status
+from tessera.cloud_outputs import production_output_store
+from tessera.alert_store import production_urgency_alert_store
 from tessera.notifications import (
     TelegramNotificationError,
     TelegramNotifier,
@@ -35,6 +38,7 @@ from tessera.services import (
     record_evaluation,
     reviewed_snapshot,
     reviewed_intelligence,
+    production_decision_store,
 )
 
 
@@ -47,6 +51,7 @@ DECISIONS = DecisionStore(DECISION_FILE)
 LIVE_EVENTS = RUNTIME / "live_events.json"
 URGENCY_ALERTS = UrgencyAlertStore(RUNTIME / "telegram_urgency_alerts.json")
 URGENCY_MONITOR_STOP = threading.Event()
+OUTPUTS = None
 
 
 def load_local_environment(path: Path = ROOT / ".env.local") -> tuple[str, ...]:
@@ -75,6 +80,16 @@ def load_local_environment(path: Path = ROOT / ".env.local") -> tuple[str, ...]:
             os.environ[key] = value
             loaded.append(key)
     return tuple(loaded)
+
+
+def configure_storage() -> None:
+    """Opt local runs into the same cloud stores as the hosted API."""
+    global OUTPUTS, INTELLIGENCE, DECISIONS, URGENCY_ALERTS
+    if os.environ.get("TESSERA_STORAGE_BACKEND", "local").lower() == "postgresql":
+        OUTPUTS = production_output_store()
+        INTELLIGENCE = IntelligenceService(ROOT / "data", LIVE_EVENTS, output_store=OUTPUTS)
+        DECISIONS = production_decision_store()
+        URGENCY_ALERTS = production_urgency_alert_store()
 
 
 class TesseraHandler(SimpleHTTPRequestHandler):
@@ -110,7 +125,10 @@ class TesseraHandler(SimpleHTTPRequestHandler):
             return
         if path == "/api/review":
             try:
-                self._send_json(review_context(INTELLIGENCE.get(), DECISIONS))
+                result = review_context(INTELLIGENCE.get(), DECISIONS)
+                if OUTPUTS is not None:
+                    OUTPUTS.put_json("review/current.json", result)
+                self._send_json(result)
             except (OSError, RuntimeError, ValueError):
                 self._send_json({"error": "The current review could not be loaded."}, HTTPStatus.SERVICE_UNAVAILABLE)
             return
@@ -122,6 +140,7 @@ class TesseraHandler(SimpleHTTPRequestHandler):
                 {
                     "status": "ok",
                     "service": "tessera",
+                    "backend_output_storage": "postgresql" if OUTPUTS is not None else "local",
                     "vector_search": retrieval_configuration_status()["status"],
                     "chat": chat_configuration_status()["status"],
                     "telegram_notifications": TelegramNotifier().configuration_status(),
@@ -171,6 +190,7 @@ class TesseraHandler(SimpleHTTPRequestHandler):
                         ROOT / "data", LIVE_EVENTS,
                         lambda: reviewed_intelligence(INTELLIGENCE.get(), DECISIONS.snapshot()),
                         lambda: URGENCY_ALERTS,
+                        **({"output_store": OUTPUTS} if OUTPUTS is not None else {}),
                     ))
                 except (OSError, RuntimeError):
                     self._send_json({"error": "Market news is temporarily unavailable"}, HTTPStatus.SERVICE_UNAVAILABLE)
@@ -187,7 +207,10 @@ class TesseraHandler(SimpleHTTPRequestHandler):
                 )
                 self._send_json({"status": "acknowledged", "alert": state})
             elif path == "/api/chat":
-                self._send_json(answer_chat(intelligence, body))
+                answer = answer_chat(intelligence, body)
+                if OUTPUTS is not None:
+                    OUTPUTS.put_json(f"chat/{uuid.uuid4()}.json", answer)
+                self._send_json(answer)
             elif path == "/api/recommendations/alternate":
                 self._send_json(
                     record_alternative(
@@ -213,6 +236,7 @@ class TesseraHandler(SimpleHTTPRequestHandler):
 
 def main() -> None:
     loaded_settings = load_local_environment()
+    configure_storage()
     parser = argparse.ArgumentParser(description="Run the TESSERA application")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=5000)

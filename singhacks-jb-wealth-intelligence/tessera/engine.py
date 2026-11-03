@@ -511,6 +511,11 @@ def _linked_events(bundle: dict[str, Any], client_id: str) -> list[dict[str, Any
                     "source": "live news" if source_type == "live_news" else f"event_log.csv • {row.event_date}",
                     "source_url": _clean_text(source_url) if source_type == "live_news" else None,
                     "publisher": _clean_text(publisher) if source_type == "live_news" else None,
+                    "source_type": "live_news" if source_type == "live_news" else "controlled_event",
+                    **{field: _clean_text(getattr(row, field, None)) for field in (
+                        "publisher_url", "published_at", "retrieved_at", "content_sha256",
+                        "publisher_policy", "verification_status", "feed_url",
+                    )},
                     "triage": _triage(row),
                 }
             ))

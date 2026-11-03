@@ -103,7 +103,15 @@ function toggleChat(force) {
 
 function chatCitationsHTML(citations = []) {
   if (!citations.length) return "";
-  return `<details class="chat-sources"><summary>${citations.length} source${citations.length === 1 ? "" : "s"}</summary>${citations.map((item) => `<div><b>[${item.number}] ${esc(item.source)}</b><span>${esc(item.source_type)}${item.source_date ? ` · ${esc(item.source_date)}` : ""}</span><p>${esc(item.excerpt)}</p></div>`).join("")}</details>`;
+  return `<details class="chat-sources"><summary>${citations.length} source${citations.length === 1 ? "" : "s"}</summary>${citations.map((item) => {
+    let sourceLink = "";
+    try {
+      const url = new URL(item.source_url);
+      if (url.protocol === "https:" && !url.username && !url.password) sourceLink = ` · <a href="${esc(url.href)}" target="_blank" rel="noopener noreferrer">Open source ↗</a>`;
+    } catch { /* Recorded evidence may have no external URL. */ }
+    const label = item.evidence_kind === "external_report" ? "External report · not independently verified" : item.evidence_kind === "derived_assessment" ? "Calculated assessment" : "Recorded evidence";
+    return `<div><b>[${item.number}] ${esc(item.source)}</b><span>${esc(label)}${item.source_date ? ` · ${esc(item.source_date)}` : ""}${sourceLink}</span>${item.retrieved_at ? `<small>Retrieved ${esc(item.retrieved_at)}</small>` : ""}<p>${esc(item.excerpt)}</p></div>`;
+  }).join("")}</details>`;
 }
 
 function addChatMessage(role, content, payload = {}) {
@@ -113,7 +121,7 @@ function addChatMessage(role, content, payload = {}) {
   const article = document.createElement("article");
   article.className = `chat-message ${role}`;
   const label = role === "user" ? "You" : "TESSERA";
-  const mode = payload.mode === "grounded_model" ? "AI + retrieved evidence" : "Retrieved evidence";
+  const mode = payload.mode === "insufficient_evidence" ? "Insufficient evidence" : payload.mode === "grounded_model" ? "AI-selected source extracts" : "Source extracts";
   article.innerHTML = `<div><b>${label}</b>${role === "assistant" ? `<span>${esc(mode)}</span><button type="button" data-speak-message aria-label="Read this answer aloud">Listen</button>` : ""}</div><p>${esc(content)}</p>${chatCitationsHTML(payload.citations)}`;
   $("#chat-messages").append(article);
   $("#chat-messages").scrollTop = $("#chat-messages").scrollHeight;
@@ -191,7 +199,7 @@ async function sendChatQuestion(question) {
     if (response.status === 404) throw new Error("Chat API unavailable. Start the app with python app.py.");
     if (!response.ok) throw new Error(payload.error || `Request failed (${response.status})`);
     addChatMessage("assistant", payload.answer, payload);
-    $("#chat-status").textContent = `${payload.citations.length} source${payload.citations.length === 1 ? "" : "s"} · ${payload.retrieval.strategy.replace("_", " ")}`;
+    $("#chat-status").textContent = payload.mode === "insufficient_evidence" ? "Insufficient evidence for this question" : `${payload.citations.length} source${payload.citations.length === 1 ? "" : "s"} · Source extracts`;
     if ($("#chat-auto-speak").checked) speakAnswer(payload.answer);
   } catch (error) {
     addChatMessage("assistant", `I could not answer that request: ${error.message}`);

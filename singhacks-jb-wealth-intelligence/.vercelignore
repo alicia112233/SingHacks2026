@@ -1,0 +1,8 @@
+.env*
+.venv/
+.vercel/
+runtime/
+outputs/
+tests/
+__pycache__/
+*.pyc
