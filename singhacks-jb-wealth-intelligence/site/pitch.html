@@ -20,6 +20,9 @@ html, body { margin: 0; height: 100%; background: #0e1311; color: #f4efe6; font-
 .stage section { position: absolute; inset: 0; width: 1920px; height: 1080px; overflow: hidden; opacity: 0; visibility: hidden; transition: opacity .35s ease, visibility .35s }
 .stage section.active { opacity: 1; visibility: visible }
 .stage p, .stage h1, .stage h2, .stage h3 { margin: 0 }
+.stage table { border-collapse: collapse }
+.stage th, .stage td { padding: 14px 24px 14px 0; border-bottom: 1px solid rgba(128,128,128,.3); vertical-align: top }
+.stage th { font-weight: 600; border-bottom: 2px solid currentColor }
 .stage aside { display: none }
 .stage a { color: inherit; text-underline-offset: 6px }
 .notes { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 3; max-height: 32vh; overflow: auto; padding: 14px 18px; border-radius: 12px; background: rgba(14,19,17,.94); border: 1px solid #3a443f; font-size: 15px; line-height: 1.55; color: #dcd6ca; display: none }

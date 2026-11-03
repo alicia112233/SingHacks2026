@@ -1,9 +1,9 @@
 """Build the site's decks from slide files.
 
-slides.html: the full deck in the artifact's order (all slides).
+slides.html: the full deck in the artifact order, without speaker notes.
 pitch.html:  the seven-slide SFF pitch (not linked from the site).
 
-Usage: python build_sff.py <site dir> <viewer template html>
+Usage: python deck/build_site_decks.py site site/pitch.html
 """
 import json
 import re
@@ -12,7 +12,7 @@ from pathlib import Path
 
 here = Path(__file__).parent
 deck = here / "deck" / "project" / "slides"
-sff = here / "sff"
+
 site = Path(sys.argv[1])
 template = Path(sys.argv[2]).read_text(encoding="utf-8")
 
@@ -65,13 +65,27 @@ def render(path, fixes):
     return html
 
 
-def build(slides, out, title, description):
+TABLES = (".stage table { border-collapse: collapse }\n"
+          ".stage th, .stage td { padding: 14px 24px 14px 0; border-bottom: 1px solid rgba(128,128,128,.3); vertical-align: top }\n"
+          ".stage th { font-weight: 600; border-bottom: 2px solid currentColor }\n")
+
+
+def build(slides, out, title, description, notes=True):
     start = template.index('<div class="stage" id="stage">') + len('<div class="stage" id="stage">')
     end = template.index("</div></div>\n<div class=\"notes\"")
     page = template[:start] + "\n" + "\n".join(slides) + "\n" + template[end:]
     page = re.sub(r'<span class="count" id="count" aria-live="polite">1 / \d+</span>', f'<span class="count" id="count" aria-live="polite">1 / {len(slides)}</span>', page)
     page = re.sub(r"<title>[^<]*</title>", f"<title>{title}</title>", page)
     page = re.sub(r'<meta name="description" content="[^"]*">', f'<meta name="description" content="{description}">', page)
+    if ".stage table" not in page:
+        page = page.replace(".stage aside { display: none }", TABLES + ".stage aside { display: none }", 1)
+    if not notes:
+        # The public deck carries no speaker notes: strip them and the controls that show them.
+        page = re.sub(r"\n?<aside>.*?</aside>", "", page, flags=re.S)
+        page = re.sub(r'\s*<button type="button" id="notes-btn"[^>]*>.*?</button>', "", page, flags=re.S)
+        page = page.replace("document.getElementById('notes-btn').addEventListener('click', toggleNotes);", "")
+        page = page.replace("else if (e.key === 'n' || e.key === 'N') toggleNotes();", "")
+        page = page.replace("document.getElementById('notes-btn').setAttribute('aria-pressed', String(on));", "")
     out.write_text(page, encoding="utf-8")
     print("wrote", out.name, len(slides), "slides")
 
@@ -80,16 +94,16 @@ CENTRE_TRUST = ('<div style="display:grid;grid-template-columns:repeat(2, 1fr);g
                 '<div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:32px;margin:auto 0">')
 
 pitch = [
-    render(sff / "cover.html", []),
+    render(deck / "cover.html", []),
     render(deck / "how-it-works.html", [
         (">What just happened<", ">How it works<"),
         ("“Here’s what just happened.", "“Here’s how it works."),
         (", click on each step.", "."),
         (" (click)", ""),
     ]),
-    render(sff / "shifts-a.html", []),
-    render(sff / "shifts-b.html", []),
-    render(sff / "bookmap.html", []),
+    render(deck / "shifts-a.html", []),
+    render(deck / "shifts-b.html", []),
+    render(deck / "bookmap.html", []),
     render(deck / "trust.html", [CENTRE_TRUST]),
     render(deck / "integration.html", []),
 ]
@@ -97,4 +111,4 @@ build(pitch, site / "pitch.html", "Pitch · TESSERA", "TESSERA by SAPTrio: the s
 
 order = json.loads((deck.parent / "deck.json").read_text(encoding="utf-8"))["order"]
 full = [render(deck / f"{sid}.html", [CENTRE_TRUST] if sid == "trust" else []) for sid in order]
-build(full, site / "slides.html", "Slides · TESSERA", "TESSERA by SAPTrio: the full deck, from the problem to how it scales in Julius Baer.")
+build(full, site / "slides.html", "Slides · TESSERA", "TESSERA by SAPTrio: the full deck, from the problem to how it scales in Julius Bär.", notes=False)
