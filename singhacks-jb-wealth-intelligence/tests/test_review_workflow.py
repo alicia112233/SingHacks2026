@@ -16,10 +16,16 @@ from tessera.services import DecisionStore, reviewed_intelligence
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def kind_index(payload, client_id, kind):
+    """Actions are ordered by priority, so tests find them by type, not position."""
+    return next(i for i, a in enumerate(payload["client_profiles"][client_id]["recommendations"]) if a["assessment_kind"] == kind)
+
+
 class ReviewWorkflowTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.payload = build_intelligence_payload(ROOT / "data")
+        cls.mandate = kind_index(cls.payload, "CL-0011", "mandate")
 
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
@@ -35,17 +41,19 @@ class ReviewWorkflowTests(unittest.TestCase):
             self.addCleanup(patcher.stop)
         self.client = api.app.test_client()
 
-    def action(self, index=1):
+    def action(self, index=None):
+        index = self.mandate if index is None else index
         return self.client.get("/api/intelligence").json["client_profiles"]["CL-0011"]["recommendations"][index]
 
-    def request_body(self, index=1):
+    def request_body(self, index=None):
+        index = self.mandate if index is None else index
         action = self.action(index)
         return {"client_id": "CL-0011", "recommendation_index": index, "recommendation_id": action["id"], "version": action["version"]}
 
-    def approve(self, index=1, body=None):
+    def approve(self, index=None, body=None):
         return self.client.post("/api/decisions", json={**(body or self.request_body(index)), "action": "approved", "note": "Checked the source evidence and suitability"})
 
-    def panel(self, score=30, verdict="block", index=1):
+    def panel(self, score=30, verdict="block", index=None):
         def judge(model, packet, token, angle, url):
             return {"model": model, "provider": "test", "angle_id": angle[0], "status": "Completed", "score": score, "verdict": verdict}
         with mock.patch("tessera.evaluation._review_enabled", return_value=True), mock.patch("tessera.evaluation._gateway_token", return_value="test"), mock.patch("tessera.evaluation._call_judge", side_effect=judge):
@@ -81,7 +89,7 @@ class ReviewWorkflowTests(unittest.TestCase):
             self.assertEqual(skipped.json["consensus"]["score"], 30)
             self.assertEqual(self.approve().status_code, 400)
         # A changed evidence version requires a completed new assessment.
-        self.data["client_profiles"]["CL-0011"]["recommendations"][1]["evidence_version"] = "new evidence"
+        self.data["client_profiles"]["CL-0011"]["recommendations"][self.mandate]["evidence_version"] = "new evidence"
         self.assertEqual(self.approve().status_code, 400)
         self.panel(80, "support_for_rm_review")
         self.assertEqual(self.approve().status_code, 201)
@@ -89,7 +97,7 @@ class ReviewWorkflowTests(unittest.TestCase):
     def test_alternative_is_durable_and_does_not_mutate_cached_payload(self):
         count = len(self.data["client_profiles"]["CL-0011"]["recommendations"])
         body = self.request_body()
-        response = self.client.post("/api/recommendations/alternate", json={**body, "dismissed_index": 1})
+        response = self.client.post("/api/recommendations/alternate", json={**body, "dismissed_index": self.mandate})
         self.assertEqual(response.status_code, 200, response.json)
         selected = response.json["recommendation"]
         self.assertEqual(len(self.data["client_profiles"]["CL-0011"]["recommendations"]), count)
@@ -106,8 +114,8 @@ class ReviewWorkflowTests(unittest.TestCase):
         for override in ({"version": "stale"}, {"recommendation_id": "other"}, {"recommendation_id": None}):
             self.assertEqual(self.approve(body={**body, **override}).status_code, 400)
         self.assertEqual(self.approve().status_code, 201)
-        self.data["client_profiles"]["CL-0011"]["recommendations"][1]["evidence_version"] = "changed"
-        self.assertNotIn("CL-0011:1", self.client.get("/api/decisions").json["effective"])
+        self.data["client_profiles"]["CL-0011"]["recommendations"][self.mandate]["evidence_version"] = "changed"
+        self.assertNotIn(f"CL-0011:{self.mandate}", self.client.get("/api/decisions").json["effective"])
 
     def test_external_packet_has_no_narratives_or_identifiers(self):
         client = deepcopy(self.data["client_profiles"]["CL-0011"])
@@ -115,7 +123,7 @@ class ReviewWorkflowTests(unittest.TestCase):
         for field in ("objectives", "risk_profile", "evidence_passport", "tension", "rm_notes"):
             client[field] = {"nested": secret}
         client["cash_needs"].append({"amount_usd_m": secret, "note": secret})
-        action = {**client["recommendations"][1], "detail": secret, "title": secret, "suitability": secret}
+        action = {**client["recommendations"][self.mandate], "detail": secret, "title": secret, "suitability": secret}
         encoded = json.dumps(_evaluation_packet(client, action, [{"excerpt": secret, "metadata": {"client_id": secret}}]))
         self.assertNotIn("PRIVATE_RM_NOTE", encoded)
         self.assertNotIn("CL-0011", encoded)
@@ -125,7 +133,7 @@ class ReviewWorkflowTests(unittest.TestCase):
     def test_concurrent_alternatives_are_distinct_and_durable(self):
         from concurrent.futures import ThreadPoolExecutor
         from tessera.services import record_alternative
-        body = {**self.request_body(), "dismissed_index": 1}
+        body = {**self.request_body(), "dismissed_index": self.mandate}
         with ThreadPoolExecutor(max_workers=2) as executor:
             futures = [executor.submit(record_alternative, body, self.data, self.store) for _ in range(2)]
             selected = [future.result()["recommendation"]["id"] for future in futures]
@@ -142,8 +150,8 @@ class ReviewWorkflowTests(unittest.TestCase):
 
     def test_low_score_is_blocked_without_explicit_hard_stop(self):
         payload = deepcopy(self.data)
-        payload["client_profiles"]["CL-0011"]["recommendations"][1]["risk_validation"]["score"] = 30
-        self.assertEqual(evaluate_recommendation(payload, "CL-0011", 1)["deterministic"]["status"], "Blocked")
+        payload["client_profiles"]["CL-0011"]["recommendations"][self.mandate]["risk_validation"]["score"] = 30
+        self.assertEqual(evaluate_recommendation(payload, "CL-0011", self.mandate)["deterministic"]["status"], "Blocked")
 
     def test_browser_urgency_does_not_drop_after_approval(self):
         script = r"""

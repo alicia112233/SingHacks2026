@@ -13,16 +13,23 @@ from tessera.recommendation_validation import revalidate_text
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def kind_index(payload, client_id, kind):
+    """Actions are ordered by priority, so tests find them by type, not position."""
+    return next(i for i, a in enumerate(payload["client_profiles"][client_id]["recommendations"]) if a["assessment_kind"] == kind)
+
+
 class ActionValidationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.bundle = load_dataset(ROOT / "data")
         cls.payload = build_intelligence_payload(ROOT / "data")
+        cls.mandate = kind_index(cls.payload, "CL-0011", "mandate")
 
     def test_pictured_actions_have_independent_scores_and_valid_mandate(self):
         actions = self.payload["client_profiles"]["CL-0011"]["recommendations"]
-        self.assertEqual([a["risk_validation"]["score"] for a in actions], [76, 84, 64, 76])
-        mandate = actions[1]["risk_validation"]
+        self.assertEqual({a["assessment_kind"]: a["risk_validation"]["score"] for a in actions}, {"funding": 76, "mandate": 84, "movement": 64, "pressure": 76})
+        self.assertEqual([a["priority"]["score"] for a in actions], sorted((a["priority"]["score"] for a in actions), reverse=True))
+        mandate = actions[self.mandate]["risk_validation"]
         self.assertFalse(mandate["blockers"])
         self.assertTrue(any(c["value"] == 75 and c["sources"][0]["field"] == "max_pct" for c in mandate["resolved_claims"]))
         for c in self.payload["client_profiles"].values():
@@ -33,7 +40,7 @@ class ActionValidationTests(unittest.TestCase):
                 self.assertEqual(result["raw_score"], sum(d["score"] for d in result["dimensions"]))
 
     def test_numeric_ranges_units_and_unrelated_values(self):
-        action = self.payload["client_profiles"]["CL-0011"]["recommendations"][1]
+        action = self.payload["client_profiles"]["CL-0011"]["recommendations"][self.mandate]
         original = action["risk_validation"]
         for dash in ("\u2013", "-"):
             self.assertFalse(revalidate_text(original, action["detail"].replace("\u2013", dash))["blockers"])
@@ -42,7 +49,8 @@ class ActionValidationTests(unittest.TestCase):
 
     def test_missing_relevant_evidence_lowers_only_affected_action(self):
         profile = deepcopy(self.payload["client_profiles"]["CL-0011"])
-        funding, mandate, movement = profile["recommendations"][:3]
+        by_kind = {a["assessment_kind"]: a for a in profile["recommendations"]}
+        funding, mandate, movement = by_kind["funding"], by_kind["mandate"], by_kind["movement"]
         profile["cash_needs"] = []
         changed = _recommendation_risk_validation(self.bundle, profile, {**funding, "detail": "Confirm the funding requirement."})
         self.assertLess(changed["raw_score"], funding["risk_validation"]["raw_score"])
@@ -55,7 +63,7 @@ class ActionValidationTests(unittest.TestCase):
 
     def test_hard_stops_survive_and_unknown_actions_fail_closed(self):
         profile = self.payload["client_profiles"]["CL-0011"]
-        action = profile["recommendations"][1]
+        action = profile["recommendations"][self.mandate]
         for overrides in ({"suitability": ""}, {"reversible": False}):
             result = _recommendation_risk_validation(self.bundle, profile, {**action, **overrides})
             self.assertEqual(result["score"], 0)
@@ -68,12 +76,12 @@ class ActionValidationTests(unittest.TestCase):
             store = DecisionStore(Path(directory) / "decisions.json")
             with mock.patch.object(api, "decision_store", return_value=store), mock.patch.object(api.INTELLIGENCE, "get", return_value=self.payload):
                 client = api.app.test_client()
-                action = self.payload["client_profiles"]["CL-0011"]["recommendations"][1]
-                body = {"client_id": "CL-0011", "recommendation_index": 1, "recommendation_id": action["id"], "version": action["version"]}
+                action = self.payload["client_profiles"]["CL-0011"]["recommendations"][self.mandate]
+                body = {"client_id": "CL-0011", "recommendation_index": self.mandate, "recommendation_id": action["id"], "version": action["version"]}
                 edited = client.post("/api/decisions", json={**body, "action": "edited", "note": "Review fixed income outside 45-76% band."})
                 self.assertEqual(edited.status_code, 201)
-                self.assertEqual(edited.json["reviews"]["CL-0011:1"]["risk_validation"]["score"], 0)
-                body["version"] = edited.json["reviews"]["CL-0011:1"]["version"]
+                self.assertEqual(edited.json["reviews"][f"CL-0011:{self.mandate}"]["risk_validation"]["score"], 0)
+                body["version"] = edited.json["reviews"][f"CL-0011:{self.mandate}"]["version"]
                 with mock.patch.dict("os.environ", {"TESSERA_EXTERNAL_JUDGES_ENABLED": "false"}):
                     panel = client.post("/api/evaluations", json=body)
                 self.assertEqual(panel.status_code, 200)
@@ -81,10 +89,10 @@ class ActionValidationTests(unittest.TestCase):
                 approval = {**body, "action": "approved", "note": "Reviewed suitability and evidence with the client"}
                 self.assertEqual(client.post("/api/decisions", json=approval).status_code, 400)
                 # Reload from durable notes; an edit cannot bypass the original control.
-                self.assertEqual(client.get("/api/decisions").json["reviews"]["CL-0011:1"]["risk_validation"]["score"], 0)
+                self.assertEqual(client.get("/api/decisions").json["reviews"][f"CL-0011:{self.mandate}"]["risk_validation"]["score"], 0)
                 corrected = client.post("/api/decisions", json={**body, "action": "edited", "note": action["detail"]})
-                self.assertGreater(corrected.json["reviews"]["CL-0011:1"]["risk_validation"]["score"], 0)
-                approval["version"] = corrected.json["reviews"]["CL-0011:1"]["version"]
+                self.assertGreater(corrected.json["reviews"][f"CL-0011:{self.mandate}"]["risk_validation"]["score"], 0)
+                approval["version"] = corrected.json["reviews"][f"CL-0011:{self.mandate}"]["version"]
                 self.assertEqual(client.post("/api/decisions", json=approval).status_code, 201)
 
     def test_rendered_html_separates_blocked_actions_and_keeps_indices(self):

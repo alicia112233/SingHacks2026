@@ -684,8 +684,9 @@ function recommendationHTML(client, recommendation, index) {
   const blocked = approvalBlocked(recommendation);
   const replacementChip = recommendation.replacement_for ? `<span class="replacement-chip" title="Generated after the RM dismissed: ${esc(recommendation.replacement_for)}">Replacement suggestion</span>` : "";
   return `<article class="recommendation" data-recommendation="${index}">
-    <header><h4>${index + 1}. ${esc(recommendation.title)}</h4><div class="recommendation-badges">${replacementChip}${validation ? `<button class="confidence-chip ${validation.band.toLowerCase().replaceAll(" ", "-")}" data-risk-index="${index}" aria-label="Open confidence rubric for ${esc(recommendation.title)}"><b>${validation.score}</b><span>${esc(validation.band)}</span></button>` : ""}${status !== "pending" ? `<span class="decision-status ${status}">${esc(status)}</span>` : ""}</div></header>
+    <header><h4>${index + 1}. ${esc(recommendation.title)}</h4><div class="recommendation-badges">${replacementChip}${recommendation.priority ? `<span class="priority-tag priority-${recommendation.priority.band.toLowerCase()}">${esc(recommendation.priority.band)} priority</span>` : ""}${validation ? `<button class="confidence-chip ${validation.band.toLowerCase().replaceAll(" ", "-")}" data-risk-index="${index}" aria-label="Open evidence rubric for ${esc(recommendation.title)}"><span>Evidence</span><b>${validation.score}</b><span>${esc(validation.band)}</span></button>` : ""}${status !== "pending" ? `<span class="decision-status ${status}">${esc(status)}</span>` : ""}</div></header>
     <p>${esc(detail)}</p>
+    ${recommendation.priority ? `<p class="priority-reason"><b>Why ${index ? "here" : "first"}:</b> ${esc(recommendation.priority.reason)}</p>` : ""}
     ${blocked ? `<div class="validation-flags blocked"><strong>Needs correction</strong>${(validation?.blockers?.length ? validation.blockers : [validation?.disposition || "Validation is unavailable"]).map(reason => `<span>${esc(reason)}</span>`).join("")}</div>` : ""}
     ${recommendationRationaleHTML(recommendation)}
     <footer><span class="suitability">${esc(recommendation.suitability)}</span><div class="recommendation-actions">
@@ -914,7 +915,7 @@ function renderClient(clientId) {
     </section>
 
     <div class="decision-grid">
-      <section class="panel"><div class="panel-title"><h3>Actions worth considering ${sourceTag("calc")}</h3><small>RM REVIEW REQUIRED</small></div><div id="recommendations-list">${recommendationsHTML(client)}</div></section>
+      <section class="panel"><div class="panel-title"><h3>Actions worth considering ${sourceTag("calc")}</h3><small>MOST PRESSING FIRST · EVIDENCE SHOWS HOW WELL EACH IS SUPPORTED</small></div><div id="recommendations-list">${recommendationsHTML(client)}</div></section>
       <aside class="panel conversation-card"><div class="panel-title"><h3>Conversation brief ${sourceTag("calc")}</h3><small>${esc(client.confidence.level)}</small></div><div class="talk-line"><small>OPEN WITH</small><p>${esc(client.conversation.open)}</p></div><div class="talk-line"><small>SHOW</small><p>${esc(client.conversation.show)}</p></div><div class="talk-line"><small>ASK</small><p>${esc(client.conversation.ask)}</p></div><div class="talk-line"><small>AVOID</small><p>${esc(client.conversation.avoid)}</p></div><button class="evidence-button" data-evidence>Open evidence passport →</button></aside>
     </div>`;
 }

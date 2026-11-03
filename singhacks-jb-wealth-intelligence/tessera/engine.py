@@ -1159,6 +1159,69 @@ def _feature_profile(bundle: dict[str, Any], client_id: str) -> dict[str, Any]:
     return base
 
 
+CASH_KINDS = {"funding", "reserve", "liability"}
+
+
+def _priority_band(score: int) -> str:
+    return "High" if score >= 70 else "Medium" if score >= 45 else "Low"
+
+
+def _action_priority(bundle: dict[str, Any], profile: dict[str, Any], recommendation: dict[str, Any]) -> dict[str, Any]:
+    """How soon and how much an action matters, kept apart from how well it is evidenced.
+
+    Built only from what is at stake: time to a dated need and its size against
+    sellable assets, distance outside a mandate limit, loan headroom, or the size
+    of a position move. The evidence score answers a different question.
+    """
+
+    kind = recommendation.get("assessment_kind")
+    as_of = pd.Timestamp(_as_of(bundle))
+    aum = float(profile.get("aum_usd_m") or 0)
+    wording = str(recommendation.get("detail", "")).casefold()
+    score, reason = 35, "No dated trigger; a judgement item for the RM."
+
+    if kind in CASH_KINDS and profile.get("cash_needs"):
+        holdings = bundle["holdings"]
+        current = holdings[(holdings.client_id == profile["client_id"]) & (holdings.snapshot_date == _as_of(bundle))]
+        daily = float(current.loc[current.liquidity_tier == "Daily", "market_value_usd"].sum()) / 1_000_000
+        need = min(profile["cash_needs"], key=lambda item: item["due_from"])
+        months = (pd.Timestamp(need["due_from"]) - as_of).days / 30.4
+        timing = 50 if months <= 0 else 45 if months <= 6 else 35 if months <= 12 else 20 if months <= 24 else 10
+        cover = need["amount_usd_m"] / daily if daily else 1.0
+        size = 40 if cover >= 1 else 30 if cover >= 0.5 else 20 if cover >= 0.25 else 10
+        certainty = {"Confirmed": 10, "Likely": 5}.get(need.get("certainty"), 0)
+        score = timing + size + certainty
+        when = "due now" if months <= 0 else f"due in {round(months)} month{'s' if round(months) != 1 else ''}"
+        reason = f"USD {need['amount_usd_m']:.1f}m {when}, {cover * 100:.0f}% of daily-liquid assets."
+    elif kind == "mandate" and profile.get("mandate_findings"):
+        findings = profile["mandate_findings"]
+        named = [item for item in findings if item["label"].casefold() in wording]
+        finding = (named or findings)[0]
+        actual, low, high = finding.get("actual_pct"), finding.get("min_pct"), finding.get("max_pct")
+        outside = max((actual or 0) - (high if high is not None else 100), (low or 0) - (actual or 0), 0)
+        score = 30 + min(45, round(outside * 1.5)) + (10 if finding.get("severity") == "High" else 0)
+        reason = f"{finding['label']}, {outside:.1f} points beyond the limit."
+    elif kind == "credit" and profile.get("ltv"):
+        ltv = profile["ltv"]
+        points = float(ltv.get("points_to_trigger") or 100)
+        score = 90 if points <= 3 else 75 if points <= 7 else 55 if points <= 15 else 30
+        reason = f"Loan at {ltv['ltv_pct']:.1f}% against a {ltv['trigger_pct']:.0f}% margin-call level."
+    elif kind == "movement" and profile.get("position_changes"):
+        named = [item for item in profile["position_changes"] if item["instrument"].casefold() in wording]
+        change = (named or profile["position_changes"])[0]
+        share = abs(change["delta_usd_m"]) / aum if aum else 0
+        score = 15 + min(35, round(share * 300))
+        reason = f"USD {change['delta_usd_m']:+.2f}m move, {share * 100:.1f}% of the portfolio, to reconcile."
+    elif kind == "pressure":
+        pressure = int(profile.get("priority", {}).get("score", 0))
+        score = round(pressure * 0.6)
+        reason = f"Driven by the client's urgency score of {pressure}."
+    elif kind == "profile":
+        score, reason = 15, "Routine check with no dated trigger."
+    score = max(0, min(100, int(score)))
+    return {"score": score, "band": _priority_band(score), "reason": reason}
+
+
 def _action_numeric_evidence(bundle, profile, recommendation):
     """Typed values from action-linked records; never scrape JSON or prose."""
     facts = []
@@ -1611,6 +1674,10 @@ def build_intelligence_payload(
                 profile, recommendation
             )
             recommendation["version"] = action_version(recommendation)
+        for recommendation in profile["recommendations"] + profile["alternative_candidates"]:
+            recommendation["priority"] = _action_priority(bundle, profile, recommendation)
+        # Most pressing first; the evidence score is shown beside it, never used to rank.
+        profile["recommendations"].sort(key=lambda item: -item["priority"]["score"])
 
     focus_client_ids = ["CL-0012", "CL-0014", "CL-0019"]
 
