@@ -21,6 +21,7 @@ html, body { margin: 0; height: 100%; background: #0e1311; color: #f4efe6; font-
 .stage section.active { opacity: 1; visibility: visible }
 .stage p, .stage h1, .stage h2, .stage h3 { margin: 0 }
 .stage aside { display: none }
+.stage a { color: inherit; text-underline-offset: 6px }
 .notes { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 3; max-height: 32vh; overflow: auto; padding: 14px 18px; border-radius: 12px; background: rgba(14,19,17,.94); border: 1px solid #3a443f; font-size: 15px; line-height: 1.55; color: #dcd6ca; display: none }
 .notes.on { display: block }
 body.fs .bar { opacity: 0; transition: opacity .3s }
@@ -33,7 +34,7 @@ body.fs .bar:hover { opacity: 1 }
   <a href="index.html">← TESSERA</a>
   <div class="group">
     <button type="button" data-go="-1" aria-label="Previous slide">←</button>
-    <span class="count" id="count" aria-live="polite">1 / 6</span>
+    <span class="count" id="count" aria-live="polite">1 / 7</span>
     <button type="button" data-go="1" aria-label="Next slide">→</button>
   </div>
   <div class="group">
@@ -42,68 +43,193 @@ body.fs .bar:hover { opacity: 1 }
   </div>
 </div>
 <div class="viewport"><div class="stage" id="stage">
-<section id="cover" data-transition="fade" style="background:#18201C;color:#F4EFE6;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;justify-content:space-between">
-<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#D4B26A">SingHacks 2026 · Julius Bär Wealth Intelligence</p>
-<div style="display:flex;flex-direction:column;gap:32px">
-<h1 style="font-family:'EB Garamond', Georgia, serif;font-size:160px;font-weight:500;letter-spacing:12px;line-height:1">TESSERA</h1>
-<p style="font-family:'EB Garamond', Georgia, serif;font-size:56px;line-height:1.25;color:#F4EFE6;width:1300px">Finding the client conversation a portfolio report misses.</p>
+<section id="cover" style="background:#18201C;color:#F4EFE6;font-family:'IBM Plex Sans', Arial, sans-serif;padding:112px 128px 96px;display:flex;flex-direction:column;justify-content:space-between">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#D4B26A">Julius Bär Wealth Intelligence · SAPTrio</p>
+<div style="display:flex;flex-direction:column;gap:28px">
+<h1 style="font-family:'EB Garamond', Georgia, serif;font-size:150px;font-weight:500;letter-spacing:12px;line-height:1">TESSERA</h1>
+<p style="font-family:'EB Garamond', Georgia, serif;font-size:54px;line-height:1.2;width:1400px">Finding the client conversation a portfolio report misses.</p>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:40px">
+<div style="display:flex;flex-direction:column;gap:10px;padding-top:24px;border-top:3px solid #D4B26A"><p style="font-size:22px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#D4B26A">Who first</p><p style="font-size:32px;line-height:1.35">One queue: who may be exposed to today’s news, then by urgency</p></div>
+<div style="display:flex;flex-direction:column;gap:10px;padding-top:24px;border-top:3px solid #D4B26A"><p style="font-size:22px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#D4B26A">What doesn’t add up</p><p style="font-size:32px;line-height:1.35">Each client’s own words checked against what they hold</p></div>
+<div style="display:flex;flex-direction:column;gap:10px;padding-top:24px;border-top:3px solid #D4B26A"><p style="font-size:22px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#D4B26A">What to do</p><p style="font-size:32px;line-height:1.35">A brief for the conversation, and actions for the RM to approve</p></div>
 </div>
 <div style="display:flex;justify-content:space-between;align-items:end">
-<p style="font-size:32px;color:#C9C2B4">Code calculates. AI reads. The RM decides.</p>
-<p style="font-size:24px;color:#9C9686">SAPTrio · [Presenter names] · Singapore FinTech Festival, 18 Nov 2026</p>
+<p style="font-size:30px;color:#C9C2B4">Code calculates. AI reads. The RM decides.</p>
+<p style="font-size:22px;color:#9C9686">[Presenter names] · Singapore FinTech Festival, 18 Nov 2026</p>
 </div>
-<aside>Siang Woo · 5 seconds. “We’re TESSERA. Code calculates, AI reads, and the relationship manager decides.”</aside>
+<aside>Siang Woo · 25 seconds. “We’re SAPTrio, and this is TESSERA. It finds the client conversation a portfolio report misses. Every morning it tells the relationship manager who to look at first, what doesn’t add up between what a client said and what they hold, and what to do about it. Code calculates, AI reads, and the RM decides.”</aside>
 </section>
-<section id="rm-day" data-transition="fade" style="background:#F6F2EA;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<section id="how-it-works" data-transition="fade" style="background:#F6F2EA;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
 <div style="display:flex;flex-direction:column;gap:16px">
-<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">An RM’s Monday morning</p>
-<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">Start with the right client, not the next report</h2>
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">How it works</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">Code calculates. AI reads. The RM decides.</h2>
 </div>
-<div style="display:flex;flex-direction:column">
-<div style="display:flex;gap:48px;padding:0 0 12px;border-bottom:2px solid #18201C"><p style="width:760px;font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#6B6F69">Today</p><p style="flex:1;font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#1F4A3F">With TESSERA</p></div>
-<div style="display:flex;gap:48px;padding:22px 0;border-bottom:1px solid #D8D0C0"><p style="width:760px;font-size:30px;line-height:1.35;color:#4B524D">Open each client’s report, one by one</p><p style="flex:1;font-size:30px;line-height:1.35;font-weight:600">One queue: who may be exposed today, then by urgency</p></div>
-<div style="display:flex;gap:48px;padding:22px 0;border-bottom:1px solid #D8D0C0"><p style="width:760px;font-size:30px;line-height:1.35;color:#4B524D">Spot clashes between goals and holdings from memory</p><p style="flex:1;font-size:30px;line-height:1.35;font-weight:600">Code compares what each client said with what they hold</p></div>
-<div style="display:flex;gap:48px;padding:22px 0;border-bottom:1px solid #D8D0C0"><p style="width:760px;font-size:30px;line-height:1.35;color:#4B524D">Read the news, then guess who it affects</p><p style="flex:1;font-size:30px;line-height:1.35;font-weight:600">Each headline is matched to every portfolio, with what to check</p></div>
-<div style="display:flex;gap:48px;padding:22px 0"><p style="width:760px;font-size:30px;line-height:1.35;color:#4B524D">Prepare every conversation from scratch</p><p style="flex:1;font-size:30px;line-height:1.35;font-weight:600">A brief: how to open, what to show, what to ask, what to avoid</p></div>
+<div style="position:relative;width:1664px;height:540px">
+<div style="position:absolute;left:0;top:296px;width:844px;height:244px;background:#E6EBF0;border-radius:16px"></div>
+<p style="position:absolute;left:20px;top:302px;width:600px;font-size:24px;font-weight:600;color:#4A5A70">Outside the bank: public data only</p>
+<div style="position:absolute;left:0;top:0;width:320px;height:200px;background:#FBF8F2;border:2px solid #B9B2A3;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><p style="font-size:24px;font-weight:600;letter-spacing:2px;color:#A8483C">C3–C4 · CLIENT</p><h3 style="font-size:30px;font-weight:600"><a href="map.html#records">Client records</a></h3><p style="font-size:24px;line-height:1.35;color:#4B524D">Portfolios, goals, RM notes</p></div>
+<div style="position:absolute;left:448px;top:0;width:360px;height:200px;background:#FBF8F2;border:2px solid #1F4A3F;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><p style="font-size:24px;font-weight:600;letter-spacing:2px;color:#1F4A3F">CODE</p><h3 style="font-size:30px;font-weight:600"><a href="map.html#detect">Detect and score</a></h3><p style="font-size:24px;line-height:1.35;color:#4B524D">Contradictions, exposure, urgency</p></div>
+<div style="position:absolute;left:936px;top:0;width:340px;height:200px;background:#1F4A3F;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><p style="font-size:24px;font-weight:600;letter-spacing:2px;color:#CFE0D8">IN-HOUSE MODEL</p><h3 style="font-size:30px;font-weight:600;color:#F4EFE6"><a href="map.html#review">Reviews actions</a></h3><p style="font-size:24px;line-height:1.35;color:#DCE6E1">Three angles. Only lowers confidence.</p></div>
+<div style="position:absolute;left:1344px;top:0;width:320px;height:200px;background:#FBF8F2;border:2px solid #8A6A2C;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><p style="font-size:24px;font-weight:600;letter-spacing:2px;color:#8A6A2C">RM</p><h3 style="font-size:30px;font-weight:600"><a href="map.html#rm">Decides</a></h3><p style="font-size:24px;line-height:1.35;color:#4B524D">Approve, edit or dismiss</p></div>
+<div style="position:absolute;left:0;top:340px;width:320px;height:200px;background:#FBF8F2;border:2px solid #4A5A70;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><p style="font-size:24px;font-weight:600;letter-spacing:2px;color:#4A5A70">C1–C2 · PUBLIC</p><h3 style="font-size:30px;font-weight:600"><a href="map.html#news">Market news</a></h3><p style="font-size:24px;line-height:1.35;color:#4B524D">Yahoo, CNBC, Business Times</p></div>
+<div style="position:absolute;left:448px;top:340px;width:360px;height:200px;background:#FBF8F2;border:2px solid #4A5A70;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><p style="font-size:24px;font-weight:600;letter-spacing:2px;color:#4A5A70">EXTERNAL MODELS</p><h3 style="font-size:30px;font-weight:600"><a href="map.html#triage">Triage headlines</a></h3><p style="font-size:24px;line-height:1.35;color:#4B524D">GPT, Claude, Gemini vote on each one</p></div>
+<div style="position:absolute;left:1344px;top:340px;width:320px;height:200px;background:#FBF8F2;border:2px solid #B9B2A3;border-radius:14px;padding:24px 28px;display:flex;flex-direction:column;gap:6px"><p style="font-size:24px;font-weight:600;letter-spacing:2px;color:#6B6F69">LEDGER</p><h3 style="font-size:30px;font-weight:600"><a href="map.html#ledger">Recorded</a></h3><p style="font-size:24px;line-height:1.35;color:#4B524D">Every decision, append-only</p></div>
+<p style="position:absolute;left:360px;top:76px;width:48px;height:48px;line-height:48px;font-size:26px;font-weight:600;text-align:center;color:#F4EFE6;background:#18201C;border-radius:50%">1</p>
+<p style="position:absolute;left:360px;top:416px;width:48px;height:48px;line-height:48px;font-size:26px;font-weight:600;text-align:center;color:#F4EFE6;background:#18201C;border-radius:50%">2</p>
+<p style="position:absolute;left:604px;top:246px;width:48px;height:48px;line-height:48px;font-size:26px;font-weight:600;text-align:center;color:#F4EFE6;background:#18201C;border-radius:50%">3</p>
+<p style="position:absolute;left:848px;top:76px;width:48px;height:48px;line-height:48px;font-size:26px;font-weight:600;text-align:center;color:#F4EFE6;background:#18201C;border-radius:50%">4</p>
+<p style="position:absolute;left:1286px;top:76px;width:48px;height:48px;line-height:48px;font-size:26px;font-weight:600;text-align:center;color:#F4EFE6;background:#18201C;border-radius:50%">5</p>
+<p style="position:absolute;left:1480px;top:246px;width:48px;height:48px;line-height:48px;font-size:26px;font-weight:600;text-align:center;color:#F4EFE6;background:#18201C;border-radius:50%">6</p>
+<svg style="position:absolute;left:0;top:0;width:1664px;height:540px;overflow:visible" aria-hidden="true"><defs><marker id="hw-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="16" markerHeight="16" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L10 5L0 10z" fill="#18201C"/></marker></defs><line x1="320" y1="100" x2="448" y2="100" stroke="#18201C" stroke-width="3" marker-end="url(#hw-a)"/><line x1="320" y1="440" x2="448" y2="440" stroke="#18201C" stroke-width="3" marker-end="url(#hw-a)"/><line x1="628" y1="340" x2="628" y2="200" stroke="#18201C" stroke-width="3" marker-end="url(#hw-a)"/><line x1="808" y1="100" x2="936" y2="100" stroke="#18201C" stroke-width="3" marker-end="url(#hw-a)"/><line x1="1276" y1="100" x2="1344" y2="100" stroke="#18201C" stroke-width="3" marker-end="url(#hw-a)"/><line x1="1504" y1="200" x2="1504" y2="340" stroke="#18201C" stroke-width="3" marker-end="url(#hw-a)"/></svg>
 </div>
-<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B6F69">Pain points from our check with a relationship manager. RMs spend 41% of their time on operations: Capgemini, World Wealth Report 2026.</p>
-<aside>Siang Woo · 30 seconds. “We checked with a relationship manager to understand their pain points. Today an RM opens each report one by one, spots clashes from memory, reads the news and guesses who it affects, and preps every conversation from scratch. That’s part of why RMs spend 41% of their time on operations. With TESSERA they start with one queue, the clashes are already found, every headline is matched to every portfolio, and the brief is ready.” Read the left column quickly, land on the right.</aside>
+<p style="position:absolute;left:128px;top:840px;width:816px;font-size:24px;line-height:1.3"><b>1</b>  Client records stay inside the bank. Code reads them.</p>
+<p style="position:absolute;left:128px;top:876px;width:816px;font-size:24px;line-height:1.3"><b>2</b>  External models tag public headlines. No client data.</p>
+<p style="position:absolute;left:128px;top:912px;width:816px;font-size:24px;line-height:1.3"><b>3</b>  Code matches tags to holdings and scores urgency.</p>
+<p style="position:absolute;left:976px;top:840px;width:816px;font-size:24px;line-height:1.3"><b>4</b>  In-house model reviews actions. It can only lower scores.</p>
+<p style="position:absolute;left:976px;top:876px;width:816px;font-size:24px;line-height:1.3"><b>5</b>  The RM approves, edits or dismisses.</p>
+<p style="position:absolute;left:976px;top:912px;width:816px;font-size:24px;line-height:1.3"><b>6</b>  Each decision goes into an append-only ledger.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B6F69">Data classes: C1 to C2 public, C3 to C4 client data. In the demo, a labelled stand-in plays the in-house model.</p>
+<aside>[Teammate] · 30 seconds. “Here’s how it works. Client records never leave the bank. Code reads them and finds the contradiction. Public headlines go to three outside models, which vote on topic and severity. They never see a client. Code matches those votes to holdings and scores urgency. The bank’s own model reviews each action from three angles, and can only lower confidence. The RM decides, and the ledger records it.”</aside>
 </section>
-<section id="demo" data-transition="fade" style="background:#18201C;color:#F4EFE6;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:56px">
+<section id="shifts-a" style="background:#EFE9DD;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:120px 128px 150px;display:flex;flex-direction:column;gap:40px">
 <div style="display:flex;flex-direction:column;gap:16px">
-<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#D4B26A">Demo · 45 seconds</p>
-<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">A Monday morning with TESSERA</h2>
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">Since SingHacks · shifts 1 to 3</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">From a prototype to a tool a bank can run</h2>
 </div>
-<div style="display:flex;flex-direction:column;gap:40px">
-<div style="display:flex;gap:32px;align-items:start"><p style="font-family:'EB Garamond', Georgia, serif;font-size:64px;line-height:1;color:#D4B26A;width:64px">1</p><p style="font-size:40px;line-height:1.35">The queue: who may be exposed today, then by urgency</p></div>
-<div style="display:flex;gap:32px;align-items:start"><p style="font-family:'EB Garamond', Georgia, serif;font-size:64px;line-height:1;color:#D4B26A;width:64px">2</p><p style="font-size:40px;line-height:1.35">Abdullah: what he said, what he holds, how far he has drifted</p></div>
-<div style="display:flex;gap:32px;align-items:start"><p style="font-family:'EB Garamond', Georgia, serif;font-size:64px;line-height:1;color:#D4B26A;width:64px">3</p><p style="font-size:40px;line-height:1.35">The RM approves an action, and it goes into the ledger</p></div>
+<div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:32px;margin:auto 0">
+<div style="display:flex;flex-direction:column;gap:18px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:14px;padding:32px 34px">
+<div style="display:flex;align-items:baseline;gap:16px"><p style="font-family:'EB Garamond', Georgia, serif;font-size:52px;line-height:1;color:#8A6A2C">1</p><h3 style="font-size:32px;font-weight:600;line-height:1.2">Client data stays in the bank</h3></div>
+<svg viewBox="0 0 460 250" style="width:100%;height:auto" aria-hidden="true" font-family="IBM Plex Sans, Arial, sans-serif">
+<defs><marker id="sa-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1F4A3F"/></marker><marker id="sa-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L10 5L0 10z" fill="#4A5A70"/></marker></defs>
+<rect x="1" y="1" width="246" height="248" rx="12" fill="none" stroke="#1F4A3F" stroke-width="2" stroke-dasharray="7 6"/>
+<rect x="262" y="1" width="197" height="248" rx="12" fill="#E6EBF0"/>
+<text x="18" y="32" font-size="15" font-weight="600" letter-spacing="1.5" fill="#1F4A3F">INSIDE THE BANK</text>
+<text x="278" y="32" font-size="15" font-weight="600" letter-spacing="1.5" fill="#4A5A70">OUTSIDE</text>
+<rect x="18" y="56" width="212" height="58" rx="8" fill="#FBF8F2" stroke="#B9B2A3" stroke-width="2"/><text x="124" y="92" font-size="20" font-weight="600" text-anchor="middle">Client data</text>
+<line x1="124" y1="114" x2="124" y2="166" stroke="#1F4A3F" stroke-width="3" marker-end="url(#sa-g)"/>
+<rect x="18" y="168" width="212" height="58" rx="8" fill="#1F4A3F"/><text x="124" y="204" font-size="20" font-weight="600" text-anchor="middle" fill="#F4EFE6">In-house model</text>
+<rect x="278" y="56" width="165" height="58" rx="8" fill="#FBF8F2" stroke="#4A5A70" stroke-width="2"/><text x="360" y="92" font-size="20" font-weight="600" text-anchor="middle">Headlines</text>
+<line x1="360" y1="114" x2="360" y2="166" stroke="#4A5A70" stroke-width="3" marker-end="url(#sa-s)"/>
+<rect x="278" y="168" width="165" height="58" rx="8" fill="#FBF8F2" stroke="#4A5A70" stroke-width="2"/><text x="360" y="204" font-size="20" font-weight="600" text-anchor="middle">Outside models</text>
+</svg>
+<p style="font-size:26px;line-height:1.4;color:#4B524D">Outside models read public headlines only. Actions are reviewed by the bank’s own model.</p>
 </div>
-<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#9C9686">Backup if the network fails: replay walkthrough, same steps. [Link or QR]</p>
-<aside>Siang Woo narrates over the recording · 45 seconds. “Monday morning. Clients who may be exposed today come first: Ravi’s flag shows which holdings a headline touches and what to check. But the most important conversation isn’t always the most urgent one. Abdullah told us to build wealth outside shipping and energy. His share there has grown from 29 to 42 percent in eight months. The RM gets a brief, approves an action, and it goes into an append-only ledger.”</aside>
+<div style="display:flex;flex-direction:column;gap:18px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:14px;padding:32px 34px">
+<div style="display:flex;align-items:baseline;gap:16px"><p style="font-family:'EB Garamond', Georgia, serif;font-size:52px;line-height:1;color:#8A6A2C">2</p><h3 style="font-size:32px;font-weight:600;line-height:1.2">Screening, not predicting</h3></div>
+<svg viewBox="0 0 460 250" style="width:100%;height:auto" aria-hidden="true" font-family="IBM Plex Sans, Arial, sans-serif">
+<defs><marker id="sb-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L10 5L0 10z" fill="#A8483C"/></marker></defs>
+<rect x="0" y="96" width="140" height="58" rx="8" fill="#FBF8F2" stroke="#4A5A70" stroke-width="2"/><text x="70" y="132" font-size="20" font-weight="600" text-anchor="middle">Headline</text>
+<path d="M140 125 C 185 125 190 40 228 40" fill="none" stroke="#A8483C" stroke-width="3" marker-end="url(#sb-r)"/>
+<path d="M140 125 C 185 125 190 98 228 98" fill="none" stroke="#A8483C" stroke-width="3" marker-end="url(#sb-r)"/>
+<path d="M140 125 C 185 125 190 156 228 156" fill="none" stroke="#C9C2B4" stroke-width="2" stroke-dasharray="5 5"/>
+<path d="M140 125 C 185 125 190 214 228 214" fill="none" stroke="#C9C2B4" stroke-width="2" stroke-dasharray="5 5"/>
+<rect x="230" y="18" width="230" height="44" rx="8" fill="#F7E3DF" stroke="#A8483C" stroke-width="2"/><text x="246" y="46" font-size="18" font-weight="600" fill="#A8483C">Client A · check loan</text>
+<rect x="230" y="76" width="230" height="44" rx="8" fill="#F7E3DF" stroke="#A8483C" stroke-width="2"/><text x="246" y="104" font-size="18" font-weight="600" fill="#A8483C">Client B · check fund</text>
+<rect x="230" y="134" width="230" height="44" rx="8" fill="#FBF8F2" stroke="#DDD5C6" stroke-width="2"/><text x="246" y="162" font-size="18" fill="#6B6F69">Client C · not touched</text>
+<rect x="230" y="192" width="230" height="44" rx="8" fill="#FBF8F2" stroke="#DDD5C6" stroke-width="2"/><text x="246" y="220" font-size="18" fill="#6B6F69">Client D · not touched</text>
+</svg>
+<p style="font-size:26px;line-height:1.4;color:#4B524D">A headline flags the clients it touches and what to check. No forecasts.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:18px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:14px;padding:32px 34px">
+<div style="display:flex;align-items:baseline;gap:16px"><p style="font-family:'EB Garamond', Georgia, serif;font-size:52px;line-height:1;color:#8A6A2C">3</p><h3 style="font-size:32px;font-weight:600;line-height:1.2">Detection for any client</h3></div>
+<svg viewBox="0 0 460 250" style="width:100%;height:auto" aria-hidden="true" font-family="IBM Plex Sans, Arial, sans-serif">
+<text x="0" y="26" font-size="15" font-weight="600" letter-spacing="1.5" fill="#8A6A2C">WHAT ABDULLAH SAID</text>
+<text x="0" y="64" font-size="24" font-style="italic" font-family="EB Garamond, Georgia, serif">“Build wealth outside shipping.”</text>
+<text x="0" y="118" font-size="15" font-weight="600" letter-spacing="1.5" fill="#8A6A2C">WHAT HE HOLDS, LOOKED THROUGH</text>
+<rect x="0" y="134" width="460" height="40" rx="6" fill="#E6E0D4"/>
+<rect x="0" y="134" width="194" height="40" rx="6" fill="#A8483C"/>
+<text x="206" y="161" font-size="20" font-weight="600">42.1% shipping and energy</text>
+<line x1="0" y1="206" x2="460" y2="206" stroke="#DDD5C6" stroke-width="2"/>
+<text x="0" y="236" font-size="18" fill="#4B524D">The same rules check every client.</text>
+</svg>
+<p style="font-size:26px;line-height:1.4;color:#4B524D">Code compares each client’s own words with their holdings. No client is named in the rules.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:56px;width:1664px;font-size:24px;color:#6B6F69">Shaped by our check with a relationship manager and our own research.</p>
+<aside>[Teammate] · 30 seconds. “Since SingHacks we made six shifts. One: client data stays in the bank. Outside models only read public headlines; actions go to the bank’s own model. Two: we screen, we don’t predict. A headline tells the RM which clients it touches and what to check. Three: detection works for any client. Code compares what each client said with what they hold, with no client named in the rules.”</aside>
 </section>
-<section id="since" data-transition="fade" style="background:#EFE9DD;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<section id="shifts-b" style="background:#EFE9DD;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:120px 128px 150px;display:flex;flex-direction:column;gap:40px">
 <div style="display:flex;flex-direction:column;gap:16px">
-<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">Since SingHacks</p>
-<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">Six things we built since SingHacks</h2>
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">Since SingHacks · shifts 4 to 6</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">Clearer numbers, a fuller view, the right order</h2>
 </div>
-<div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:24px">
-<div style="display:flex;flex-direction:column;gap:10px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:12px;padding:28px 30px"><h3 style="font-size:30px;font-weight:600">Contradiction detection</h3><p style="font-size:24px;line-height:1.4;color:#4B524D">Reads any client’s record. No client is named in the rules.</p></div>
-<div style="display:flex;flex-direction:column;gap:10px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:12px;padding:28px 30px"><h3 style="font-size:30px;font-weight:600">News triage</h3><p style="font-size:24px;line-height:1.4;color:#4B524D">Three public models vote on every headline. They never see a client.</p></div>
-<div style="display:flex;flex-direction:column;gap:10px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:12px;padding:28px 30px"><h3 style="font-size:30px;font-weight:600">Exposure flags</h3><p style="font-size:24px;line-height:1.4;color:#4B524D">Which clients a headline may touch, and what to check. No forecasts.</p></div>
-<div style="display:flex;flex-direction:column;gap:10px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:12px;padding:28px 30px"><h3 style="font-size:30px;font-weight:600">In-house review</h3><p style="font-size:24px;line-height:1.4;color:#4B524D">The bank’s own model checks each action from three angles, and can only lower confidence.</p></div>
-<div style="display:flex;flex-direction:column;gap:10px;background:#1F4A3F;border-radius:12px;padding:28px 30px"><p style="font-size:24px;font-weight:600;letter-spacing:3px;color:#D4B26A">NEW</p><h3 style="font-size:30px;font-weight:600;color:#F4EFE6">Customer vectors</h3><p style="font-size:24px;line-height:1.4;color:#DCE6E1">Every client as 24 named numbers: lookalike clients, and drift from their own goal. Abdullah: 29.4% to 42.1% in eight months.</p></div>
-<div style="display:flex;flex-direction:column;gap:10px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:12px;padding:28px 30px"><h3 style="font-size:30px;font-weight:600">Labelled sources</h3><p style="font-size:24px;line-height:1.4;color:#4B524D">Every figure says if it is client data, a calculation, an illustration or public news.</p></div>
+<div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:32px;margin:auto 0">
+<div style="display:flex;flex-direction:column;gap:18px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:14px;padding:32px 34px">
+<div style="display:flex;align-items:baseline;gap:16px"><p style="font-family:'EB Garamond', Georgia, serif;font-size:52px;line-height:1;color:#8A6A2C">4</p><h3 style="font-size:32px;font-weight:600;line-height:1.2">Every figure labelled</h3></div>
+<svg viewBox="0 0 460 250" style="width:100%;height:auto" aria-hidden="true" font-family="IBM Plex Sans, Arial, sans-serif">
+<text x="0" y="62" font-size="64" font-family="EB Garamond, Georgia, serif">42.1%</text>
+<rect x="250" y="28" width="168" height="40" rx="20" fill="#E3EEE9"/><circle cx="272" cy="48" r="6" fill="#1F4A3F"/><text x="288" y="54" font-size="17" font-weight="600" letter-spacing="1" fill="#1F4A3F">CALCULATED</text>
+<line x1="0" y1="96" x2="460" y2="96" stroke="#DDD5C6" stroke-width="2"/>
+<circle cx="10" cy="128" r="7" fill="#8B8F87"/><text x="30" y="134" font-size="19">Client record (synthetic in the demo)</text>
+<circle cx="10" cy="166" r="7" fill="#1F4A3F"/><text x="30" y="172" font-size="19">Calculated by TESSERA</text>
+<circle cx="10" cy="204" r="7" fill="#8A6A2C"/><text x="30" y="210" font-size="19">Scenario, not a forecast</text>
+<circle cx="10" cy="242" r="7" fill="#4A5A70"/><text x="30" y="248" font-size="19">Public news</text>
+</svg>
+<p style="font-size:26px;line-height:1.4;color:#4B524D">Real and simulated are never mixed up. Each number traces to its record.</p>
 </div>
-<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B6F69">Shaped by our check with a relationship manager and our own review. 135 automated tests pass.</p>
-<aside>[Teammate] · 35 seconds. “Since SingHacks we’ve built six things. Detection that reads any client’s record, with no client-specific rules. News triage, where three public models vote on each headline without ever seeing a client. Exposure flags that say who to check, not what will happen. An in-house review that can only lower confidence. Labels on every figure. And the newest: customer vectors. Every client is 24 named numbers, so TESSERA finds lookalike clients and measures drift. Abdullah’s share in what he asked to leave grew from 29 to 42 percent in eight months.” Point at the green card last.</aside>
+<div style="display:flex;flex-direction:column;gap:18px;background:#1F4A3F;border-radius:14px;padding:32px 34px;color:#F4EFE6">
+<div style="display:flex;align-items:baseline;gap:16px"><p style="font-family:'EB Garamond', Georgia, serif;font-size:52px;line-height:1;color:#D4B26A">5</p><h3 style="font-size:32px;font-weight:600;line-height:1.2">Customer vectors</h3></div>
+<svg viewBox="0 0 460 250" style="width:100%;height:auto" aria-hidden="true" font-family="IBM Plex Sans, Arial, sans-serif">
+<text x="0" y="22" font-size="15" font-weight="600" letter-spacing="1.5" fill="#CFE0D8">ABDULLAH · SHARE IN WHAT HE ASKED TO LEAVE</text>
+<line x1="20" y1="206" x2="440" y2="206" stroke="#4E7468" stroke-width="2"/>
+<polyline points="30,169 135,168 240,138 345,90 430,84" fill="none" stroke="#E2B4A6" stroke-width="4"/>
+<circle cx="30" cy="169" r="6" fill="#E2B4A6"/><circle cx="135" cy="168" r="6" fill="#E2B4A6"/><circle cx="240" cy="138" r="6" fill="#E2B4A6"/><circle cx="345" cy="90" r="6" fill="#E2B4A6"/><circle cx="430" cy="84" r="8" fill="#F4EFE6"/>
+<text x="30" y="152" font-size="20" font-weight="600" text-anchor="middle" fill="#F4EFE6">29.4%</text>
+<text x="430" y="66" font-size="22" font-weight="600" text-anchor="end" fill="#F4EFE6">42.1%</text>
+<text x="30" y="236" font-size="17" fill="#CFE0D8">Dec 2025</text>
+<text x="440" y="236" font-size="17" text-anchor="end" fill="#CFE0D8">Aug 2026</text>
+</svg>
+<p style="font-size:26px;line-height:1.4;color:#DCE6E1">Every client as 24 named numbers, kept in the bank: drift from their own goal, and lookalike clients.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:18px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:14px;padding:32px 34px">
+<div style="display:flex;align-items:baseline;gap:16px"><p style="font-family:'EB Garamond', Georgia, serif;font-size:52px;line-height:1;color:#8A6A2C">6</p><h3 style="font-size:32px;font-weight:600;line-height:1.2">Most pressing first</h3></div>
+<svg viewBox="0 0 460 250" style="width:100%;height:auto" aria-hidden="true" font-family="IBM Plex Sans, Arial, sans-serif">
+<text x="0" y="22" font-size="15" font-weight="600" letter-spacing="1.5" fill="#6B6F69">LAU CHI MING’S ACTIONS</text>
+<text x="460" y="22" font-size="15" font-weight="600" letter-spacing="1.5" fill="#6B6F69" text-anchor="end">EVIDENCE</text>
+<text x="0" y="68" font-size="19" font-weight="600">Protect the loan</text>
+<rect x="0" y="80" width="340" height="12" rx="6" fill="#E6E0D4"/><rect x="0" y="80" width="306" height="12" rx="6" fill="#B9232D"/>
+<rect x="392" y="52" width="68" height="40" rx="6" fill="#F6EDDC" stroke="#C9A96F"/><text x="426" y="79" font-size="20" font-weight="600" text-anchor="middle" fill="#7A5A24">84</text>
+<text x="0" y="140" font-size="19" font-weight="600">Fund USD 7.7m due soon</text>
+<rect x="0" y="152" width="340" height="12" rx="6" fill="#E6E0D4"/><rect x="0" y="152" width="289" height="12" rx="6" fill="#B9232D"/>
+<rect x="392" y="124" width="68" height="40" rx="6" fill="#F6EDDC" stroke="#C9A96F"/><text x="426" y="151" font-size="20" font-weight="600" text-anchor="middle" fill="#7A5A24">65</text>
+<text x="0" y="212" font-size="19" font-weight="600">Separate one hidden bet</text>
+<rect x="0" y="224" width="340" height="12" rx="6" fill="#E6E0D4"/><rect x="0" y="224" width="119" height="12" rx="6" fill="#8B8F87"/>
+<rect x="392" y="196" width="68" height="40" rx="6" fill="#F6EDDC" stroke="#C9A96F"/><text x="426" y="223" font-size="20" font-weight="600" text-anchor="middle" fill="#7A5A24">81</text>
+</svg>
+<p style="font-size:26px;line-height:1.4;color:#4B524D">Priority from what is at stake sets the order. Evidence is scored separately.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:56px;width:1664px;font-size:24px;color:#6B6F69">Synthetic clients from the Julius Bär case dataset. 135 automated tests pass.</p>
+<aside>[Teammate] · 30 seconds. “Four: every figure says what it is, a client record, a calculation, a scenario or public news. Five, our newest: customer vectors. Abdullah has drifted from 29 to 42 percent in what he asked to leave. Six: actions come in order of what is at stake. Lau’s loan is next to its margin call, so it comes first, and how well each action is evidenced is scored separately.”</aside>
+</section>
+<section id="bookmap" style="background:#18201C;color:#F4EFE6;font-family:'IBM Plex Sans', Arial, sans-serif;padding:100px 128px 120px;display:flex;flex-direction:column;gap:28px">
+<div style="display:flex;flex-direction:column;gap:14px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#D4B26A">New since SingHacks · customer vectors</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:68px;font-weight:500;line-height:1.08">Every client is a vector. Lookalike books sit together.</h2>
+</div>
+<div style="display:flex;gap:48px;align-items:flex-start">
+<div style="width:1000px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;gap:32px;font-size:22px;color:#C9C2B4"><span style="display:inline-flex;align-items:center;gap:10px"><i style="width:16px;height:16px;border-radius:50%;background:#E06A5A"></i>May be exposed</span><span style="display:inline-flex;align-items:center;gap:10px"><i style="width:16px;height:16px;border-radius:50%;background:#D9822B"></i>Act now</span><span style="display:inline-flex;align-items:center;gap:10px"><i style="width:16px;height:16px;border-radius:50%;background:#D4B26A"></i>This week</span><span style="display:inline-flex;align-items:center;gap:10px"><i style="width:16px;height:16px;border-radius:50%;background:#8FA3C0"></i>Monitor</span></div>
+<svg viewBox="0 0 1000 600" style="width:1000px;height:600px;background:#1A221E;border:1px solid #2C3631;border-radius:14px" aria-hidden="true" font-family="IBM Plex Sans, Arial, sans-serif"><line x1="500.0" y1="20" x2="500.0" y2="580" stroke="#2C3631" stroke-width="2"/><line x1="20" y1="300.0" x2="980" y2="300.0" stroke="#2C3631" stroke-width="2"/><line x1="523" y1="122" x2="555" y2="60" stroke="#D4B26A" stroke-width="3" stroke-dasharray="8 7"/><line x1="523" y1="122" x2="732" y2="186" stroke="#D4B26A" stroke-width="3" stroke-dasharray="8 7"/><line x1="523" y1="122" x2="184" y2="131" stroke="#D4B26A" stroke-width="3" stroke-dasharray="8 7"/><circle cx="625" cy="470" r="10" fill="#D4B26A"/><circle cx="60" cy="416" r="10" fill="#E06A5A"/><circle cx="579" cy="285" r="10" fill="#D9822B"/><circle cx="523" cy="122" r="22" fill="none" stroke="#F4EFE6" stroke-width="3"/><circle cx="523" cy="122" r="13" fill="#D4B26A"/><circle cx="802" cy="313" r="10" fill="#D4B26A"/><circle cx="323" cy="183" r="10" fill="#D4B26A"/><circle cx="540" cy="229" r="10" fill="#8FA3C0"/><circle cx="732" cy="186" r="10" fill="#8FA3C0"/><circle cx="622" cy="256" r="10" fill="#8FA3C0"/><circle cx="559" cy="347" r="10" fill="#8FA3C0"/><circle cx="195" cy="136" r="10" fill="#D9822B"/><circle cx="555" cy="60" r="10" fill="#D4B26A"/><circle cx="422" cy="490" r="10" fill="#8FA3C0"/><circle cx="184" cy="131" r="10" fill="#D9822B"/><circle cx="404" cy="471" r="10" fill="#8FA3C0"/><circle cx="828" cy="322" r="10" fill="#D4B26A"/><circle cx="256" cy="402" r="10" fill="#D4B26A"/><circle cx="832" cy="304" r="10" fill="#8FA3C0"/><circle cx="405" cy="405" r="10" fill="#D4B26A"/><circle cx="555" cy="473" r="10" fill="#8FA3C0"/><text x="539" y="130" font-size="24" font-weight="600" text-anchor="start" fill="#F4EFE6" paint-order="stroke" stroke="#18201C" stroke-width="6">Chalermchai</text><text x="571" y="68" font-size="24" font-weight="600" text-anchor="start" fill="#F4EFE6" paint-order="stroke" stroke="#18201C" stroke-width="6">Cheung</text><text x="748" y="194" font-size="24" font-weight="600" text-anchor="start" fill="#F4EFE6" paint-order="stroke" stroke="#18201C" stroke-width="6">Chen</text><text x="168" y="139" font-size="24" font-weight="600" text-anchor="end" fill="#F4EFE6" paint-order="stroke" stroke="#18201C" stroke-width="6">Lau</text><text x="641" y="478" font-size="20" font-weight="400" text-anchor="start" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Hartono</text><text x="76" y="424" font-size="20" font-weight="400" text-anchor="start" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Ravi</text><text x="595" y="293" font-size="20" font-weight="400" text-anchor="start" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Margarethe</text><text x="786" y="321" font-size="20" font-weight="400" text-anchor="end" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Aishah</text><text x="339" y="191" font-size="20" font-weight="400" text-anchor="start" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Nguyen</text><text x="556" y="237" font-size="20" font-weight="400" text-anchor="start" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Alistair</text><text x="638" y="264" font-size="20" font-weight="400" text-anchor="start" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Andreas</text><text x="575" y="355" font-size="20" font-weight="400" text-anchor="start" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Priya</text><text x="211" y="144" font-size="20" font-weight="400" text-anchor="start" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Tan</text><text x="438" y="498" font-size="20" font-weight="400" text-anchor="start" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Zhang</text><text x="388" y="479" font-size="20" font-weight="400" text-anchor="end" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Kim</text><text x="828" y="354" font-size="20" font-weight="400" text-anchor="middle" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Yamamoto</text><text x="272" y="410" font-size="20" font-weight="400" text-anchor="start" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Fong</text><text x="848" y="312" font-size="20" font-weight="400" text-anchor="start" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Elena</text><text x="421" y="413" font-size="20" font-weight="400" text-anchor="start" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Abdullah</text><text x="555" y="455" font-size="20" font-weight="400" text-anchor="middle" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Grace</text><text x="512" y="30" font-size="18" fill="#9C9686" font-family="IBM Plex Mono, monospace">↑ fixed income, property exposure</text><text x="980" y="582" font-size="18" fill="#9C9686" text-anchor="end" font-family="IBM Plex Mono, monospace">sellable daily, held outside base currency →</text></svg>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:18px">
+<h3 style="font-family:'EB Garamond', Georgia, serif;font-size:48px;font-weight:500;line-height:1.1">Chalermchai Suphanburi</h3>
+<p style="display:flex;align-items:center;gap:14px;font-size:24px;color:#C9C2B4"><span style="padding:4px 14px;border-radius:999px;background:#D4B26A;color:#18201C;font-weight:600;letter-spacing:2px;text-transform:uppercase;font-size:20px">This week</span>Urgency 49 / 99</p>
+<p style="font-size:24px;line-height:1.4;color:#DCD6CA">Lifetime income vs long-duration holdings</p>
+<p style="margin-top:6px;font-size:20px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#9C9686">Clients like this one</p>
+<div style="display:flex;flex-direction:column;gap:6px;padding:20px 24px;background:#1E2622;border:1px solid #2C3631;border-radius:12px"><div style="display:flex;justify-content:space-between;align-items:baseline"><p style="font-size:28px;font-weight:600">Cheung Kwok Wing</p><p style="font-size:26px;font-weight:600;color:#D4B26A">0.85</p></div><p style="font-size:21px;line-height:1.4;color:#B9B2A3">Risk tolerance score 3/10 vs 3/10 · Fixed income 65% vs 67%</p></div><div style="display:flex;flex-direction:column;gap:6px;padding:20px 24px;background:#1E2622;border:1px solid #2C3631;border-radius:12px"><div style="display:flex;justify-content:space-between;align-items:baseline"><p style="font-size:28px;font-weight:600">Chen Wei Ling</p><p style="font-size:26px;font-weight:600;color:#D4B26A">0.39</p></div><p style="font-size:21px;line-height:1.4;color:#B9B2A3">Fixed income 65% vs 32% · Gated or illiquid 5% vs 0%</p></div><div style="display:flex;flex-direction:column;gap:6px;padding:20px 24px;background:#1E2622;border:1px solid #2C3631;border-radius:12px"><div style="display:flex;justify-content:space-between;align-items:baseline"><p style="font-size:28px;font-weight:600">Lau Chi Ming</p><p style="font-size:26px;font-weight:600;color:#D4B26A">0.29</p></div><p style="font-size:21px;line-height:1.4;color:#B9B2A3">Fixed income 65% vs 44% · Investment horizon 18 yrs vs 12 yrs</p></div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:52px;width:1664px;font-size:22px;color:#9C9686">24 named numbers per client: exposures, liquidity, obligations, stated profile. Calculated inside the bank, never sent to a model. Similarity, not prediction.</p>
+<aside>Siang Woo · 25 seconds. “Our newest feature: customer vectors. Every client becomes 24 named numbers, calculated inside the bank, so books that look alike sit together on this map. Chalermchai’s closest match is Cheung, at 0.85: both are about two-thirds in fixed income with a cautious profile. When an RM handles one, they know which other books to look at, and they can see the reasons, not a black box.”</aside>
 </section>
 <section id="trust" data-transition="fade" style="background:#F6F2EA;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
 <div style="display:flex;flex-direction:column;gap:16px">
 <p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">Why RMs can trust it</p>
 <h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">Built for how a private bank works</h2>
 </div>
-<div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:32px">
+<div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:32px;margin:auto 0">
 <div style="display:flex;gap:24px;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:36px">
 <svg viewBox="0 0 24 24" style="color:#1F4A3F;width:48px;height:48px;flex:none" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
 <div style="flex:1;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:36px;font-weight:600">Client data stays in the bank</h3><p style="font-size:28px;line-height:1.4;color:#4B524D">Outside models only read public headlines. Client data goes only to the bank’s own model.</p></div>
@@ -180,6 +306,7 @@ body.fs .bar:hover { opacity: 1 }
     else if (e.key === 'f' || e.key === 'F') toggleFull();
   });
   document.querySelector('.viewport').addEventListener('click', function (e) {
+    if (e.target.closest('a')) return;
     show(current + (e.clientX > window.innerWidth / 2 ? 1 : -1));
   });
   var startX = null;
