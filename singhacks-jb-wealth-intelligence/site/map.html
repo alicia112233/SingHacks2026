@@ -233,7 +233,7 @@ html { scroll-behavior: smooth }
         </div>
         <ul class="rules">
           <li>Each refresh keeps new events and skips ones already stored.</li>
-          <li>Extra feeds can be added by configuration, with no code change.</li>
+          <li>Extra feeds can be added by configuration, with no code change, including the bank's own research and market reviews.</li>
         </ul>
         <p class="where">Feeds are set in <code>TESSERA_NEWS_FEEDS</code>.</p>
       </div>
@@ -313,7 +313,15 @@ html { scroll-behavior: smooth }
           <tr><td>This week</td><td>45 to 69</td></tr>
           <tr><td>Monitor</td><td>Below 45</td></tr>
         </table></div>
-        <p class="where">Weights are illustrative, not calibrated. Code: <code>tessera/contradictions.py</code>, <code>tessera/engine.py</code>.</p>
+        <h3>Proposed actions</h3>
+        <div class="tbl"><table>
+          <tr><th>Score</th><th>What it answers</th></tr>
+          <tr><td>Priority</td><td>How much is at stake: time to a dated need and its size against sellable assets, distance outside a mandate limit, loan headroom. Sets the order.</td></tr>
+          <tr><td>Evidence</td><td>How well the action is supported. Every number in it must trace to a source record, or the action is blocked.</td></tr>
+        </table></div>
+        <h3>Customer vector</h3>
+        <p>Each client is also described by 24 named numbers (exposures, liquidity, obligations, stated profile). Code uses them to find lookalike clients and to track drift from the client's own goal. They never leave the bank.</p>
+        <p class="where">Weights are illustrative, not calibrated. Code: <code>tessera/contradictions.py</code>, <code>tessera/engine.py</code>, <code>tessera/client_vector.py</code>.</p>
       </div>
       <div class="trace">
         <p class="kicker">Abdullah at this step</p>
