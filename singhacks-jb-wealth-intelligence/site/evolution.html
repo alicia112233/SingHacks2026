@@ -53,7 +53,7 @@
 .bwa { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px }
 .bwa div { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; min-width: 0 }
 .bwa h4 { margin: 0; font-family: var(--mono); font-size: .74rem; font-weight: 500; letter-spacing: .12em; text-transform: uppercase }
-.bwa .b h4 { color: var(--red) } .bwa .w h4 { color: var(--slate) } .bwa .a h4 { color: var(--green) }
+.bwa .b h4 { color: var(--faint) } .bwa .w h4 { color: var(--slate) } .bwa .a h4 { color: var(--green) }
 .bwa .a { border: 1.5px solid var(--green) }
 .bwa p { font-size: .94rem; color: var(--muted) }
 .src-tag { display: inline-block; font-family: var(--mono); font-size: .72rem; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--slate); color: var(--slate); align-self: flex-start }
@@ -92,14 +92,14 @@
 <main class="wrap">
   <header class="ev-head">
     <p class="kicker">How it evolved</p>
-    <h1 class="title">We built a smart assistant. We learned to build for a bank.</h1>
-    <p class="lede">At SingHacks we asked one question: are the AI's answers good? We removed names before calling outside models and thought that was enough. Over the two months since, a check with a relationship manager about their pain points, plus our own research, taught us to ask a different question first: where is client data allowed to go at all? This page shows how that changed the product.</p>
+    <h1 class="title">From a working prototype to a tool a bank can run.</h1>
+    <p class="lede">At SingHacks we proved the idea: TESSERA found the client conversations a portfolio report misses, with the strongest AI models reviewing every action. Over the two months since, a check with a relationship manager about their pain points, plus our own research, showed us what it takes to run inside a bank: where client data may go, what an RM will trust, and what they need to see first. This page shows how that shaped the product.</p>
   </header>
 
   <section class="models" aria-label="Our mental model, then and now">
-    <div class="mm"><p class="kicker">At SingHacks we thought</p><p class="q">“Strip the names, send the numbers to the best AI models, and let them tell the RM what will happen.”</p></div>
+    <div class="mm"><p class="kicker">At SingHacks we set out to</p><p class="q">“Find the conversation a portfolio report misses, with the best AI models checking every action.”</p></div>
     <div class="arrowcell" aria-hidden="true">→</div>
-    <div class="mm now"><p class="kicker">Now we think</p><p class="q">“Code calculates. AI reads only what it is allowed to. The RM decides.”</p></div>
+    <div class="mm now"><p class="kicker">Now we build on</p><p class="q">“Code calculates. AI reads only what it is allowed to. The RM decides.”</p></div>
   </section>
 
   <section class="compare" aria-label="Where data went, then and now">
@@ -189,17 +189,17 @@
         </g>
       </svg>
     </div>
-    <p class="legend-text" id="dg-desc"><b>At SingHacks:</b> to review each recommended action, TESSERA sent the client's portfolio numbers, with names removed, to three outside AI models. The red dot is client data leaving the bank. News went through keyword rules, and the RM was told what a headline would do.</p>
+    <p class="legend-text" id="dg-desc"><b>At SingHacks:</b> three leading AI models reviewed each recommended action, using portfolio numbers with names removed. The red dot marks client data leaving the bank, the line we now never cross. News went through keyword rules, and the RM saw what a headline could mean.</p>
   </section>
 
   <section class="shifts" aria-label="Four shifts">
-    <h2 class="title">Four shifts in how we think</h2>
+    <h2 class="title">Six shifts since SingHacks</h2>
 
     <article class="shift">
       <div class="side"><span class="num">1</span><h3>Where client data is allowed to go</h3><span class="date">21 Oct and 30 Oct 2026</span></div>
       <div class="bwa">
-        <div class="b"><h4>We believed</h4><p>Removing names is enough. Outside AI models reviewed each action using the client's portfolio numbers, with names, IDs and RM notes stripped out.</p></div>
-        <div class="w"><h4>What changed our mind</h4><span class="src-tag">User testing</span><p>Talking to an RM about how they work showed us how strictly a bank separates public data from client data. Client data, anonymised or not, stays with AI the bank runs itself.</p></div>
+        <div class="b"><h4>At SingHacks</h4><p>Names, IDs and RM notes were stripped before any outside model reviewed an action, the usual standard for anonymised data.</p></div>
+        <div class="w"><h4>What we learned</h4><span class="src-tag">User testing</span><p>Talking to an RM about how they work showed us how strictly a bank separates public data from client data. Client data, anonymised or not, stays with AI the bank runs itself.</p></div>
         <div class="a"><h4>What we built</h4><p>First, a stricter check that blocks any packet carrying a name, ID or note, plus a view of exactly what the model saw. Then a full split: outside models only read public headlines, and one in-house model reviews actions from three angles.</p></div>
       </div>
     </article>
@@ -207,8 +207,8 @@
     <article class="shift">
       <div class="side"><span class="num">2</span><h3>From predicting to screening</h3><span class="date">27 Oct 2026</span></div>
       <div class="bwa">
-        <div class="b"><h4>We believed</h4><p>A good alert tells the RM what a headline will do to a client's portfolio.</p></div>
-        <div class="w"><h4>What changed our mind</h4><span class="src-tag">User testing</span><p>The RM we spoke to doubted any system can predict each headline's impact on every portfolio. RMs already get regular market and media reviews, so the gap is knowing which clients to check.</p></div>
+        <div class="b"><h4>At SingHacks</h4><p>Alerts showed the RM what a headline could mean for each client's portfolio.</p></div>
+        <div class="w"><h4>What we learned</h4><span class="src-tag">User testing</span><p>The RM we spoke to doubted any system can predict each headline's impact on every portfolio. RMs already get regular market and media reviews, so the gap is knowing which clients to check.</p></div>
         <div class="a"><h4>What we built</h4><p>A “May be exposed” flag: which clients a headline touches and what to check. Scenarios are labelled as illustrations, and confidence is capped at 84 until a model is tested on real outcomes.</p></div>
       </div>
     </article>
@@ -216,8 +216,8 @@
     <article class="shift">
       <div class="side"><span class="num">3</span><h3>From hand-written rules to detection</h3><span class="date">20 Oct 2026</span></div>
       <div class="bwa">
-        <div class="b"><h4>We believed</h4><p>For a demo, it is fine to code each featured client's contradiction by hand.</p></div>
-        <div class="w"><h4>What changed our mind</h4><span class="src-tag">Our own review</span><p>A rule that names a client breaks on the next client. A bank has thousands, and judges would ask about client number 21.</p></div>
+        <div class="b"><h4>At SingHacks</h4><p>Each featured client's contradiction was coded directly, to prove the idea end to end in a weekend.</p></div>
+        <div class="w"><h4>What we learned</h4><span class="src-tag">Our own review</span><p>A rule that names a client breaks on the next client. A bank has thousands, and judges would ask about client number 21.</p></div>
         <div class="a"><h4>What we built</h4><p>Detection that reads any client's source of wealth, objectives and RM notes, and compares them with look-through holdings. No client is named in the rules.</p></div>
       </div>
     </article>
@@ -225,9 +225,27 @@
     <article class="shift">
       <div class="side"><span class="num">4</span><h3>Showing what is real</h3><span class="date">29 Oct 2026</span></div>
       <div class="bwa">
-        <div class="b"><h4>We believed</h4><p>A polished screen builds trust.</p></div>
-        <div class="w"><h4>What changed our mind</h4><span class="src-tag">User testing</span><p>In a bank, a screen that mixes real data with simulations, without saying which is which, loses trust. Pages must show what is simulated.</p></div>
+        <div class="b"><h4>At SingHacks</h4><p>The demo focused on a polished, end-to-end experience.</p></div>
+        <div class="w"><h4>What we learned</h4><span class="src-tag">User testing</span><p>In a bank, a screen that mixes real data with simulations, without saying which is which, loses trust. Pages must show what is simulated.</p></div>
         <div class="a"><h4>What we built</h4><p>Every section carries a source tag: client data, calculation, illustration or public news. The demo's stand-in for the in-house model is labelled too.</p></div>
+      </div>
+    </article>
+
+    <article class="shift">
+      <div class="side"><span class="num">5</span><h3>Seeing each client as a whole</h3><span class="date">3 Nov 2026</span></div>
+      <div class="bwa">
+        <div class="b"><h4>At SingHacks</h4><p>Each client was reviewed on their own, one contradiction at a time.</p></div>
+        <div class="w"><h4>What we learned</h4><span class="src-tag">Our own review</span><p>An RM's next questions are "who else looks like this client?" and "is this getting worse?" One snapshot cannot answer either.</p></div>
+        <div class="a"><h4>What we built</h4><p>Customer vectors: every client as 24 named numbers, calculated inside the bank and never sent to a model. TESSERA finds lookalike clients with the reasons, tracks drift from each client's own goal (Abdullah: 29.4% to 42.1% in eight months), and maps the whole book.</p></div>
+      </div>
+    </article>
+
+    <article class="shift">
+      <div class="side"><span class="num">6</span><h3>Most pressing first, every number traced</h3><span class="date">3 Nov 2026</span></div>
+      <div class="bwa">
+        <div class="b"><h4>At SingHacks</h4><p>Each action carried one score, which mixed how important it was with how well it was supported.</p></div>
+        <div class="w"><h4>What we learned</h4><span class="src-tag">Our own review</span><p>A well-documented small task should not sit above a USD 2m payment due in two months. Importance and evidence are different questions.</p></div>
+        <div class="a"><h4>What we built</h4><p>A priority from what is at stake (time to a dated need, distance outside a mandate limit, loan headroom) decides the order. A separate evidence score says how well each action is supported, and every number in it links to its source record.</p></div>
       </div>
     </article>
   </section>
@@ -253,7 +271,7 @@
 <script>
 (function () {
   var desc = {
-    then: '<b>At SingHacks:</b> to review each recommended action, TESSERA sent the client’s portfolio numbers, with names removed, to three outside AI models. The red dot is client data leaving the bank. News went through keyword rules, and the RM was told what a headline would do.',
+    then: '<b>At SingHacks:</b> three leading AI models reviewed each recommended action, using portfolio numbers with names removed. The red dot marks client data leaving the bank, the line we now never cross. News went through keyword rules, and the RM saw what a headline could mean.',
     now: '<b>Now:</b> client data never crosses the line. Only public headlines go out, and outside models send back topics and severity. The bank\'s own research and market reviews come in as a second news feed, matched to every client\'s holdings. Actions are reviewed by the bank\'s own offline model, from a de-identified packet, and its review goes to the RM with what to check.'
   };
   var rm = { then: 'gets a predicted impact', now: 'gets what to check' };
