@@ -25,7 +25,7 @@
 .diagram { overflow-x: auto }
 .diagram svg { display: block; width: 100%; min-width: 640px; height: auto }
 .diagram text { font-family: var(--body); fill: var(--fg) }
-.diagram .lbl { font-family: var(--mono); font-size: 11px; fill: var(--faint) }
+.diagram .lbl { font-family: var(--mono); font-size: 11px; fill: var(--faint); paint-order: stroke; stroke: var(--card); stroke-width: 5px; stroke-linejoin: round }
 .diagram .zl { font-family: var(--mono); font-size: 11px; letter-spacing: 1.5px; fill: var(--faint) }
 .diagram .bx { fill: var(--card); stroke: var(--line-2); stroke-width: 1.5 }
 .diagram .bx.green { fill: var(--green); stroke: var(--green) }
@@ -37,7 +37,7 @@
 .diagram .sub { font-size: 12px; fill: var(--muted) }
 .diagram .t-on-green.sub { fill: var(--on-green); opacity: .8 }
 .diagram .wire { fill: none; stroke-width: 2.5 }
-.diagram .w-bank { stroke: var(--green) } .diagram .w-pub { stroke: var(--slate) } .diagram .w-bad { stroke: var(--red) }
+.diagram .w-bank { stroke: var(--green); marker-end: url(#m-bank) } .diagram .w-pub { stroke: var(--slate); marker-end: url(#m-pub) } .diagram .w-bad { stroke: var(--red); marker-end: url(#m-bad) }
 .diagram .d-bank { fill: var(--green) } .diagram .d-pub { fill: var(--slate) } .diagram .d-bad { fill: var(--red) }
 .diagram .zone-out { fill: var(--slate-soft) }
 .diagram .zone-in { fill: none; stroke: var(--line-2); stroke-width: 2; stroke-dasharray: 6 6 }
@@ -109,34 +109,39 @@
       <button type="button" data-v="now" aria-pressed="false">Now</button>
     </div>
     <div class="diagram">
-      <svg viewBox="0 0 900 340" role="img" aria-labelledby="dg-desc">
+      <svg viewBox="0 0 900 420" role="img" aria-labelledby="dg-desc">
         <defs>
-          <path id="p-client-code" d="M220 112 L320 112"/>
-          <path id="p-then-out" d="M520 100 L620 100"/>
-          <path id="p-then-back" d="M620 124 L520 124"/>
-          <path id="p-then-news" d="M620 268 C570 268 470 210 470 144"/>
-          <path id="p-code-rm" d="M420 144 L420 236"/>
-          <path id="p-now-inhouse" d="M360 144 C360 230 300 268 220 268"/>
-          <path id="p-now-news" d="M745 236 L745 144"/>
-          <path id="p-now-back" d="M620 112 L520 112"/>
+          <marker id="m-bank" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--green)"/></marker>
+          <marker id="m-pub" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--slate)"/></marker>
+          <marker id="m-bad" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="11" markerHeight="11" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--red)"/></marker>
+          <path id="p-client-code" d="M220 112 L400 112 Q420 112 420 132 L420 196"/>
+          <path id="p-code-rm" d="M420 260 L420 316"/>
+          <path id="p-then-out" d="M520 216 L620 216"/>
+          <path id="p-then-back" d="M620 240 L520 240"/>
+          <path id="p-then-news" d="M620 348 C560 348 480 330 480 260"/>
+          <path id="p-now-housenews" d="M220 228 L320 228"/>
+          <path id="p-now-inhouse" d="M330 260 C330 292 130 284 130 316"/>
+          <path id="p-now-review" d="M220 348 L320 348"/>
+          <path id="p-now-news" d="M745 316 L745 260"/>
+          <path id="p-now-back" d="M620 228 L520 228"/>
         </defs>
-        <rect class="zone-out" x="580" y="40" width="304" height="284" rx="14"/>
-        <rect class="zone-in" x="16" y="40" width="540" height="284" rx="14"/>
+        <rect class="zone-out" x="592" y="40" width="292" height="364" rx="14"/>
+        <rect class="zone-in" x="16" y="40" width="530" height="364" rx="14"/>
         <text class="zl" x="34" y="62">INSIDE THE BANK</text>
-        <text class="zl" x="598" y="62">OUTSIDE THE BANK</text>
+        <text class="zl" x="610" y="62">OUTSIDE THE BANK</text>
 
         <rect class="bx" x="40" y="80" width="180" height="64" rx="10"/>
         <text x="56" y="106" font-size="15" font-weight="600">Client record</text>
         <text class="sub" x="56" y="126">holdings, goals, RM notes</text>
-        <rect class="bx code" x="320" y="80" width="200" height="64" rx="10"/>
-        <text x="336" y="106" font-size="15" font-weight="600">TESSERA code</text>
-        <text class="sub" x="336" y="126">detects and scores</text>
-        <rect class="bx rm" x="320" y="236" width="200" height="64" rx="10"/>
-        <text x="336" y="262" font-size="15" font-weight="600">RM</text>
-        <text class="sub" x="336" y="282" id="rm-sub">gets a predicted impact</text>
-        <rect class="bx pub" x="620" y="236" width="250" height="64" rx="10"/>
-        <text x="636" y="262" font-size="15" font-weight="600">Public news</text>
-        <text class="sub" x="636" y="282">Yahoo Finance, CNBC, The Business Times</text>
+        <rect class="bx code" x="320" y="196" width="200" height="64" rx="10"/>
+        <text x="336" y="222" font-size="15" font-weight="600">TESSERA code</text>
+        <text class="sub" x="336" y="242">detects and scores</text>
+        <rect class="bx rm" x="320" y="316" width="200" height="64" rx="10"/>
+        <text x="336" y="342" font-size="15" font-weight="600">RM</text>
+        <text class="sub" x="336" y="362" id="rm-sub">gets a predicted impact</text>
+        <rect class="bx pub" x="620" y="316" width="250" height="64" rx="10"/>
+        <text x="636" y="342" font-size="15" font-weight="600">Public news</text>
+        <text class="sub" x="636" y="362">Yahoo Finance, CNBC, The Business Times</text>
 
         <use href="#p-client-code" class="wire w-bank"/>
         <use href="#p-code-rm" class="wire w-bank"/>
@@ -144,34 +149,42 @@
         <circle r="6" class="d-bank"><animateMotion dur="2.2s" repeatCount="indefinite"><mpath href="#p-code-rm"/></animateMotion></circle>
 
         <g id="g-then">
-          <rect class="bx bad" x="620" y="80" width="250" height="64" rx="10"/>
-          <text x="636" y="106" font-size="15" font-weight="600">Outside AI models</text>
-          <text class="sub" x="636" y="126">GPT, Claude, Gemini review actions</text>
+          <rect class="bx bad" x="620" y="196" width="250" height="64" rx="10"/>
+          <text x="636" y="222" font-size="15" font-weight="600">Outside AI models</text>
+          <text class="sub" x="636" y="242">GPT, Claude, Gemini review actions</text>
           <use href="#p-then-out" class="wire w-bad"/>
           <use href="#p-then-back" class="wire w-bank"/>
           <use href="#p-then-news" class="wire w-pub"/>
-          <text class="lbl" x="522" y="92" style="fill:var(--red)">portfolio numbers</text>
-          <text class="lbl" x="530" y="140">scores back</text>
-          <text class="lbl" x="560" y="214">keyword rules</text>
+          <text class="lbl" x="526" y="188" style="fill:var(--red)">portfolio numbers</text>
+          <text class="lbl" x="528" y="258">scores back</text>
+          <text class="lbl" x="530" y="318">keyword rules</text>
           <circle r="7" class="d-bad"><animateMotion dur="1.8s" repeatCount="indefinite"><mpath href="#p-then-out"/></animateMotion></circle>
           <circle r="6" class="d-bank"><animateMotion dur="1.8s" repeatCount="indefinite"><mpath href="#p-then-back"/></animateMotion></circle>
           <circle r="6" class="d-pub"><animateMotion dur="2.4s" repeatCount="indefinite"><mpath href="#p-then-news"/></animateMotion></circle>
         </g>
 
         <g id="g-now" style="display:none">
-          <rect class="bx pub" x="620" y="80" width="250" height="64" rx="10"/>
-          <text x="636" y="106" font-size="15" font-weight="600">Outside AI models</text>
-          <text class="sub" x="636" y="126">vote on public headlines only</text>
-          <rect class="bx green" x="40" y="236" width="180" height="64" rx="10"/>
-          <text class="t-on-green" x="56" y="262" font-size="15" font-weight="600">In-house model</text>
-          <text class="t-on-green sub" x="56" y="282">offline, reviews actions</text>
+          <rect class="bx pub" x="620" y="196" width="250" height="64" rx="10"/>
+          <text x="636" y="222" font-size="15" font-weight="600">Outside AI models</text>
+          <text class="sub" x="636" y="242">vote on public headlines only</text>
+          <rect class="bx" x="40" y="196" width="180" height="64" rx="10"/>
+          <text x="56" y="222" font-size="15" font-weight="600">In-house news</text>
+          <text class="sub" x="56" y="242">bank research, market reviews</text>
+          <rect class="bx green" x="40" y="316" width="180" height="64" rx="10"/>
+          <text class="t-on-green" x="56" y="342" font-size="15" font-weight="600">In-house model</text>
+          <text class="t-on-green sub" x="56" y="362">offline, reviews actions</text>
+          <use href="#p-now-housenews" class="wire w-bank"/>
           <use href="#p-now-inhouse" class="wire w-bank"/>
+          <use href="#p-now-review" class="wire w-bank"/>
           <use href="#p-now-news" class="wire w-pub"/>
           <use href="#p-now-back" class="wire w-pub"/>
-          <text class="lbl" x="752" y="196">headline only</text>
-          <text class="lbl" x="540" y="104">topics</text>
-          <text class="lbl" x="228" y="226">de-identified action</text>
+          <text class="lbl" x="752" y="292">headline only</text>
+          <text class="lbl" x="549" y="220">topics</text>
+          <text class="lbl" x="196" y="300">de-identified action</text>
+          <text class="lbl" x="246" y="340">review</text>
+          <circle r="6" class="d-bank"><animateMotion dur="2s" repeatCount="indefinite"><mpath href="#p-now-housenews"/></animateMotion></circle>
           <circle r="6" class="d-bank"><animateMotion dur="2.2s" repeatCount="indefinite"><mpath href="#p-now-inhouse"/></animateMotion></circle>
+          <circle r="6" class="d-bank"><animateMotion dur="2s" repeatCount="indefinite"><mpath href="#p-now-review"/></animateMotion></circle>
           <circle r="6" class="d-pub"><animateMotion dur="1.8s" repeatCount="indefinite"><mpath href="#p-now-news"/></animateMotion></circle>
           <circle r="6" class="d-pub"><animateMotion dur="1.8s" repeatCount="indefinite"><mpath href="#p-now-back"/></animateMotion></circle>
         </g>
@@ -242,7 +255,7 @@
 (function () {
   var desc = {
     then: '<b>At SingHacks:</b> to review each recommended action, TESSERA sent the client’s portfolio numbers, with names removed, to three outside AI models. The red dot is client data leaving the bank. News went through keyword rules, and the RM was told what a headline would do.',
-    now: '<b>Now:</b> client data never crosses the line. Only public headlines go out, and outside models send back topics and severity. Actions are reviewed by the bank\'s own offline model, from a de-identified packet. The RM is told what to check.'
+    now: '<b>Now:</b> client data never crosses the line. Only public headlines go out, and outside models send back topics and severity. The bank\'s own research and market reviews come in as a second news feed, matched to every client\'s holdings. Actions are reviewed by the bank\'s own offline model, from a de-identified packet, and its review goes to the RM with what to check.'
   };
   var rm = { then: 'gets a predicted impact', now: 'gets what to check' };
   var btns = document.querySelectorAll('.toggle button');
