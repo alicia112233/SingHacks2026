@@ -446,18 +446,16 @@ function queueTableHTML(queue, nextUpId) {
 }
 
 function summaryHeaderHTML(counts, total) {
+  const lanes = [
+    ["exposed", counts.breach, "May be exposed"],
+    ["now", counts.now, "Act now"],
+    ["week", counts.week, "This week"],
+    ["monitor", counts.monitor, "Monitor"],
+  ];
   return `
     <div class="queue-summary" aria-label="Follow-up summary">
-      <span class="queue-summary-item urgent"><b>${counts.breach}</b> may be exposed</span>
-      <span class="queue-summary-item">·</span>
-      <span class="queue-summary-item urgent"><b>${counts.now}</b> act now</span>
-      <span class="queue-summary-item">·</span>
-      <span class="queue-summary-item"><b>${counts.week}</b> this week</span>
-      <span class="queue-summary-item">·</span>
-      <span class="queue-summary-item"><b>${counts.monitor}</b> monitoring</span>
-      <span class="queue-summary-item">·</span>
-      <span class="queue-summary-item"><b>${counts.resolved}</b> reviews recorded</span>
-      <span class="queue-summary-total">of ${total} clients</span>
+      ${lanes.map(([key, count, label]) => `<div class="queue-stat stat-${key}"><strong>${count}</strong><span>${label}</span></div>`).join("")}
+      <div class="queue-stat stat-reviewed"><strong>${counts.resolved}<small> / ${total}</small></strong><span>Reviewed</span></div>
     </div>`;
 }
 
