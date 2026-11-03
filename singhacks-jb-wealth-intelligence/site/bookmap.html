@@ -210,8 +210,8 @@
       return '<div class="dim" style="--w:' + Math.min(100, x.v * 100).toFixed(1) + '%"><span>' + esc(x.f.label) + '</span><b>' + fmt(x.f.unit, x.v) + '</b><i></i></div>';
     }).join('') + '</div></div>';
     html += '<div class="dsec"><small>Clients like this one</small>' + v.similar.map(function (s) {
-      var why = s.shared.length ? s.shared.map(function (r) { return r.label + ' ' + fmt(r.unit, r.a) + ' vs ' + fmt(r.unit, r.b); }).join(' · ') : 'Alike across the whole profile';
-      return '<button type="button" class="sim" data-id="' + s.client_id + '"><span class="top"><span>' + esc(s.name) + '</span><span>' + Math.round(s.similarity * 100) + '% alike</span></span><small>' + esc(why) + '</small></button>';
+      var why = s.drivers.length ? s.drivers.map(function (r) { return r.label + ' ' + fmt(r.unit, r.a) + ' vs ' + fmt(r.unit, r.b); }).join(' · ') : 'No single dimension stands out';
+      return '<button type="button" class="sim" data-id="' + s.client_id + '"><span class="top"><span>' + esc(s.name) + '</span><span>' + s.similarity.toFixed(2) + ' similarity</span></span><small>' + esc(why) + '</small></button>';
     }).join('') + '</div>';
     detail.innerHTML = html;
     detail.querySelectorAll('.sim').forEach(function (b) { b.addEventListener('click', function () { select(b.dataset.id); }); });

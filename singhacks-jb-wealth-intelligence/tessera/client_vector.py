@@ -36,7 +36,7 @@ ASSET_CLASSES = (
 )
 
 FEATURES: tuple[Feature, ...] = (
-    *(Feature(f"theme:{label}", label.capitalize(), "Exposure, looked through", "share") for label in THEME_LABELS),
+    *(Feature(f"theme:{label}", f"{label.capitalize()} exposure", "Exposure, looked through", "share") for label in THEME_LABELS),
     *(Feature(f"asset:{name}", label, "Portfolio build", "share") for name, label in ASSET_CLASSES),
     Feature("currency_mismatch", "Held outside base currency", "Portfolio build", "share"),
     Feature("daily_liquid", "Sellable daily", "Liquidity", "share"),
@@ -128,16 +128,56 @@ def _cosine(matrix: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(unit @ unit.T, index=matrix.index, columns=matrix.index)
 
 
-def _shared(a: str, b: str, raw: pd.DataFrame, scaled: pd.DataFrame) -> list[dict[str, Any]]:
-    """The dimensions where both clients sit above the book average, strongest first."""
+def _drivers(a: str, b: str, raw: pd.DataFrame, scaled: pd.DataFrame) -> list[dict[str, Any]]:
+    """The dimensions that add most to the similarity score, so the reasons shown are the real ones.
 
-    both = scaled.loc[[a, b]]
-    keys = [key for key in raw.columns if (both[key] > 0).all() and raw.loc[[a, b], key].abs().min() > 0]
-    keys.sort(key=lambda key: float(both[key].min()), reverse=True)
+    Cosine is a sum over dimensions, so each dimension's share is exact. Shared
+    absences (both hold nothing gated) count, because rarity is what makes them alike.
+    """
+
+    va, vb = scaled.loc[a], scaled.loc[b]
+    norm = float(np.linalg.norm(va) * np.linalg.norm(vb)) or 1.0
+    shares = (va * vb / norm).sort_values(ascending=False)
     return [
-        {"key": key, "label": BY_KEY[key].label, "unit": BY_KEY[key].unit, "a": _value(raw.at[a, key]), "b": _value(raw.at[b, key])}
-        for key in keys[:3]
+        {
+            "key": key,
+            "label": BY_KEY[key].label,
+            "unit": BY_KEY[key].unit,
+            "a": _value(raw.at[a, key]),
+            "b": _value(raw.at[b, key]),
+            "adds": round(float(share), 2),
+        }
+        for key, share in shares.head(3).items()
+        if share > 0
     ]
+
+
+def _fingerprint(cid: str, raw: pd.DataFrame) -> list[dict[str, Any]]:
+    """For each group, the dimension where this client stands furthest from the rest of the book."""
+
+    others = raw.drop(cid)
+    rows = []
+    for group in dict.fromkeys(feature.group for feature in FEATURES):
+        best = None
+        for key in (feature.key for feature in FEATURES if feature.group == group):
+            value = raw.at[cid, key]
+            above, below = int((others[key] < value).sum()), int((others[key] > value).sum())
+            if best is None or abs(above - below) > abs(best[1] - best[2]):
+                best = (key, above, below)
+        key, above, below = best
+        rows.append(
+            {
+                "group": group,
+                "key": key,
+                "label": BY_KEY[key].label,
+                "unit": BY_KEY[key].unit,
+                "value": _value(raw.at[cid, key]),
+                "above": above,
+                "below": below,
+                "others": len(others),
+            }
+        )
+    return rows
 
 
 def _value(number: float) -> float:
@@ -216,10 +256,11 @@ def build_client_vectors(bundle: dict[str, Any], needs_by_client: dict[str, list
                     "client_id": other,
                     "name": str(clients.at[other, "client_name"]),
                     "similarity": round(float(score), 2),
-                    "shared": _shared(cid, other, raw, scaled),
+                    "drivers": _drivers(cid, other, raw, scaled),
                 }
                 for other, score in ranked.items()
             ],
+            "fingerprint": _fingerprint(cid, raw),
             "goal_gap": gap,
             "goal_themes": " and ".join(dict.fromkeys(theme.label for theme in avoid)) or None,
             "biggest_moves": [
@@ -232,7 +273,7 @@ def build_client_vectors(bundle: dict[str, Any], needs_by_client: dict[str, list
     return {
         "as_of": as_of,
         "snapshots": snapshots,
-        "method": "Named features calculated in-house from the client record. Each feature is ranked across the book, groups are weighted equally, and similarity is cosine. Similarity, not prediction; never sent to any model.",
+        "method": "Named features calculated in-house from the client record. Each feature is ranked across the book, groups are weighted equally, and similarity is cosine (from -1 to 1). Similarity, not prediction; never sent to any model.",
         "features": [{"key": f.key, "label": f.label, "group": f.group, "unit": f.unit} for f in FEATURES],
         "axes": axes,
         "clients": result,

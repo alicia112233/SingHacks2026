@@ -45,12 +45,26 @@ class ClientVectorTests(unittest.TestCase):
         # Ranking bounds every scaled value, however large the raw number.
         self.assertLessEqual(float(_scaled(raw).abs().max().max()), 0.5)
 
-    def test_shared_reasons_are_true_for_both_clients(self):
+    def test_reasons_are_true_and_are_what_drives_the_score(self):
         for cid, vector in self.clients.items():
             for item in vector["similar"]:
-                for reason in item["shared"]:
+                adds = [reason["adds"] for reason in item["drivers"]]
+                self.assertEqual(adds, sorted(adds, reverse=True))
+                self.assertTrue(all(share > 0 for share in adds))
+                for reason in item["drivers"]:
                     self.assertEqual(reason["a"], vector["values"][reason["key"]])
                     self.assertEqual(reason["b"], self.clients[item["client_id"]]["values"][reason["key"]])
+
+    def test_every_client_gets_one_fingerprint_row_per_group(self):
+        groups = list(dict.fromkeys(feature.group for feature in FEATURES))
+        for vector in self.clients.values():
+            self.assertEqual([row["group"] for row in vector["fingerprint"]], groups)
+            for row in vector["fingerprint"]:
+                self.assertEqual(row["value"], vector["values"][row["key"]])
+                self.assertLessEqual(row["above"] + row["below"], row["others"])
+
+    def test_feature_labels_are_unique(self):
+        self.assertEqual(len({feature.label for feature in FEATURES}), len(FEATURES))
 
     def test_abdullah_drifts_towards_what_he_asked_to_leave(self):
         abdullah = self.clients["CL-0019"]

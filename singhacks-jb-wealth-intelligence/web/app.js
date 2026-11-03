@@ -411,7 +411,6 @@ function breachPanelHTML(item) {
         ${escalation.exposed_holdings?.length ? `<span><b>Holdings it touches:</b> ${esc(escalation.exposed_holdings.join(", "))}</span>` : ""}
         <span>${sourceTag("news")} Headline: “${esc(escalation.headline)}” · ${esc(escalation.severity)} · ${fullDate(escalation.date)}${escalation.source_url ? ` · <a href="${esc(escalation.source_url)}" target="_blank" rel="noopener noreferrer">Open source ↗</a>` : ""}</span>
         ${escalation.stress ? `<small class="breach-stress">${sourceTag("sim")} ${esc(escalation.stress)}</small>` : ""}
-        ${alsoCheckHTML(item.client_id)}
       </div>
       <div class="breach-actions">${actions}</div>
     </div>`;
@@ -809,16 +808,12 @@ function featureValue(unit, value) {
 }
 
 function similarReasons(item) {
-  if (!item.shared.length) return "Alike across the whole profile";
-  return item.shared.map((reason) => `${reason.label} ${featureValue(reason.unit, reason.a)} vs ${featureValue(reason.unit, reason.b)}`).join(" · ");
+  if (!item.drivers.length) return "No single dimension stands out";
+  return item.drivers.map((reason) => `${reason.label} ${featureValue(reason.unit, reason.a)} vs ${featureValue(reason.unit, reason.b)}`).join(" · ");
 }
 
-// Names the clients whose books look most like this one, so one flag prompts a check of its lookalikes.
-function alsoCheckHTML(clientId) {
-  const vector = clientVector(clientId);
-  if (!vector?.similar?.length) return "";
-  const links = vector.similar.map((item) => `<a href="${routeFor("client", item.client_id)}" data-open-client="${esc(item.client_id)}">${esc(item.name)}</a>`).join(", ");
-  return `<span><b>Similar books to check:</b> ${links}</span>`;
+function standing(row) {
+  return row.above >= row.below ? `higher than ${row.above} of ${row.others}` : `lower than ${row.below} of ${row.others}`;
 }
 
 function goalDriftChart(points) {
@@ -840,27 +835,28 @@ function clientVectorHTML(clientId) {
   if (!vector) return "";
   const drift = vector.goal_gap
     ? `<div class="vector-block"><small>DRIFT FROM STATED GOAL</small><p>Share of the portfolio in what the client asked to move away from (${esc(vector.goal_themes)}), looked through.</p>${goalDriftChart(vector.goal_gap)}</div>`
-    : `<div class="vector-block"><small>BIGGEST CHANGES SINCE ${esc(monthYear(state.data.client_vectors.snapshots[0]).toUpperCase())}</small>${vector.biggest_moves.length ? `<ul class="vector-moves">${vector.biggest_moves.map((move) => `<li><span>${esc(move.label)}</span><b>${featureValue("share", move.from)} → ${featureValue("share", move.to)}</b></li>`).join("")}</ul>` : `<p>No dimension moved by more than one point.</p>`}</div>`;
+    : "";
+  const fingerprint = `<div class="vector-block"><small>WHAT SETS THIS BOOK APART</small><ul class="vector-moves vector-fingerprint">${vector.fingerprint.map((row) => `<li><span><em>${esc(row.group)}</em>${esc(row.label)} <b>${featureValue(row.unit, row.value)}</b></span><small>${standing(row)}</small></li>`).join("")}</ul></div>`;
   const similar = vector.similar.map((item) => `
       <a class="similar-row" href="${routeFor("client", item.client_id)}" data-open-client="${esc(item.client_id)}">
-        <span class="similar-name">${esc(item.name)}</span><span class="similar-score">${Math.round(item.similarity * 100)}% alike</span>
+        <span class="similar-name">${esc(item.name)}</span><span class="similar-score">${item.similarity.toFixed(2)} similarity</span>
         <small>${esc(similarReasons(item))}</small>
       </a>`).join("");
   return `
     <section class="panel vector-panel">
       <div class="panel-title"><h3>Client vector ${sourceTag("calc")}</h3><small>${state.data.client_vectors.features.length} NAMED DIMENSIONS · CALCULATED IN-HOUSE · NEVER SENT TO A MODEL</small></div>
       <div class="vector-grid">
-        ${drift}
-        <div class="vector-block"><small>CLIENTS LIKE THIS ONE</small>${similar}<p class="vector-note">Similarity across exposures, liquidity, obligations and stated profile. A measure of how alike two books look, not a prediction.</p></div>
+        <div class="vector-stack">${drift}${fingerprint}</div>
+        <div class="vector-block"><small>CLIENTS LIKE THIS ONE</small>${similar}<p class="vector-note">Similarity runs from -1 to 1: each of the 24 dimensions is ranked across the book and the five groups count equally. Reasons are the dimensions that add most to the score. A measure of how alike two books look, not a prediction or a news signal.</p></div>
       </div>
     </section>`;
 }
 
 // Every section says where its content comes from, so simulated and real data are never confused.
 const SOURCE_TAGS = {
-  record: "Synthetic demo data",
+  record: "Client record (synthetic)",
   calc: "Calculated by TESSERA",
-  sim: "Illustrative, not a forecast",
+  sim: "Scenario, not a forecast",
   news: "Public news",
 };
 
@@ -876,7 +872,7 @@ function triageNote(event) {
 }
 
 function dataLegendHTML() {
-  return `<div class="data-legend"><strong>Where each figure comes from:</strong> ${sourceTag("record")} invented client records for this demo ${sourceTag("calc")} ${sourceTag("sim")} ${sourceTag("news")}<span>In a bank deployment, client records and anything calculated from them would be sensitive client data (C3 to C4); public news is C1 to C2.</span></div>`;
+  return `<div class="data-legend"><div><strong>Sources</strong>${sourceTag("record")}${sourceTag("calc")}${sourceTag("sim")}${sourceTag("news")}</div><p>Client records are invented for this demo. In a bank, client records and figures calculated from them are confidential (C3 to C4); public news is C1 to C2.</p></div>`;
 }
 
 function renderClient(clientId) {
@@ -1020,7 +1016,7 @@ function evaluationPanelHTML(evaluation, index) {
   const retrievedEvidence = retrieval.evidence?.length
     ? `<div class="retrieval-list">${retrieval.evidence.map((item) => `<article><header><strong>${esc(item.source)}</strong><span>${esc(item.source_type)}</span></header><p>${esc(item.excerpt)}</p></article>`).join("")}</div>`
     : "";
-  return `<div class="evaluation-heading"><div><span class="section-kicker">SECOND-LAYER REVIEW</span><h3>Model review of this action</h3></div><button class="action-button" data-run-evaluation="${index}">Run again</button></div><div class="panel-consensus"><strong>${evaluation.consensus.score}/100</strong><div><b>${esc(evaluation.consensus.band)}</b><span>${esc(evaluation.consensus.rule)}</span></div></div><h4 class="evaluation-subtitle">Evidence coverage</h4><div class="dataset-scores">${Object.entries(evaluation.datasets).map(([name, lens]) => `<div><small>${esc(name)} dataset</small><b>${lens.score}/100</b><span>${esc(lens.detail)}</span></div>`).join("")}</div><div class="validation-layers"><div><small>DETERMINISTIC ALGORITHM</small><b>${evaluation.deterministic.score}/100 · ${esc(evaluation.deterministic.status)}</b><span>Policy, evidence, suitability, freshness and hard-stop validation.</span></div><div><small>PREDICTIVE PROBABILITY</small><b>${esc(predictive.status)}</b><span>${esc(predictive.reason)}</span></div></div><h4 class="evaluation-subtitle">Chroma semantic evidence</h4><div class="retrieval-status ${retrieval.status === "ready" ? "ready" : ""}"><strong>${esc(retrieval.status)}</strong><span>${esc(retrieval.reason)}</span></div>${retrievedEvidence}<h4 class="evaluation-subtitle">In-house model, three angles</h4><p class="production-note"><strong>${esc(evaluation.reviewer?.deployment || "In-house model")}:</strong> client data (C3 to C4) only goes to the bank's in-house model, so one model reviews this action from three angles. ${evaluation.reviewer?.deployment?.startsWith("Demo") ? `In this demo, ${esc(evaluation.reviewer.model)} stands in for it and sees only the de-identified packet below. ` : ""}External models such as GPT, Claude and Gemini only read public headlines (C1 to C2).</p><div class="judge-list">${evaluation.judges.map((judge) => `<article class="${judge.status === "Completed" ? "completed" : "unavailable"}"><header><div><small>${esc(judge.angle ? `Angle · ${judge.model}` : `${judge.provider} provider`)}</small><strong>${esc(judge.angle || judge.model)}</strong></div><b>${judge.status === "Completed" ? `${judge.score}/100` : esc(judge.status)}</b></header>${judge.status === "Completed" ? `<p>${esc(judge.rationale)}</p><div><span>Customer ${judge.customer_fit}</span><span>Product ${judge.product_fit}</span><span>Signal ${judge.signal_support}</span></div>${judge.required_rm_checks?.length ? `<ul>${judge.required_rm_checks.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>` : ""}` : `<p>${esc(judgeFailureMessage(judge))}</p>`}</article>`).join("")}</div>${modelPacketHTML(evaluation)}<p class="privacy-note">${esc(evaluation.privacy)} RM approval is still required.</p>`;
+  return `<div class="evaluation-heading"><div><span class="section-kicker">SECOND-LAYER REVIEW</span><h3>Model review of this action</h3></div><button class="action-button" data-run-evaluation="${index}">Run again</button></div><div class="panel-consensus"><strong>${evaluation.consensus.score}/100</strong><div><b>${esc(evaluation.consensus.band)}</b><span>${esc(evaluation.consensus.rule)}</span></div></div><h4 class="evaluation-subtitle">Evidence coverage</h4><div class="dataset-scores">${Object.entries(evaluation.datasets).map(([name, lens]) => `<div><small>${esc(name)} dataset</small><b>${lens.score}/100</b><span>${esc(lens.detail)}</span></div>`).join("")}</div><div class="validation-layers"><div><small>DETERMINISTIC ALGORITHM</small><b>${evaluation.deterministic.score}/100 · ${esc(evaluation.deterministic.status)}</b><span>Policy, evidence, suitability, freshness and hard-stop validation.</span></div><div><small>PREDICTIVE PROBABILITY</small><b>${esc(predictive.status)}</b><span>${esc(predictive.reason)}</span></div></div><h4 class="evaluation-subtitle">Chroma semantic evidence</h4><div class="retrieval-status ${retrieval.status === "ready" ? "ready" : ""}"><strong>${esc(retrieval.status)}</strong><span>${esc(retrieval.reason)}</span></div>${retrievedEvidence}<h4 class="evaluation-subtitle">In-house model, three angles</h4><p class="production-note"><strong>${esc(evaluation.reviewer?.deployment || "In-house model")}:</strong> client data (C3 to C4) only goes to the bank's in-house model, so one model reviews this action from three angles. ${evaluation.reviewer?.deployment?.startsWith("Demo") ? `In this demo, ${esc(evaluation.reviewer.model)} stands in for it and sees only the de-identified packet below. ` : ""}External models such as GPT, Claude and Gemini only read public headlines (C1 to C2).</p>${evaluation.judges.some((judge) => judge.status === "Completed") ? `<div class="judge-list">${evaluation.judges.map((judge) => `<article class="${judge.status === "Completed" ? "completed" : "unavailable"}"><header><div><small>${esc(judge.angle ? "Angle · In-house model" : `${judge.provider} provider`)}</small><strong>${esc(judge.angle || judge.model)}</strong></div><b>${judge.status === "Completed" ? `${judge.score}/100` : esc(judge.status)}</b></header>${judge.status === "Completed" ? `<p>${esc(judge.rationale)}</p><div><span>Customer ${judge.customer_fit}</span><span>Product ${judge.product_fit}</span><span>Signal ${judge.signal_support}</span></div>${judge.required_rm_checks?.length ? `<ul>${judge.required_rm_checks.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>` : ""}` : `<p>${esc(judgeFailureMessage(judge))}</p>`}</article>`).join("")}</div>` : `<p class="review-off"><b>Not run in this demo.</b> When switched on, the in-house model checks ${esc(evaluation.judges.map((judge) => (judge.angle || judge.model).toLowerCase()).join(", ").replace(/, ([^,]*)$/, " and $1"))}.</p>`}${modelPacketHTML(evaluation)}<p class="privacy-note">${esc(evaluation.privacy)} RM approval is still required.</p>`;
 }
 
 async function runIndependentEvaluation(client, index, button) {

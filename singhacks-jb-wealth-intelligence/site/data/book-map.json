@@ -7,59 +7,59 @@
   "2026-06-30",
   "2026-08-26"
  ],
- "method": "Named features calculated in-house from the client record. Each feature is ranked across the book, groups are weighted equally, and similarity is cosine. Similarity, not prediction; never sent to any model.",
+ "method": "Named features calculated in-house from the client record. Each feature is ranked across the book, groups are weighted equally, and similarity is cosine (from -1 to 1). Similarity, not prediction; never sent to any model.",
  "features": [
   {
    "key": "theme:energy",
-   "label": "Energy",
+   "label": "Energy exposure",
    "group": "Exposure, looked through",
    "unit": "share"
   },
   {
    "key": "theme:shipping",
-   "label": "Shipping",
+   "label": "Shipping exposure",
    "group": "Exposure, looked through",
    "unit": "share"
   },
   {
    "key": "theme:property",
-   "label": "Property",
+   "label": "Property exposure",
    "group": "Exposure, looked through",
    "unit": "share"
   },
   {
    "key": "theme:plantation",
-   "label": "Plantation",
+   "label": "Plantation exposure",
    "group": "Exposure, looked through",
    "unit": "share"
   },
   {
    "key": "theme:healthcare",
-   "label": "Healthcare",
+   "label": "Healthcare exposure",
    "group": "Exposure, looked through",
    "unit": "share"
   },
   {
    "key": "theme:technology",
-   "label": "Technology",
+   "label": "Technology exposure",
    "group": "Exposure, looked through",
    "unit": "share"
   },
   {
    "key": "theme:luxury",
-   "label": "Luxury",
+   "label": "Luxury exposure",
    "group": "Exposure, looked through",
    "unit": "share"
   },
   {
    "key": "theme:commodities",
-   "label": "Commodities",
+   "label": "Commodities exposure",
    "group": "Exposure, looked through",
    "unit": "share"
   },
   {
    "key": "theme:industrial",
-   "label": "Industrial",
+   "label": "Industrial exposure",
    "group": "Exposure, looked through",
    "unit": "share"
   },
@@ -172,7 +172,7 @@
    ],
    "high": [
     "Fixed income",
-    "Property"
+    "Property exposure"
    ]
   }
  },
@@ -209,27 +209,30 @@
      "client_id": "CL-0005",
      "name": "Aishah binti Rahman",
      "similarity": 0.38,
-     "shared": [
+     "drivers": [
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.0357,
+       "b": 0.0,
+       "adds": 0.16
+      },
       {
        "key": "daily_liquid",
        "label": "Sellable daily",
        "unit": "share",
        "a": 0.8942,
-       "b": 0.9428
+       "b": 0.9428,
+       "adds": 0.12
       },
       {
        "key": "currency_mismatch",
        "label": "Held outside base currency",
        "unit": "share",
        "a": 0.9714,
-       "b": 0.6132
-      },
-      {
-       "key": "theme:energy",
-       "label": "Energy",
-       "unit": "share",
-       "a": 0.4499,
-       "b": 0.1113
+       "b": 0.6132,
+       "adds": 0.07
       }
      ]
     },
@@ -237,27 +240,30 @@
      "client_id": "CL-0016",
      "name": "Yamamoto Kenji",
      "similarity": 0.36,
-     "shared": [
+     "drivers": [
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.0357,
+       "b": 0.0,
+       "adds": 0.16
+      },
       {
        "key": "daily_liquid",
        "label": "Sellable daily",
        "unit": "share",
        "a": 0.8942,
-       "b": 1.0
+       "b": 1.0,
+       "adds": 0.15
       },
       {
        "key": "risk_gap",
        "label": "Risk assets above target",
        "unit": "points",
        "a": 0.2975,
-       "b": 0.2537
-      },
-      {
-       "key": "currency_mismatch",
-       "label": "Held outside base currency",
-       "unit": "share",
-       "a": 0.9714,
-       "b": 0.5641
+       "b": 0.2537,
+       "adds": 0.07
       }
      ]
     },
@@ -265,29 +271,84 @@
      "client_id": "CL-0018",
      "name": "Elena Marchetti-Wong",
      "similarity": 0.33,
-     "shared": [
+     "drivers": [
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.0357,
+       "b": 0.0,
+       "adds": 0.16
+      },
       {
        "key": "daily_liquid",
        "label": "Sellable daily",
        "unit": "share",
        "a": 0.8942,
-       "b": 1.0
-      },
-      {
-       "key": "asset:Commodities",
-       "label": "Commodities",
-       "unit": "share",
-       "a": 0.0367,
-       "b": 0.1404
+       "b": 1.0,
+       "adds": 0.14
       },
       {
        "key": "currency_mismatch",
        "label": "Held outside base currency",
        "unit": "share",
        "a": 0.9714,
-       "b": 0.468
+       "b": 0.468,
+       "adds": 0.05
       }
      ]
+    }
+   ],
+   "fingerprint": [
+    {
+     "group": "Exposure, looked through",
+     "key": "theme:energy",
+     "label": "Energy exposure",
+     "unit": "share",
+     "value": 0.4499,
+     "above": 19,
+     "below": 0,
+     "others": 19
+    },
+    {
+     "group": "Portfolio build",
+     "key": "currency_mismatch",
+     "label": "Held outside base currency",
+     "unit": "share",
+     "value": 0.9714,
+     "above": 19,
+     "below": 0,
+     "others": 19
+    },
+    {
+     "group": "Liquidity",
+     "key": "gated",
+     "label": "Gated or illiquid",
+     "unit": "share",
+     "value": 0.0357,
+     "above": 4,
+     "below": 15,
+     "others": 19
+    },
+    {
+     "group": "Obligations",
+     "key": "ltv_to_trigger",
+     "label": "Loan against its margin-call level",
+     "unit": "share",
+     "value": 0.845,
+     "above": 17,
+     "below": 2,
+     "others": 19
+    },
+    {
+     "group": "Stated profile",
+     "key": "risk_gap",
+     "label": "Risk assets above target",
+     "unit": "points",
+     "value": 0.2975,
+     "above": 16,
+     "below": 3,
+     "others": 19
     }
    ],
    "goal_gap": [
@@ -322,7 +383,7 @@
     },
     {
      "key": "theme:energy",
-     "label": "Energy",
+     "label": "Energy exposure",
      "from": 0.3811,
      "to": 0.4499
     },
@@ -374,27 +435,30 @@
      "client_id": "CL-0014",
      "name": "Lau Chi Ming",
      "similarity": 0.53,
-     "shared": [
+     "drivers": [
       {
-       "key": "ltv_to_trigger",
-       "label": "Loan against its margin-call level",
+       "key": "daily_liquid",
+       "label": "Sellable daily",
        "unit": "share",
-       "a": 0.9828,
-       "b": 0.9916
+       "a": 0.2828,
+       "b": 0.4295,
+       "adds": 0.19
       },
       {
        "key": "gated",
        "label": "Gated or illiquid",
        "unit": "share",
        "a": 0.7172,
-       "b": 0.2662
+       "b": 0.2662,
+       "adds": 0.14
       },
       {
-       "key": "cash_need_cover",
-       "label": "Cash due in 24 months against daily-liquid assets",
-       "unit": "ratio",
-       "a": 0.4694,
-       "b": 0.6751
+       "key": "ltv_to_trigger",
+       "label": "Loan against its margin-call level",
+       "unit": "share",
+       "a": 0.9828,
+       "b": 0.9916,
+       "adds": 0.12
       }
      ]
     },
@@ -402,27 +466,30 @@
      "client_id": "CL-0017",
      "name": "Fong Enterprises Family Office",
      "similarity": 0.5,
-     "shared": [
+     "drivers": [
       {
        "key": "gated",
        "label": "Gated or illiquid",
        "unit": "share",
        "a": 0.7172,
-       "b": 0.2745
+       "b": 0.2745,
+       "adds": 0.17
+      },
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 0.2828,
+       "b": 0.6214,
+       "adds": 0.15
       },
       {
        "key": "risk_gap",
        "label": "Risk assets above target",
        "unit": "points",
        "a": 0.2925,
-       "b": 0.3053
-      },
-      {
-       "key": "asset:Alternatives",
-       "label": "Alternatives",
-       "unit": "share",
-       "a": 0.6835,
-       "b": 0.3786
+       "b": 0.3053,
+       "adds": 0.07
       }
      ]
     },
@@ -430,29 +497,84 @@
      "client_id": "CL-0011",
      "name": "Tan Boon Huat",
      "similarity": 0.48,
-     "shared": [
+     "drivers": [
       {
        "key": "gated",
        "label": "Gated or illiquid",
        "unit": "share",
        "a": 0.7172,
-       "b": 0.4728
+       "b": 0.4728,
+       "adds": 0.18
+      },
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 0.2828,
+       "b": 0.4602,
+       "adds": 0.16
       },
       {
        "key": "ltv_to_trigger",
        "label": "Loan against its margin-call level",
        "unit": "share",
        "a": 0.9828,
-       "b": 0.4036
-      },
-      {
-       "key": "asset:Alternatives",
-       "label": "Alternatives",
-       "unit": "share",
-       "a": 0.6835,
-       "b": 0.4728
+       "b": 0.4036,
+       "adds": 0.08
       }
      ]
+    }
+   ],
+   "fingerprint": [
+    {
+     "group": "Exposure, looked through",
+     "key": "theme:technology",
+     "label": "Technology exposure",
+     "unit": "share",
+     "value": 0.8856,
+     "above": 19,
+     "below": 0,
+     "others": 19
+    },
+    {
+     "group": "Portfolio build",
+     "key": "asset:Fixed Income",
+     "label": "Fixed income",
+     "unit": "share",
+     "value": 0.0261,
+     "above": 0,
+     "below": 19,
+     "others": 19
+    },
+    {
+     "group": "Liquidity",
+     "key": "daily_liquid",
+     "label": "Sellable daily",
+     "unit": "share",
+     "value": 0.2828,
+     "above": 0,
+     "below": 19,
+     "others": 19
+    },
+    {
+     "group": "Obligations",
+     "key": "ltv_to_trigger",
+     "label": "Loan against its margin-call level",
+     "unit": "share",
+     "value": 0.9828,
+     "above": 18,
+     "below": 1,
+     "others": 19
+    },
+    {
+     "group": "Stated profile",
+     "key": "risk_tolerance",
+     "label": "Risk tolerance score",
+     "unit": "score",
+     "value": 8.0,
+     "above": 17,
+     "below": 1,
+     "others": 19
     }
    ],
    "goal_gap": null,
@@ -518,27 +640,30 @@
      "client_id": "CL-0016",
      "name": "Yamamoto Kenji",
      "similarity": 0.32,
-     "shared": [
-      {
-       "key": "risk_gap",
-       "label": "Risk assets above target",
-       "unit": "points",
-       "a": 0.5917,
-       "b": 0.2537
-      },
+     "drivers": [
       {
        "key": "daily_liquid",
        "label": "Sellable daily",
        "unit": "share",
        "a": 0.8829,
-       "b": 1.0
+       "b": 1.0,
+       "adds": 0.12
       },
       {
-       "key": "asset:Cash and Equivalents",
-       "label": "Cash",
+       "key": "risk_gap",
+       "label": "Risk assets above target",
+       "unit": "points",
+       "a": 0.5917,
+       "b": 0.2537,
+       "adds": 0.11
+      },
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
        "unit": "share",
-       "a": 0.0769,
-       "b": 0.078
+       "a": 0.0539,
+       "b": 0.0,
+       "adds": 0.08
       }
      ]
     },
@@ -546,27 +671,30 @@
      "client_id": "CL-0018",
      "name": "Elena Marchetti-Wong",
      "similarity": 0.2,
-     "shared": [
-      {
-       "key": "theme:luxury",
-       "label": "Luxury",
-       "unit": "share",
-       "a": 0.2606,
-       "b": 0.1628
-      },
+     "drivers": [
       {
        "key": "daily_liquid",
        "label": "Sellable daily",
        "unit": "share",
        "a": 0.8829,
-       "b": 1.0
+       "b": 1.0,
+       "adds": 0.12
       },
       {
-       "key": "asset:Cash and Equivalents",
-       "label": "Cash",
+       "key": "gated",
+       "label": "Gated or illiquid",
        "unit": "share",
-       "a": 0.0769,
-       "b": 0.1258
+       "a": 0.0539,
+       "b": 0.0,
+       "adds": 0.07
+      },
+      {
+       "key": "theme:luxury",
+       "label": "Luxury exposure",
+       "unit": "share",
+       "a": 0.2606,
+       "b": 0.1628,
+       "adds": 0.07
       }
      ]
     },
@@ -574,29 +702,84 @@
      "client_id": "CL-0007",
      "name": "Alistair Pemberton-Hale",
      "similarity": 0.19,
-     "shared": [
+     "drivers": [
+      {
+       "key": "horizon_years",
+       "label": "Investment horizon",
+       "unit": "years",
+       "a": 15.0,
+       "b": 12.0,
+       "adds": 0.11
+      },
       {
        "key": "theme:industrial",
-       "label": "Industrial",
+       "label": "Industrial exposure",
        "unit": "share",
        "a": 0.1837,
-       "b": 0.0654
+       "b": 0.0654,
+       "adds": 0.06
       },
       {
-       "key": "daily_liquid",
-       "label": "Sellable daily",
-       "unit": "share",
-       "a": 0.8829,
-       "b": 0.8792
-      },
-      {
-       "key": "asset:Structured Products",
-       "label": "Structured products",
-       "unit": "share",
-       "a": 0.0539,
-       "b": 0.051
+       "key": "cash_need_cover",
+       "label": "Cash due in 24 months against daily-liquid assets",
+       "unit": "ratio",
+       "a": 0.1894,
+       "b": 0.3411,
+       "adds": 0.04
       }
      ]
+    }
+   ],
+   "fingerprint": [
+    {
+     "group": "Exposure, looked through",
+     "key": "theme:luxury",
+     "label": "Luxury exposure",
+     "unit": "share",
+     "value": 0.2606,
+     "above": 19,
+     "below": 0,
+     "others": 19
+    },
+    {
+     "group": "Portfolio build",
+     "key": "asset:Equity",
+     "label": "Equity",
+     "unit": "share",
+     "value": 0.7146,
+     "above": 17,
+     "below": 2,
+     "others": 19
+    },
+    {
+     "group": "Liquidity",
+     "key": "daily_liquid",
+     "label": "Sellable daily",
+     "unit": "share",
+     "value": 0.8829,
+     "above": 13,
+     "below": 6,
+     "others": 19
+    },
+    {
+     "group": "Obligations",
+     "key": "ltv_to_trigger",
+     "label": "Loan against its margin-call level",
+     "unit": "share",
+     "value": 0.0,
+     "above": 0,
+     "below": 5,
+     "others": 19
+    },
+    {
+     "group": "Stated profile",
+     "key": "risk_gap",
+     "label": "Risk assets above target",
+     "unit": "points",
+     "value": 0.5917,
+     "above": 19,
+     "below": 0,
+     "others": 19
     }
    ],
    "goal_gap": null,
@@ -610,13 +793,13 @@
     },
     {
      "key": "theme:luxury",
-     "label": "Luxury",
+     "label": "Luxury exposure",
      "from": 0.2874,
      "to": 0.2606
     },
     {
      "key": "theme:technology",
-     "label": "Technology",
+     "label": "Technology exposure",
      "from": 0.0872,
      "to": 0.1068
     }
@@ -662,20 +845,30 @@
      "client_id": "CL-0012",
      "name": "Cheung Kwok Wing",
      "similarity": 0.85,
-     "shared": [
+     "drivers": [
+      {
+       "key": "risk_gap",
+       "label": "Risk assets above target",
+       "unit": "points",
+       "a": -0.0181,
+       "b": -0.0459,
+       "adds": 0.23
+      },
+      {
+       "key": "risk_tolerance",
+       "label": "Risk tolerance score",
+       "unit": "score",
+       "a": 3.0,
+       "b": 3.0,
+       "adds": 0.16
+      },
       {
        "key": "asset:Fixed Income",
        "label": "Fixed income",
        "unit": "share",
        "a": 0.6471,
-       "b": 0.6662
-      },
-      {
-       "key": "theme:property",
-       "label": "Property",
-       "unit": "share",
-       "a": 0.0975,
-       "b": 0.0943
+       "b": 0.6662,
+       "adds": 0.11
       }
      ]
     },
@@ -683,20 +876,30 @@
      "client_id": "CL-0008",
      "name": "Chen Wei Ling",
      "similarity": 0.39,
-     "shared": [
+     "drivers": [
+      {
+       "key": "risk_gap",
+       "label": "Risk assets above target",
+       "unit": "points",
+       "a": -0.0181,
+       "b": 0.0903,
+       "adds": 0.12
+      },
       {
        "key": "asset:Fixed Income",
        "label": "Fixed income",
        "unit": "share",
        "a": 0.6471,
-       "b": 0.3236
+       "b": 0.3236,
+       "adds": 0.07
       },
       {
-       "key": "theme:property",
-       "label": "Property",
+       "key": "gated",
+       "label": "Gated or illiquid",
        "unit": "share",
-       "a": 0.0975,
-       "b": 0.0818
+       "a": 0.0539,
+       "b": 0.0,
+       "adds": 0.07
       }
      ]
     },
@@ -704,22 +907,84 @@
      "client_id": "CL-0014",
      "name": "Lau Chi Ming",
      "similarity": 0.29,
-     "shared": [
+     "drivers": [
+      {
+       "key": "risk_gap",
+       "label": "Risk assets above target",
+       "unit": "points",
+       "a": -0.0181,
+       "b": 0.0501,
+       "adds": 0.11
+      },
       {
        "key": "asset:Fixed Income",
        "label": "Fixed income",
        "unit": "share",
        "a": 0.6471,
-       "b": 0.4419
+       "b": 0.4419,
+       "adds": 0.07
       },
       {
-       "key": "theme:property",
-       "label": "Property",
-       "unit": "share",
-       "a": 0.0975,
-       "b": 0.4903
+       "key": "horizon_years",
+       "label": "Investment horizon",
+       "unit": "years",
+       "a": 18.0,
+       "b": 12.0,
+       "adds": 0.06
       }
      ]
+    }
+   ],
+   "fingerprint": [
+    {
+     "group": "Exposure, looked through",
+     "key": "theme:property",
+     "label": "Property exposure",
+     "unit": "share",
+     "value": 0.0975,
+     "above": 16,
+     "below": 3,
+     "others": 19
+    },
+    {
+     "group": "Portfolio build",
+     "key": "asset:Fixed Income",
+     "label": "Fixed income",
+     "unit": "share",
+     "value": 0.6471,
+     "above": 18,
+     "below": 1,
+     "others": 19
+    },
+    {
+     "group": "Liquidity",
+     "key": "daily_liquid",
+     "label": "Sellable daily",
+     "unit": "share",
+     "value": 0.8323,
+     "above": 8,
+     "below": 11,
+     "others": 19
+    },
+    {
+     "group": "Obligations",
+     "key": "ltv_to_trigger",
+     "label": "Loan against its margin-call level",
+     "unit": "share",
+     "value": 0.0,
+     "above": 0,
+     "below": 5,
+     "others": 19
+    },
+    {
+     "group": "Stated profile",
+     "key": "risk_gap",
+     "label": "Risk assets above target",
+     "unit": "points",
+     "value": -0.0181,
+     "above": 2,
+     "below": 17,
+     "others": 19
     }
    ],
    "goal_gap": null,
@@ -779,27 +1044,30 @@
      "client_id": "CL-0016",
      "name": "Yamamoto Kenji",
      "similarity": 0.8,
-     "shared": [
+     "drivers": [
       {
        "key": "daily_liquid",
        "label": "Sellable daily",
        "unit": "share",
        "a": 0.9428,
-       "b": 1.0
+       "b": 1.0,
+       "adds": 0.26
       },
       {
-       "key": "theme:healthcare",
-       "label": "Healthcare",
+       "key": "gated",
+       "label": "Gated or illiquid",
        "unit": "share",
-       "a": 0.1284,
-       "b": 0.2697
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.25
       },
       {
-       "key": "currency_mismatch",
-       "label": "Held outside base currency",
+       "key": "asset:Alternatives",
+       "label": "Alternatives",
        "unit": "share",
-       "a": 0.6132,
-       "b": 0.5641
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.07
       }
      ]
     },
@@ -807,27 +1075,30 @@
      "client_id": "CL-0018",
      "name": "Elena Marchetti-Wong",
      "similarity": 0.59,
-     "shared": [
+     "drivers": [
       {
        "key": "daily_liquid",
        "label": "Sellable daily",
        "unit": "share",
        "a": 0.9428,
-       "b": 1.0
+       "b": 1.0,
+       "adds": 0.25
       },
       {
-       "key": "currency_mismatch",
-       "label": "Held outside base currency",
+       "key": "gated",
+       "label": "Gated or illiquid",
        "unit": "share",
-       "a": 0.6132,
-       "b": 0.468
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.24
       },
       {
-       "key": "asset:Equity",
-       "label": "Equity",
+       "key": "asset:Alternatives",
+       "label": "Alternatives",
        "unit": "share",
-       "a": 0.6774,
-       "b": 0.504
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.07
       }
      ]
     },
@@ -835,29 +1106,84 @@
      "client_id": "CL-0008",
      "name": "Chen Wei Ling",
      "similarity": 0.49,
-     "shared": [
+     "drivers": [
       {
-       "key": "theme:healthcare",
-       "label": "Healthcare",
+       "key": "gated",
+       "label": "Gated or illiquid",
        "unit": "share",
-       "a": 0.1284,
-       "b": 0.0685
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.27
       },
       {
-       "key": "currency_mismatch",
-       "label": "Held outside base currency",
+       "key": "asset:Alternatives",
+       "label": "Alternatives",
        "unit": "share",
-       "a": 0.6132,
-       "b": 0.4384
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.08
       },
       {
-       "key": "daily_liquid",
-       "label": "Sellable daily",
-       "unit": "share",
-       "a": 0.9428,
-       "b": 0.8639
+       "key": "cash_need_cover",
+       "label": "Cash due in 24 months against daily-liquid assets",
+       "unit": "ratio",
+       "a": 0.0071,
+       "b": 0.03,
+       "adds": 0.05
       }
      ]
+    }
+   ],
+   "fingerprint": [
+    {
+     "group": "Exposure, looked through",
+     "key": "theme:plantation",
+     "label": "Plantation exposure",
+     "unit": "share",
+     "value": 0.1017,
+     "above": 19,
+     "below": 0,
+     "others": 19
+    },
+    {
+     "group": "Portfolio build",
+     "key": "asset:Alternatives",
+     "label": "Alternatives",
+     "unit": "share",
+     "value": 0.0,
+     "above": 0,
+     "below": 16,
+     "others": 19
+    },
+    {
+     "group": "Liquidity",
+     "key": "gated",
+     "label": "Gated or illiquid",
+     "unit": "share",
+     "value": 0.0,
+     "above": 0,
+     "below": 16,
+     "others": 19
+    },
+    {
+     "group": "Obligations",
+     "key": "cash_need_cover",
+     "label": "Cash due in 24 months against daily-liquid assets",
+     "unit": "ratio",
+     "value": 0.0071,
+     "above": 4,
+     "below": 15,
+     "others": 19
+    },
+    {
+     "group": "Stated profile",
+     "key": "risk_tolerance",
+     "label": "Risk tolerance score",
+     "unit": "score",
+     "value": 5.0,
+     "above": 4,
+     "below": 7,
+     "others": 19
     }
    ],
    "goal_gap": [
@@ -944,27 +1270,30 @@
      "client_id": "CL-0014",
      "name": "Lau Chi Ming",
      "similarity": 0.57,
-     "shared": [
+     "drivers": [
       {
        "key": "cash_need_cover",
        "label": "Cash due in 24 months against daily-liquid assets",
        "unit": "ratio",
        "a": 0.6395,
-       "b": 0.6751
+       "b": 0.6751,
+       "adds": 0.18
+      },
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 0.6921,
+       "b": 0.4295,
+       "adds": 0.13
       },
       {
        "key": "gated",
        "label": "Gated or illiquid",
        "unit": "share",
        "a": 0.1933,
-       "b": 0.2662
-      },
-      {
-       "key": "theme:property",
-       "label": "Property",
-       "unit": "share",
-       "a": 0.2506,
-       "b": 0.4903
+       "b": 0.2662,
+       "adds": 0.12
       }
      ]
     },
@@ -972,27 +1301,30 @@
      "client_id": "CL-0011",
      "name": "Tan Boon Huat",
      "similarity": 0.4,
-     "shared": [
+     "drivers": [
       {
        "key": "gated",
        "label": "Gated or illiquid",
        "unit": "share",
        "a": 0.1933,
-       "b": 0.4728
+       "b": 0.4728,
+       "adds": 0.15
       },
       {
-       "key": "theme:property",
-       "label": "Property",
+       "key": "daily_liquid",
+       "label": "Sellable daily",
        "unit": "share",
-       "a": 0.2506,
-       "b": 0.5142
+       "a": 0.6921,
+       "b": 0.4602,
+       "adds": 0.11
       },
       {
-       "key": "asset:Alternatives",
-       "label": "Alternatives",
-       "unit": "share",
-       "a": 0.1933,
-       "b": 0.4728
+       "key": "horizon_years",
+       "label": "Investment horizon",
+       "unit": "years",
+       "a": 18.0,
+       "b": 8.0,
+       "adds": 0.06
       }
      ]
     },
@@ -1000,29 +1332,84 @@
      "client_id": "CL-0017",
      "name": "Fong Enterprises Family Office",
      "similarity": 0.4,
-     "shared": [
+     "drivers": [
       {
        "key": "uncalled_share",
        "label": "Uncalled fund commitments",
        "unit": "share",
        "a": 0.166,
-       "b": 0.1797
+       "b": 0.1797,
+       "adds": 0.19
       },
       {
        "key": "gated",
        "label": "Gated or illiquid",
        "unit": "share",
        "a": 0.1933,
-       "b": 0.2745
+       "b": 0.2745,
+       "adds": 0.15
       },
       {
-       "key": "cash_need_cover",
-       "label": "Cash due in 24 months against daily-liquid assets",
-       "unit": "ratio",
-       "a": 0.6395,
-       "b": 0.3057
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 0.6921,
+       "b": 0.6214,
+       "adds": 0.11
       }
      ]
+    }
+   ],
+   "fingerprint": [
+    {
+     "group": "Exposure, looked through",
+     "key": "theme:property",
+     "label": "Property exposure",
+     "unit": "share",
+     "value": 0.2506,
+     "above": 17,
+     "below": 2,
+     "others": 19
+    },
+    {
+     "group": "Portfolio build",
+     "key": "asset:Cash and Equivalents",
+     "label": "Cash",
+     "unit": "share",
+     "value": 0.1146,
+     "above": 16,
+     "below": 3,
+     "others": 19
+    },
+    {
+     "group": "Liquidity",
+     "key": "gated",
+     "label": "Gated or illiquid",
+     "unit": "share",
+     "value": 0.1933,
+     "above": 15,
+     "below": 4,
+     "others": 19
+    },
+    {
+     "group": "Obligations",
+     "key": "cash_need_cover",
+     "label": "Cash due in 24 months against daily-liquid assets",
+     "unit": "ratio",
+     "value": 0.6395,
+     "above": 18,
+     "below": 1,
+     "others": 19
+    },
+    {
+     "group": "Stated profile",
+     "key": "risk_gap",
+     "label": "Risk assets above target",
+     "unit": "points",
+     "value": 0.1454,
+     "above": 6,
+     "below": 13,
+     "others": 19
     }
    ],
    "goal_gap": null,
@@ -1042,7 +1429,7 @@
     },
     {
      "key": "theme:property",
-     "label": "Property",
+     "label": "Property exposure",
      "from": 0.2636,
      "to": 0.2506
     }
@@ -1088,20 +1475,30 @@
      "client_id": "CL-0012",
      "name": "Cheung Kwok Wing",
      "similarity": 0.28,
-     "shared": [
+     "drivers": [
       {
-       "key": "theme:industrial",
-       "label": "Industrial",
+       "key": "horizon_years",
+       "label": "Investment horizon",
+       "unit": "years",
+       "a": 12.0,
+       "b": 12.0,
+       "adds": 0.17
+      },
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
        "unit": "share",
-       "a": 0.0654,
-       "b": 0.0583
+       "a": 0.051,
+       "b": 0.0429,
+       "adds": 0.07
       },
       {
        "key": "asset:Fixed Income",
        "label": "Fixed income",
        "unit": "share",
        "a": 0.2898,
-       "b": 0.6662
+       "b": 0.6662,
+       "adds": 0.04
       }
      ]
     },
@@ -1109,27 +1506,30 @@
      "client_id": "CL-0008",
      "name": "Chen Wei Ling",
      "similarity": 0.24,
-     "shared": [
+     "drivers": [
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.051,
+       "b": 0.0,
+       "adds": 0.14
+      },
+      {
+       "key": "horizon_years",
+       "label": "Investment horizon",
+       "unit": "years",
+       "a": 12.0,
+       "b": 15.0,
+       "adds": 0.12
+      },
       {
        "key": "asset:Commodities",
        "label": "Commodities",
        "unit": "share",
        "a": 0.1893,
-       "b": 0.0429
-      },
-      {
-       "key": "theme:commodities",
-       "label": "Commodities",
-       "unit": "share",
-       "a": 0.2404,
-       "b": 0.0429
-      },
-      {
-       "key": "asset:Fixed Income",
-       "label": "Fixed income",
-       "unit": "share",
-       "a": 0.2898,
-       "b": 0.3236
+       "b": 0.0429,
+       "adds": 0.09
       }
      ]
     },
@@ -1137,29 +1537,84 @@
      "client_id": "CL-0003",
      "name": "Margarethe Voss-Brenner",
      "similarity": 0.19,
-     "shared": [
+     "drivers": [
+      {
+       "key": "horizon_years",
+       "label": "Investment horizon",
+       "unit": "years",
+       "a": 12.0,
+       "b": 15.0,
+       "adds": 0.11
+      },
       {
        "key": "theme:industrial",
-       "label": "Industrial",
+       "label": "Industrial exposure",
        "unit": "share",
        "a": 0.0654,
-       "b": 0.1837
+       "b": 0.1837,
+       "adds": 0.06
       },
       {
-       "key": "daily_liquid",
-       "label": "Sellable daily",
-       "unit": "share",
-       "a": 0.8792,
-       "b": 0.8829
-      },
-      {
-       "key": "asset:Structured Products",
-       "label": "Structured products",
-       "unit": "share",
-       "a": 0.051,
-       "b": 0.0539
+       "key": "cash_need_cover",
+       "label": "Cash due in 24 months against daily-liquid assets",
+       "unit": "ratio",
+       "a": 0.3411,
+       "b": 0.1894,
+       "adds": 0.04
       }
      ]
+    }
+   ],
+   "fingerprint": [
+    {
+     "group": "Exposure, looked through",
+     "key": "theme:commodities",
+     "label": "Commodities exposure",
+     "unit": "share",
+     "value": 0.2404,
+     "above": 19,
+     "below": 0,
+     "others": 19
+    },
+    {
+     "group": "Portfolio build",
+     "key": "asset:Commodities",
+     "label": "Commodities",
+     "unit": "share",
+     "value": 0.1893,
+     "above": 19,
+     "below": 0,
+     "others": 19
+    },
+    {
+     "group": "Liquidity",
+     "key": "gated",
+     "label": "Gated or illiquid",
+     "unit": "share",
+     "value": 0.051,
+     "above": 6,
+     "below": 13,
+     "others": 19
+    },
+    {
+     "group": "Obligations",
+     "key": "cash_need_cover",
+     "label": "Cash due in 24 months against daily-liquid assets",
+     "unit": "ratio",
+     "value": 0.3411,
+     "above": 15,
+     "below": 4,
+     "others": 19
+    },
+    {
+     "group": "Stated profile",
+     "key": "horizon_years",
+     "label": "Investment horizon",
+     "unit": "years",
+     "value": 12.0,
+     "above": 1,
+     "below": 16,
+     "others": 19
     }
    ],
    "goal_gap": null,
@@ -1179,7 +1634,7 @@
     },
     {
      "key": "theme:commodities",
-     "label": "Commodities",
+     "label": "Commodities exposure",
      "from": 0.2228,
      "to": 0.2404
     }
@@ -1225,27 +1680,30 @@
      "client_id": "CL-0018",
      "name": "Elena Marchetti-Wong",
      "similarity": 0.67,
-     "shared": [
+     "drivers": [
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.27
+      },
+      {
+       "key": "asset:Alternatives",
+       "label": "Alternatives",
+       "unit": "share",
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.08
+      },
       {
        "key": "asset:Cash and Equivalents",
        "label": "Cash",
        "unit": "share",
        "a": 0.1361,
-       "b": 0.1258
-      },
-      {
-       "key": "asset:Commodities",
-       "label": "Commodities",
-       "unit": "share",
-       "a": 0.0429,
-       "b": 0.1404
-      },
-      {
-       "key": "theme:commodities",
-       "label": "Commodities",
-       "unit": "share",
-       "a": 0.0429,
-       "b": 0.1404
+       "b": 0.1258,
+       "adds": 0.08
       }
      ]
     },
@@ -1253,27 +1711,30 @@
      "client_id": "CL-0016",
      "name": "Yamamoto Kenji",
      "similarity": 0.65,
-     "shared": [
+     "drivers": [
       {
-       "key": "asset:Cash and Equivalents",
-       "label": "Cash",
+       "key": "gated",
+       "label": "Gated or illiquid",
        "unit": "share",
-       "a": 0.1361,
-       "b": 0.078
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.27
       },
       {
-       "key": "theme:healthcare",
-       "label": "Healthcare",
+       "key": "asset:Alternatives",
+       "label": "Alternatives",
        "unit": "share",
-       "a": 0.0685,
-       "b": 0.2697
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.08
       },
       {
-       "key": "asset:Commodities",
-       "label": "Commodities",
+       "key": "daily_liquid",
+       "label": "Sellable daily",
        "unit": "share",
-       "a": 0.0429,
-       "b": 0.0265
+       "a": 0.8639,
+       "b": 1.0,
+       "adds": 0.06
       }
      ]
     },
@@ -1281,29 +1742,84 @@
      "client_id": "CL-0012",
      "name": "Cheung Kwok Wing",
      "similarity": 0.49,
-     "shared": [
+     "drivers": [
       {
-       "key": "asset:Fixed Income",
-       "label": "Fixed income",
+       "key": "gated",
+       "label": "Gated or illiquid",
        "unit": "share",
-       "a": 0.3236,
-       "b": 0.6662
+       "a": 0.0,
+       "b": 0.0429,
+       "adds": 0.15
       },
       {
-       "key": "theme:property",
-       "label": "Property",
-       "unit": "share",
-       "a": 0.0818,
-       "b": 0.0943
+       "key": "risk_gap",
+       "label": "Risk assets above target",
+       "unit": "points",
+       "a": 0.0903,
+       "b": -0.0459,
+       "adds": 0.12
       },
       {
-       "key": "asset:Cash and Equivalents",
-       "label": "Cash",
-       "unit": "share",
-       "a": 0.1361,
-       "b": 0.0697
+       "key": "horizon_years",
+       "label": "Investment horizon",
+       "unit": "years",
+       "a": 15.0,
+       "b": 12.0,
+       "adds": 0.11
       }
      ]
+    }
+   ],
+   "fingerprint": [
+    {
+     "group": "Exposure, looked through",
+     "key": "theme:commodities",
+     "label": "Commodities exposure",
+     "unit": "share",
+     "value": 0.0429,
+     "above": 16,
+     "below": 3,
+     "others": 19
+    },
+    {
+     "group": "Portfolio build",
+     "key": "asset:Cash and Equivalents",
+     "label": "Cash",
+     "unit": "share",
+     "value": 0.1361,
+     "above": 18,
+     "below": 1,
+     "others": 19
+    },
+    {
+     "group": "Liquidity",
+     "key": "gated",
+     "label": "Gated or illiquid",
+     "unit": "share",
+     "value": 0.0,
+     "above": 0,
+     "below": 16,
+     "others": 19
+    },
+    {
+     "group": "Obligations",
+     "key": "cash_need_cover",
+     "label": "Cash due in 24 months against daily-liquid assets",
+     "unit": "ratio",
+     "value": 0.03,
+     "above": 6,
+     "below": 13,
+     "others": 19
+    },
+    {
+     "group": "Stated profile",
+     "key": "horizon_years",
+     "label": "Investment horizon",
+     "unit": "years",
+     "value": 15.0,
+     "above": 4,
+     "below": 14,
+     "others": 19
     }
    ],
    "goal_gap": null,
@@ -1369,27 +1885,30 @@
      "client_id": "CL-0010",
      "name": "Priya Nair Menon",
      "similarity": 0.34,
-     "shared": [
+     "drivers": [
       {
-       "key": "asset:Alternatives",
-       "label": "Alternatives",
-       "unit": "share",
-       "a": 0.0716,
-       "b": 0.0735
+       "key": "cash_need_cover",
+       "label": "Cash due in 24 months against daily-liquid assets",
+       "unit": "ratio",
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.2
+      },
+      {
+       "key": "risk_gap",
+       "label": "Risk assets above target",
+       "unit": "points",
+       "a": -0.0444,
+       "b": 0.0494,
+       "adds": 0.17
       },
       {
        "key": "currency_mismatch",
        "label": "Held outside base currency",
        "unit": "share",
        "a": 0.2914,
-       "b": 0.721
-      },
-      {
-       "key": "gated",
-       "label": "Gated or illiquid",
-       "unit": "share",
-       "a": 0.0716,
-       "b": 0.0735
+       "b": 0.721,
+       "adds": 0.03
       }
      ]
     },
@@ -1397,27 +1916,30 @@
      "client_id": "CL-0018",
      "name": "Elena Marchetti-Wong",
      "similarity": 0.28,
-     "shared": [
+     "drivers": [
       {
        "key": "daily_liquid",
        "label": "Sellable daily",
        "unit": "share",
        "a": 0.9284,
-       "b": 1.0
+       "b": 1.0,
+       "adds": 0.2
       },
       {
        "key": "asset:Cash and Equivalents",
        "label": "Cash",
        "unit": "share",
        "a": 0.4498,
-       "b": 0.1258
+       "b": 0.1258,
+       "adds": 0.08
       },
       {
-       "key": "currency_mismatch",
-       "label": "Held outside base currency",
-       "unit": "share",
-       "a": 0.2914,
-       "b": 0.468
+       "key": "cash_need_cover",
+       "label": "Cash due in 24 months against daily-liquid assets",
+       "unit": "ratio",
+       "a": 0.0,
+       "b": 0.0412,
+       "adds": 0.05
       }
      ]
     },
@@ -1425,22 +1947,84 @@
      "client_id": "CL-0012",
      "name": "Cheung Kwok Wing",
      "similarity": 0.24,
-     "shared": [
+     "drivers": [
       {
-       "key": "theme:industrial",
-       "label": "Industrial",
-       "unit": "share",
-       "a": 0.1719,
-       "b": 0.0583
+       "key": "risk_gap",
+       "label": "Risk assets above target",
+       "unit": "points",
+       "a": -0.0444,
+       "b": -0.0459,
+       "adds": 0.22
       },
       {
-       "key": "asset:Cash and Equivalents",
-       "label": "Cash",
+       "key": "asset:Equity",
+       "label": "Equity",
        "unit": "share",
-       "a": 0.4498,
-       "b": 0.0697
+       "a": 0.3341,
+       "b": 0.2212,
+       "adds": 0.04
+      },
+      {
+       "key": "theme:industrial",
+       "label": "Industrial exposure",
+       "unit": "share",
+       "a": 0.1719,
+       "b": 0.0583,
+       "adds": 0.04
       }
      ]
+    }
+   ],
+   "fingerprint": [
+    {
+     "group": "Exposure, looked through",
+     "key": "theme:industrial",
+     "label": "Industrial exposure",
+     "unit": "share",
+     "value": 0.1719,
+     "above": 17,
+     "below": 2,
+     "others": 19
+    },
+    {
+     "group": "Portfolio build",
+     "key": "asset:Cash and Equivalents",
+     "label": "Cash",
+     "unit": "share",
+     "value": 0.4498,
+     "above": 19,
+     "below": 0,
+     "others": 19
+    },
+    {
+     "group": "Liquidity",
+     "key": "daily_liquid",
+     "label": "Sellable daily",
+     "unit": "share",
+     "value": 0.9284,
+     "above": 15,
+     "below": 4,
+     "others": 19
+    },
+    {
+     "group": "Obligations",
+     "key": "cash_need_cover",
+     "label": "Cash due in 24 months against daily-liquid assets",
+     "unit": "ratio",
+     "value": 0.0,
+     "above": 0,
+     "below": 16,
+     "others": 19
+    },
+    {
+     "group": "Stated profile",
+     "key": "risk_gap",
+     "label": "Risk assets above target",
+     "unit": "points",
+     "value": -0.0444,
+     "above": 1,
+     "below": 18,
+     "others": 19
     }
    ],
    "goal_gap": null,
@@ -1494,27 +2078,30 @@
      "client_id": "CL-0009",
      "name": "Andreas Lindqvist",
      "similarity": 0.34,
-     "shared": [
+     "drivers": [
       {
-       "key": "asset:Alternatives",
-       "label": "Alternatives",
-       "unit": "share",
-       "a": 0.0735,
-       "b": 0.0716
+       "key": "cash_need_cover",
+       "label": "Cash due in 24 months against daily-liquid assets",
+       "unit": "ratio",
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.2
+      },
+      {
+       "key": "risk_gap",
+       "label": "Risk assets above target",
+       "unit": "points",
+       "a": 0.0494,
+       "b": -0.0444,
+       "adds": 0.17
       },
       {
        "key": "currency_mismatch",
        "label": "Held outside base currency",
        "unit": "share",
        "a": 0.721,
-       "b": 0.2914
-      },
-      {
-       "key": "gated",
-       "label": "Gated or illiquid",
-       "unit": "share",
-       "a": 0.0735,
-       "b": 0.0716
+       "b": 0.2914,
+       "adds": 0.03
       }
      ]
     },
@@ -1522,27 +2109,30 @@
      "client_id": "CL-0015",
      "name": "Kim Do-Yoon",
      "similarity": 0.25,
-     "shared": [
+     "drivers": [
+      {
+       "key": "cash_need_cover",
+       "label": "Cash due in 24 months against daily-liquid assets",
+       "unit": "ratio",
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.17
+      },
       {
        "key": "horizon_years",
        "label": "Investment horizon",
        "unit": "years",
        "a": 35.0,
-       "b": 25.0
+       "b": 25.0,
+       "adds": 0.12
       },
       {
        "key": "risk_tolerance",
        "label": "Risk tolerance score",
        "unit": "score",
        "a": 6.0,
-       "b": 9.0
-      },
-      {
-       "key": "asset:Alternatives",
-       "label": "Alternatives",
-       "unit": "share",
-       "a": 0.0735,
-       "b": 0.2194
+       "b": 9.0,
+       "adds": 0.11
       }
      ]
     },
@@ -1550,29 +2140,84 @@
      "client_id": "CL-0005",
      "name": "Aishah binti Rahman",
      "similarity": 0.22,
-     "shared": [
+     "drivers": [
+      {
+       "key": "cash_need_cover",
+       "label": "Cash due in 24 months against daily-liquid assets",
+       "unit": "ratio",
+       "a": 0.0,
+       "b": 0.0071,
+       "adds": 0.13
+      },
       {
        "key": "currency_mismatch",
        "label": "Held outside base currency",
        "unit": "share",
        "a": 0.721,
-       "b": 0.6132
+       "b": 0.6132,
+       "adds": 0.08
       },
       {
        "key": "theme:healthcare",
-       "label": "Healthcare",
+       "label": "Healthcare exposure",
        "unit": "share",
        "a": 0.1218,
-       "b": 0.1284
-      },
-      {
-       "key": "asset:Fixed Income",
-       "label": "Fixed income",
-       "unit": "share",
-       "a": 0.3674,
-       "b": 0.2654
+       "b": 0.1284,
+       "adds": 0.05
       }
      ]
+    }
+   ],
+   "fingerprint": [
+    {
+     "group": "Exposure, looked through",
+     "key": "theme:healthcare",
+     "label": "Healthcare exposure",
+     "unit": "share",
+     "value": 0.1218,
+     "above": 16,
+     "below": 3,
+     "others": 19
+    },
+    {
+     "group": "Portfolio build",
+     "key": "currency_mismatch",
+     "label": "Held outside base currency",
+     "unit": "share",
+     "value": 0.721,
+     "above": 18,
+     "below": 1,
+     "others": 19
+    },
+    {
+     "group": "Liquidity",
+     "key": "gated",
+     "label": "Gated or illiquid",
+     "unit": "share",
+     "value": 0.0735,
+     "above": 11,
+     "below": 8,
+     "others": 19
+    },
+    {
+     "group": "Obligations",
+     "key": "cash_need_cover",
+     "label": "Cash due in 24 months against daily-liquid assets",
+     "unit": "ratio",
+     "value": 0.0,
+     "above": 0,
+     "below": 16,
+     "others": 19
+    },
+    {
+     "group": "Stated profile",
+     "key": "horizon_years",
+     "label": "Investment horizon",
+     "unit": "years",
+     "value": 35.0,
+     "above": 18,
+     "below": 1,
+     "others": 19
     }
    ],
    "goal_gap": null,
@@ -1638,27 +2283,30 @@
      "client_id": "CL-0014",
      "name": "Lau Chi Ming",
      "similarity": 0.63,
-     "shared": [
+     "drivers": [
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 0.4602,
+       "b": 0.4295,
+       "adds": 0.16
+      },
       {
        "key": "gated",
        "label": "Gated or illiquid",
        "unit": "share",
        "a": 0.4728,
-       "b": 0.2662
+       "b": 0.2662,
+       "adds": 0.14
       },
       {
-       "key": "ltv_to_trigger",
-       "label": "Loan against its margin-call level",
-       "unit": "share",
-       "a": 0.4036,
-       "b": 0.9916
-      },
-      {
-       "key": "theme:property",
-       "label": "Property",
-       "unit": "share",
-       "a": 0.5142,
-       "b": 0.4903
+       "key": "horizon_years",
+       "label": "Investment horizon",
+       "unit": "years",
+       "a": 8.0,
+       "b": 12.0,
+       "adds": 0.12
       }
      ]
     },
@@ -1666,27 +2314,30 @@
      "client_id": "CL-0002",
      "name": "Ravi Chandrasekaran",
      "similarity": 0.48,
-     "shared": [
+     "drivers": [
       {
        "key": "gated",
        "label": "Gated or illiquid",
        "unit": "share",
        "a": 0.4728,
-       "b": 0.7172
+       "b": 0.7172,
+       "adds": 0.18
+      },
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 0.4602,
+       "b": 0.2828,
+       "adds": 0.16
       },
       {
        "key": "ltv_to_trigger",
        "label": "Loan against its margin-call level",
        "unit": "share",
        "a": 0.4036,
-       "b": 0.9828
-      },
-      {
-       "key": "asset:Alternatives",
-       "label": "Alternatives",
-       "unit": "share",
-       "a": 0.4728,
-       "b": 0.6835
+       "b": 0.9828,
+       "adds": 0.08
       }
      ]
     },
@@ -1694,29 +2345,84 @@
      "client_id": "CL-0006",
      "name": "Nguyen Thi Bao Tran",
      "similarity": 0.4,
-     "shared": [
+     "drivers": [
       {
        "key": "gated",
        "label": "Gated or illiquid",
        "unit": "share",
        "a": 0.4728,
-       "b": 0.1933
+       "b": 0.1933,
+       "adds": 0.15
       },
       {
-       "key": "theme:property",
-       "label": "Property",
+       "key": "daily_liquid",
+       "label": "Sellable daily",
        "unit": "share",
-       "a": 0.5142,
-       "b": 0.2506
+       "a": 0.4602,
+       "b": 0.6921,
+       "adds": 0.11
       },
       {
-       "key": "asset:Alternatives",
-       "label": "Alternatives",
-       "unit": "share",
-       "a": 0.4728,
-       "b": 0.1933
+       "key": "horizon_years",
+       "label": "Investment horizon",
+       "unit": "years",
+       "a": 8.0,
+       "b": 18.0,
+       "adds": 0.06
       }
      ]
+    }
+   ],
+   "fingerprint": [
+    {
+     "group": "Exposure, looked through",
+     "key": "theme:property",
+     "label": "Property exposure",
+     "unit": "share",
+     "value": 0.5142,
+     "above": 19,
+     "below": 0,
+     "others": 19
+    },
+    {
+     "group": "Portfolio build",
+     "key": "asset:Equity",
+     "label": "Equity",
+     "unit": "share",
+     "value": 0.2156,
+     "above": 0,
+     "below": 19,
+     "others": 19
+    },
+    {
+     "group": "Liquidity",
+     "key": "gated",
+     "label": "Gated or illiquid",
+     "unit": "share",
+     "value": 0.4728,
+     "above": 18,
+     "below": 1,
+     "others": 19
+    },
+    {
+     "group": "Obligations",
+     "key": "ltv_to_trigger",
+     "label": "Loan against its margin-call level",
+     "unit": "share",
+     "value": 0.4036,
+     "above": 16,
+     "below": 3,
+     "others": 19
+    },
+    {
+     "group": "Stated profile",
+     "key": "horizon_years",
+     "label": "Investment horizon",
+     "unit": "years",
+     "value": 8.0,
+     "above": 0,
+     "below": 19,
+     "others": 19
     }
    ],
    "goal_gap": null,
@@ -1763,20 +2469,30 @@
      "client_id": "CL-0004",
      "name": "Chalermchai Suphanburi",
      "similarity": 0.85,
-     "shared": [
+     "drivers": [
+      {
+       "key": "risk_gap",
+       "label": "Risk assets above target",
+       "unit": "points",
+       "a": -0.0459,
+       "b": -0.0181,
+       "adds": 0.23
+      },
+      {
+       "key": "risk_tolerance",
+       "label": "Risk tolerance score",
+       "unit": "score",
+       "a": 3.0,
+       "b": 3.0,
+       "adds": 0.16
+      },
       {
        "key": "asset:Fixed Income",
        "label": "Fixed income",
        "unit": "share",
        "a": 0.6662,
-       "b": 0.6471
-      },
-      {
-       "key": "theme:property",
-       "label": "Property",
-       "unit": "share",
-       "a": 0.0943,
-       "b": 0.0975
+       "b": 0.6471,
+       "adds": 0.11
       }
      ]
     },
@@ -1784,27 +2500,30 @@
      "client_id": "CL-0008",
      "name": "Chen Wei Ling",
      "similarity": 0.49,
-     "shared": [
+     "drivers": [
       {
-       "key": "asset:Fixed Income",
-       "label": "Fixed income",
+       "key": "gated",
+       "label": "Gated or illiquid",
        "unit": "share",
-       "a": 0.6662,
-       "b": 0.3236
+       "a": 0.0429,
+       "b": 0.0,
+       "adds": 0.15
       },
       {
-       "key": "theme:property",
-       "label": "Property",
-       "unit": "share",
-       "a": 0.0943,
-       "b": 0.0818
+       "key": "risk_gap",
+       "label": "Risk assets above target",
+       "unit": "points",
+       "a": -0.0459,
+       "b": 0.0903,
+       "adds": 0.12
       },
       {
-       "key": "asset:Cash and Equivalents",
-       "label": "Cash",
-       "unit": "share",
-       "a": 0.0697,
-       "b": 0.1361
+       "key": "horizon_years",
+       "label": "Investment horizon",
+       "unit": "years",
+       "a": 12.0,
+       "b": 15.0,
+       "adds": 0.11
       }
      ]
     },
@@ -1812,22 +2531,84 @@
      "client_id": "CL-0014",
      "name": "Lau Chi Ming",
      "similarity": 0.28,
-     "shared": [
+     "drivers": [
       {
-       "key": "asset:Fixed Income",
-       "label": "Fixed income",
-       "unit": "share",
-       "a": 0.6662,
-       "b": 0.4419
+       "key": "horizon_years",
+       "label": "Investment horizon",
+       "unit": "years",
+       "a": 12.0,
+       "b": 12.0,
+       "adds": 0.12
       },
       {
-       "key": "theme:property",
-       "label": "Property",
+       "key": "risk_gap",
+       "label": "Risk assets above target",
+       "unit": "points",
+       "a": -0.0459,
+       "b": 0.0501,
+       "adds": 0.11
+      },
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
        "unit": "share",
-       "a": 0.0943,
-       "b": 0.4903
+       "a": 0.8159,
+       "b": 0.4295,
+       "adds": 0.07
       }
      ]
+    }
+   ],
+   "fingerprint": [
+    {
+     "group": "Exposure, looked through",
+     "key": "theme:shipping",
+     "label": "Shipping exposure",
+     "unit": "share",
+     "value": 0.0583,
+     "above": 17,
+     "below": 2,
+     "others": 19
+    },
+    {
+     "group": "Portfolio build",
+     "key": "asset:Fixed Income",
+     "label": "Fixed income",
+     "unit": "share",
+     "value": 0.6662,
+     "above": 19,
+     "below": 0,
+     "others": 19
+    },
+    {
+     "group": "Liquidity",
+     "key": "gated",
+     "label": "Gated or illiquid",
+     "unit": "share",
+     "value": 0.0429,
+     "above": 5,
+     "below": 14,
+     "others": 19
+    },
+    {
+     "group": "Obligations",
+     "key": "ltv_to_trigger",
+     "label": "Loan against its margin-call level",
+     "unit": "share",
+     "value": 0.0,
+     "above": 0,
+     "below": 5,
+     "others": 19
+    },
+    {
+     "group": "Stated profile",
+     "key": "risk_gap",
+     "label": "Risk assets above target",
+     "unit": "points",
+     "value": -0.0459,
+     "above": 0,
+     "below": 19,
+     "others": 19
     }
    ],
    "goal_gap": null,
@@ -1893,27 +2674,30 @@
      "client_id": "CL-0015",
      "name": "Kim Do-Yoon",
      "similarity": 0.52,
-     "shared": [
+     "drivers": [
       {
        "key": "risk_tolerance",
        "label": "Risk tolerance score",
        "unit": "score",
        "a": 8.0,
-       "b": 9.0
+       "b": 9.0,
+       "adds": 0.18
       },
       {
-       "key": "asset:Structured Products",
-       "label": "Structured products",
-       "unit": "share",
-       "a": 0.0709,
-       "b": 0.1284
+       "key": "cash_need_cover",
+       "label": "Cash due in 24 months against daily-liquid assets",
+       "unit": "ratio",
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.15
       },
       {
-       "key": "theme:technology",
-       "label": "Technology",
+       "key": "asset:Fixed Income",
+       "label": "Fixed income",
        "unit": "share",
-       "a": 0.5706,
-       "b": 0.4257
+       "a": 0.055,
+       "b": 0.0407,
+       "adds": 0.07
       }
      ]
     },
@@ -1921,27 +2705,30 @@
      "client_id": "CL-0002",
      "name": "Ravi Chandrasekaran",
      "similarity": 0.45,
-     "shared": [
-      {
-       "key": "risk_tolerance",
-       "label": "Risk tolerance score",
-       "unit": "score",
-       "a": 8.0,
-       "b": 8.0
-      },
+     "drivers": [
       {
        "key": "gated",
        "label": "Gated or illiquid",
        "unit": "share",
        "a": 0.1362,
-       "b": 0.7172
+       "b": 0.7172,
+       "adds": 0.12
+      },
+      {
+       "key": "risk_tolerance",
+       "label": "Risk tolerance score",
+       "unit": "score",
+       "a": 8.0,
+       "b": 8.0,
+       "adds": 0.12
       },
       {
        "key": "ltv_to_trigger",
        "label": "Loan against its margin-call level",
        "unit": "share",
        "a": 0.2719,
-       "b": 0.9828
+       "b": 0.9828,
+       "adds": 0.09
       }
      ]
     },
@@ -1949,29 +2736,84 @@
      "client_id": "CL-0001",
      "name": "Hartono Wijaya Kusuma",
      "similarity": 0.26,
-     "shared": [
+     "drivers": [
       {
        "key": "ltv_to_trigger",
        "label": "Loan against its margin-call level",
        "unit": "share",
        "a": 0.2719,
-       "b": 0.845
+       "b": 0.845,
+       "adds": 0.1
       },
       {
        "key": "risk_tolerance",
        "label": "Risk tolerance score",
        "unit": "score",
        "a": 8.0,
-       "b": 6.0
+       "b": 6.0,
+       "adds": 0.09
       },
       {
        "key": "asset:Equity",
        "label": "Equity",
        "unit": "share",
        "a": 0.7573,
-       "b": 0.7036
+       "b": 0.7036,
+       "adds": 0.07
       }
      ]
+    }
+   ],
+   "fingerprint": [
+    {
+     "group": "Exposure, looked through",
+     "key": "theme:technology",
+     "label": "Technology exposure",
+     "unit": "share",
+     "value": 0.5706,
+     "above": 18,
+     "below": 1,
+     "others": 19
+    },
+    {
+     "group": "Portfolio build",
+     "key": "asset:Equity",
+     "label": "Equity",
+     "unit": "share",
+     "value": 0.7573,
+     "above": 19,
+     "below": 0,
+     "others": 19
+    },
+    {
+     "group": "Liquidity",
+     "key": "gated",
+     "label": "Gated or illiquid",
+     "unit": "share",
+     "value": 0.1362,
+     "above": 14,
+     "below": 5,
+     "others": 19
+    },
+    {
+     "group": "Obligations",
+     "key": "cash_need_cover",
+     "label": "Cash due in 24 months against daily-liquid assets",
+     "unit": "ratio",
+     "value": 0.0,
+     "above": 0,
+     "below": 16,
+     "others": 19
+    },
+    {
+     "group": "Stated profile",
+     "key": "risk_tolerance",
+     "label": "Risk tolerance score",
+     "unit": "score",
+     "value": 8.0,
+     "above": 17,
+     "below": 1,
+     "others": 19
     }
    ],
    "goal_gap": null,
@@ -2037,27 +2879,30 @@
      "client_id": "CL-0011",
      "name": "Tan Boon Huat",
      "similarity": 0.63,
-     "shared": [
+     "drivers": [
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 0.4295,
+       "b": 0.4602,
+       "adds": 0.16
+      },
       {
        "key": "gated",
        "label": "Gated or illiquid",
        "unit": "share",
        "a": 0.2662,
-       "b": 0.4728
+       "b": 0.4728,
+       "adds": 0.14
       },
       {
-       "key": "ltv_to_trigger",
-       "label": "Loan against its margin-call level",
-       "unit": "share",
-       "a": 0.9916,
-       "b": 0.4036
-      },
-      {
-       "key": "theme:property",
-       "label": "Property",
-       "unit": "share",
-       "a": 0.4903,
-       "b": 0.5142
+       "key": "horizon_years",
+       "label": "Investment horizon",
+       "unit": "years",
+       "a": 12.0,
+       "b": 8.0,
+       "adds": 0.12
       }
      ]
     },
@@ -2065,27 +2910,30 @@
      "client_id": "CL-0006",
      "name": "Nguyen Thi Bao Tran",
      "similarity": 0.57,
-     "shared": [
+     "drivers": [
       {
        "key": "cash_need_cover",
        "label": "Cash due in 24 months against daily-liquid assets",
        "unit": "ratio",
        "a": 0.6751,
-       "b": 0.6395
+       "b": 0.6395,
+       "adds": 0.18
+      },
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 0.4295,
+       "b": 0.6921,
+       "adds": 0.13
       },
       {
        "key": "gated",
        "label": "Gated or illiquid",
        "unit": "share",
        "a": 0.2662,
-       "b": 0.1933
-      },
-      {
-       "key": "theme:property",
-       "label": "Property",
-       "unit": "share",
-       "a": 0.4903,
-       "b": 0.2506
+       "b": 0.1933,
+       "adds": 0.12
       }
      ]
     },
@@ -2093,29 +2941,84 @@
      "client_id": "CL-0002",
      "name": "Ravi Chandrasekaran",
      "similarity": 0.53,
-     "shared": [
+     "drivers": [
       {
-       "key": "ltv_to_trigger",
-       "label": "Loan against its margin-call level",
+       "key": "daily_liquid",
+       "label": "Sellable daily",
        "unit": "share",
-       "a": 0.9916,
-       "b": 0.9828
+       "a": 0.4295,
+       "b": 0.2828,
+       "adds": 0.19
       },
       {
        "key": "gated",
        "label": "Gated or illiquid",
        "unit": "share",
        "a": 0.2662,
-       "b": 0.7172
+       "b": 0.7172,
+       "adds": 0.14
       },
       {
-       "key": "cash_need_cover",
-       "label": "Cash due in 24 months against daily-liquid assets",
-       "unit": "ratio",
-       "a": 0.6751,
-       "b": 0.4694
+       "key": "ltv_to_trigger",
+       "label": "Loan against its margin-call level",
+       "unit": "share",
+       "a": 0.9916,
+       "b": 0.9828,
+       "adds": 0.12
       }
      ]
+    }
+   ],
+   "fingerprint": [
+    {
+     "group": "Exposure, looked through",
+     "key": "theme:property",
+     "label": "Property exposure",
+     "unit": "share",
+     "value": 0.4903,
+     "above": 18,
+     "below": 1,
+     "others": 19
+    },
+    {
+     "group": "Portfolio build",
+     "key": "asset:Equity",
+     "label": "Equity",
+     "unit": "share",
+     "value": 0.2339,
+     "above": 2,
+     "below": 17,
+     "others": 19
+    },
+    {
+     "group": "Liquidity",
+     "key": "daily_liquid",
+     "label": "Sellable daily",
+     "unit": "share",
+     "value": 0.4295,
+     "above": 1,
+     "below": 18,
+     "others": 19
+    },
+    {
+     "group": "Obligations",
+     "key": "ltv_to_trigger",
+     "label": "Loan against its margin-call level",
+     "unit": "share",
+     "value": 0.9916,
+     "above": 19,
+     "below": 0,
+     "others": 19
+    },
+    {
+     "group": "Stated profile",
+     "key": "horizon_years",
+     "label": "Investment horizon",
+     "unit": "years",
+     "value": 12.0,
+     "above": 1,
+     "below": 16,
+     "others": 19
     }
    ],
    "goal_gap": null,
@@ -2181,27 +3084,30 @@
      "client_id": "CL-0013",
      "name": "Zhang Meiling",
      "similarity": 0.52,
-     "shared": [
+     "drivers": [
       {
        "key": "risk_tolerance",
        "label": "Risk tolerance score",
        "unit": "score",
        "a": 9.0,
-       "b": 8.0
+       "b": 8.0,
+       "adds": 0.18
       },
       {
-       "key": "asset:Structured Products",
-       "label": "Structured products",
-       "unit": "share",
-       "a": 0.1284,
-       "b": 0.0709
+       "key": "cash_need_cover",
+       "label": "Cash due in 24 months against daily-liquid assets",
+       "unit": "ratio",
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.15
       },
       {
-       "key": "theme:technology",
-       "label": "Technology",
+       "key": "asset:Fixed Income",
+       "label": "Fixed income",
        "unit": "share",
-       "a": 0.4257,
-       "b": 0.5706
+       "a": 0.0407,
+       "b": 0.055,
+       "adds": 0.07
       }
      ]
     },
@@ -2209,27 +3115,30 @@
      "client_id": "CL-0019",
      "name": "Abdullah Al-Mansoori",
      "similarity": 0.4,
-     "shared": [
+     "drivers": [
+      {
+       "key": "risk_tolerance",
+       "label": "Risk tolerance score",
+       "unit": "score",
+       "a": 9.0,
+       "b": 6.0,
+       "adds": 0.12
+      },
       {
        "key": "asset:Structured Products",
        "label": "Structured products",
        "unit": "share",
        "a": 0.1284,
-       "b": 0.129
+       "b": 0.129,
+       "adds": 0.1
       },
       {
        "key": "horizon_years",
        "label": "Investment horizon",
        "unit": "years",
        "a": 25.0,
-       "b": 25.0
-      },
-      {
-       "key": "theme:shipping",
-       "label": "Shipping",
-       "unit": "share",
-       "a": 0.1284,
-       "b": 0.332
+       "b": 25.0,
+       "adds": 0.08
       }
      ]
     },
@@ -2237,29 +3146,84 @@
      "client_id": "CL-0002",
      "name": "Ravi Chandrasekaran",
      "similarity": 0.32,
-     "shared": [
+     "drivers": [
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 0.6522,
+       "b": 0.2828,
+       "adds": 0.13
+      },
       {
        "key": "risk_tolerance",
        "label": "Risk tolerance score",
        "unit": "score",
        "a": 9.0,
-       "b": 8.0
+       "b": 8.0,
+       "adds": 0.13
       },
       {
-       "key": "theme:technology",
-       "label": "Technology",
+       "key": "gated",
+       "label": "Gated or illiquid",
        "unit": "share",
-       "a": 0.4257,
-       "b": 0.8856
-      },
-      {
-       "key": "asset:Alternatives",
-       "label": "Alternatives",
-       "unit": "share",
-       "a": 0.2194,
-       "b": 0.6835
+       "a": 0.1284,
+       "b": 0.7172,
+       "adds": 0.06
       }
      ]
+    }
+   ],
+   "fingerprint": [
+    {
+     "group": "Exposure, looked through",
+     "key": "theme:shipping",
+     "label": "Shipping exposure",
+     "unit": "share",
+     "value": 0.1284,
+     "above": 18,
+     "below": 1,
+     "others": 19
+    },
+    {
+     "group": "Portfolio build",
+     "key": "asset:Fixed Income",
+     "label": "Fixed income",
+     "unit": "share",
+     "value": 0.0407,
+     "above": 1,
+     "below": 18,
+     "others": 19
+    },
+    {
+     "group": "Liquidity",
+     "key": "daily_liquid",
+     "label": "Sellable daily",
+     "unit": "share",
+     "value": 0.6522,
+     "above": 4,
+     "below": 15,
+     "others": 19
+    },
+    {
+     "group": "Obligations",
+     "key": "cash_need_cover",
+     "label": "Cash due in 24 months against daily-liquid assets",
+     "unit": "ratio",
+     "value": 0.0,
+     "above": 0,
+     "below": 16,
+     "others": 19
+    },
+    {
+     "group": "Stated profile",
+     "key": "risk_tolerance",
+     "label": "Risk tolerance score",
+     "unit": "score",
+     "value": 9.0,
+     "above": 19,
+     "below": 0,
+     "others": 19
     }
    ],
    "goal_gap": null,
@@ -2267,13 +3231,13 @@
    "biggest_moves": [
     {
      "key": "theme:energy",
-     "label": "Energy",
+     "label": "Energy exposure",
      "from": 0.0,
      "to": 0.1284
     },
     {
      "key": "theme:shipping",
-     "label": "Shipping",
+     "label": "Shipping exposure",
      "from": 0.0,
      "to": 0.1284
     },
@@ -2325,27 +3289,30 @@
      "client_id": "CL-0018",
      "name": "Elena Marchetti-Wong",
      "similarity": 0.82,
-     "shared": [
+     "drivers": [
       {
        "key": "daily_liquid",
        "label": "Sellable daily",
        "unit": "share",
        "a": 1.0,
-       "b": 1.0
+       "b": 1.0,
+       "adds": 0.3
       },
       {
-       "key": "asset:Cash and Equivalents",
-       "label": "Cash",
+       "key": "gated",
+       "label": "Gated or illiquid",
        "unit": "share",
-       "a": 0.078,
-       "b": 0.1258
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.24
       },
       {
-       "key": "currency_mismatch",
-       "label": "Held outside base currency",
+       "key": "asset:Alternatives",
+       "label": "Alternatives",
        "unit": "share",
-       "a": 0.5641,
-       "b": 0.468
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.07
       }
      ]
     },
@@ -2353,27 +3320,30 @@
      "client_id": "CL-0005",
      "name": "Aishah binti Rahman",
      "similarity": 0.8,
-     "shared": [
+     "drivers": [
       {
        "key": "daily_liquid",
        "label": "Sellable daily",
        "unit": "share",
        "a": 1.0,
-       "b": 0.9428
+       "b": 0.9428,
+       "adds": 0.26
       },
       {
-       "key": "theme:healthcare",
-       "label": "Healthcare",
+       "key": "gated",
+       "label": "Gated or illiquid",
        "unit": "share",
-       "a": 0.2697,
-       "b": 0.1284
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.25
       },
       {
-       "key": "currency_mismatch",
-       "label": "Held outside base currency",
+       "key": "asset:Alternatives",
+       "label": "Alternatives",
        "unit": "share",
-       "a": 0.5641,
-       "b": 0.6132
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.07
       }
      ]
     },
@@ -2381,29 +3351,84 @@
      "client_id": "CL-0008",
      "name": "Chen Wei Ling",
      "similarity": 0.65,
-     "shared": [
+     "drivers": [
       {
-       "key": "asset:Cash and Equivalents",
-       "label": "Cash",
+       "key": "gated",
+       "label": "Gated or illiquid",
        "unit": "share",
-       "a": 0.078,
-       "b": 0.1361
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.27
       },
       {
-       "key": "theme:healthcare",
-       "label": "Healthcare",
+       "key": "asset:Alternatives",
+       "label": "Alternatives",
        "unit": "share",
-       "a": 0.2697,
-       "b": 0.0685
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.08
       },
       {
-       "key": "asset:Commodities",
-       "label": "Commodities",
+       "key": "daily_liquid",
+       "label": "Sellable daily",
        "unit": "share",
-       "a": 0.0265,
-       "b": 0.0429
+       "a": 1.0,
+       "b": 0.8639,
+       "adds": 0.06
       }
      ]
+    }
+   ],
+   "fingerprint": [
+    {
+     "group": "Exposure, looked through",
+     "key": "theme:healthcare",
+     "label": "Healthcare exposure",
+     "unit": "share",
+     "value": 0.2697,
+     "above": 18,
+     "below": 1,
+     "others": 19
+    },
+    {
+     "group": "Portfolio build",
+     "key": "asset:Alternatives",
+     "label": "Alternatives",
+     "unit": "share",
+     "value": 0.0,
+     "above": 0,
+     "below": 16,
+     "others": 19
+    },
+    {
+     "group": "Liquidity",
+     "key": "daily_liquid",
+     "label": "Sellable daily",
+     "unit": "share",
+     "value": 1.0,
+     "above": 18,
+     "below": 0,
+     "others": 19
+    },
+    {
+     "group": "Obligations",
+     "key": "cash_need_cover",
+     "label": "Cash due in 24 months against daily-liquid assets",
+     "unit": "ratio",
+     "value": 0.0076,
+     "above": 5,
+     "below": 14,
+     "others": 19
+    },
+    {
+     "group": "Stated profile",
+     "key": "risk_gap",
+     "label": "Risk assets above target",
+     "unit": "points",
+     "value": 0.2537,
+     "above": 14,
+     "below": 5,
+     "others": 19
     }
    ],
    "goal_gap": [
@@ -2484,27 +3509,30 @@
      "client_id": "CL-0002",
      "name": "Ravi Chandrasekaran",
      "similarity": 0.5,
-     "shared": [
+     "drivers": [
       {
        "key": "gated",
        "label": "Gated or illiquid",
        "unit": "share",
        "a": 0.2745,
-       "b": 0.7172
+       "b": 0.7172,
+       "adds": 0.17
+      },
+      {
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 0.6214,
+       "b": 0.2828,
+       "adds": 0.15
       },
       {
        "key": "risk_gap",
        "label": "Risk assets above target",
        "unit": "points",
        "a": 0.3053,
-       "b": 0.2925
-      },
-      {
-       "key": "asset:Alternatives",
-       "label": "Alternatives",
-       "unit": "share",
-       "a": 0.3786,
-       "b": 0.6835
+       "b": 0.2925,
+       "adds": 0.07
       }
      ]
     },
@@ -2512,27 +3540,30 @@
      "client_id": "CL-0006",
      "name": "Nguyen Thi Bao Tran",
      "similarity": 0.4,
-     "shared": [
+     "drivers": [
       {
        "key": "uncalled_share",
        "label": "Uncalled fund commitments",
        "unit": "share",
        "a": 0.1797,
-       "b": 0.166
+       "b": 0.166,
+       "adds": 0.19
       },
       {
        "key": "gated",
        "label": "Gated or illiquid",
        "unit": "share",
        "a": 0.2745,
-       "b": 0.1933
+       "b": 0.1933,
+       "adds": 0.15
       },
       {
-       "key": "cash_need_cover",
-       "label": "Cash due in 24 months against daily-liquid assets",
-       "unit": "ratio",
-       "a": 0.3057,
-       "b": 0.6395
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 0.6214,
+       "b": 0.6921,
+       "adds": 0.11
       }
      ]
     },
@@ -2540,29 +3571,84 @@
      "client_id": "CL-0020",
      "name": "Grace Adeyemi-Lim",
      "similarity": 0.29,
-     "shared": [
-      {
-       "key": "uncalled_share",
-       "label": "Uncalled fund commitments",
-       "unit": "share",
-       "a": 0.1797,
-       "b": 0.0472
-      },
+     "drivers": [
       {
        "key": "horizon_years",
        "label": "Investment horizon",
        "unit": "years",
        "a": 50.0,
-       "b": 28.0
+       "b": 28.0,
+       "adds": 0.16
+      },
+      {
+       "key": "uncalled_share",
+       "label": "Uncalled fund commitments",
+       "unit": "share",
+       "a": 0.1797,
+       "b": 0.0472,
+       "adds": 0.16
       },
       {
        "key": "cash_need_cover",
        "label": "Cash due in 24 months against daily-liquid assets",
        "unit": "ratio",
        "a": 0.3057,
-       "b": 0.3417
+       "b": 0.3417,
+       "adds": 0.06
       }
      ]
+    }
+   ],
+   "fingerprint": [
+    {
+     "group": "Exposure, looked through",
+     "key": "theme:healthcare",
+     "label": "Healthcare exposure",
+     "unit": "share",
+     "value": 0.0189,
+     "above": 14,
+     "below": 5,
+     "others": 19
+    },
+    {
+     "group": "Portfolio build",
+     "key": "currency_mismatch",
+     "label": "Held outside base currency",
+     "unit": "share",
+     "value": 0.0458,
+     "above": 1,
+     "below": 18,
+     "others": 19
+    },
+    {
+     "group": "Liquidity",
+     "key": "gated",
+     "label": "Gated or illiquid",
+     "unit": "share",
+     "value": 0.2745,
+     "above": 17,
+     "below": 2,
+     "others": 19
+    },
+    {
+     "group": "Obligations",
+     "key": "uncalled_share",
+     "label": "Uncalled fund commitments",
+     "unit": "share",
+     "value": 0.1797,
+     "above": 19,
+     "below": 0,
+     "others": 19
+    },
+    {
+     "group": "Stated profile",
+     "key": "horizon_years",
+     "label": "Investment horizon",
+     "unit": "years",
+     "value": 50.0,
+     "above": 19,
+     "below": 0,
+     "others": 19
     }
    ],
    "goal_gap": null,
@@ -2622,27 +3708,30 @@
      "client_id": "CL-0016",
      "name": "Yamamoto Kenji",
      "similarity": 0.82,
-     "shared": [
+     "drivers": [
       {
        "key": "daily_liquid",
        "label": "Sellable daily",
        "unit": "share",
        "a": 1.0,
-       "b": 1.0
+       "b": 1.0,
+       "adds": 0.3
       },
       {
-       "key": "asset:Cash and Equivalents",
-       "label": "Cash",
+       "key": "gated",
+       "label": "Gated or illiquid",
        "unit": "share",
-       "a": 0.1258,
-       "b": 0.078
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.24
       },
       {
-       "key": "currency_mismatch",
-       "label": "Held outside base currency",
+       "key": "asset:Alternatives",
+       "label": "Alternatives",
        "unit": "share",
-       "a": 0.468,
-       "b": 0.5641
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.07
       }
      ]
     },
@@ -2650,27 +3739,30 @@
      "client_id": "CL-0008",
      "name": "Chen Wei Ling",
      "similarity": 0.67,
-     "shared": [
+     "drivers": [
+      {
+       "key": "gated",
+       "label": "Gated or illiquid",
+       "unit": "share",
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.27
+      },
+      {
+       "key": "asset:Alternatives",
+       "label": "Alternatives",
+       "unit": "share",
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.08
+      },
       {
        "key": "asset:Cash and Equivalents",
        "label": "Cash",
        "unit": "share",
        "a": 0.1258,
-       "b": 0.1361
-      },
-      {
-       "key": "asset:Commodities",
-       "label": "Commodities",
-       "unit": "share",
-       "a": 0.1404,
-       "b": 0.0429
-      },
-      {
-       "key": "theme:commodities",
-       "label": "Commodities",
-       "unit": "share",
-       "a": 0.1404,
-       "b": 0.0429
+       "b": 0.1361,
+       "adds": 0.08
       }
      ]
     },
@@ -2678,29 +3770,84 @@
      "client_id": "CL-0005",
      "name": "Aishah binti Rahman",
      "similarity": 0.59,
-     "shared": [
+     "drivers": [
       {
        "key": "daily_liquid",
        "label": "Sellable daily",
        "unit": "share",
        "a": 1.0,
-       "b": 0.9428
+       "b": 0.9428,
+       "adds": 0.25
       },
       {
-       "key": "currency_mismatch",
-       "label": "Held outside base currency",
+       "key": "gated",
+       "label": "Gated or illiquid",
        "unit": "share",
-       "a": 0.468,
-       "b": 0.6132
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.24
       },
       {
-       "key": "asset:Equity",
-       "label": "Equity",
+       "key": "asset:Alternatives",
+       "label": "Alternatives",
        "unit": "share",
-       "a": 0.504,
-       "b": 0.6774
+       "a": 0.0,
+       "b": 0.0,
+       "adds": 0.07
       }
      ]
+    }
+   ],
+   "fingerprint": [
+    {
+     "group": "Exposure, looked through",
+     "key": "theme:luxury",
+     "label": "Luxury exposure",
+     "unit": "share",
+     "value": 0.1628,
+     "above": 18,
+     "below": 1,
+     "others": 19
+    },
+    {
+     "group": "Portfolio build",
+     "key": "asset:Commodities",
+     "label": "Commodities",
+     "unit": "share",
+     "value": 0.1404,
+     "above": 18,
+     "below": 1,
+     "others": 19
+    },
+    {
+     "group": "Liquidity",
+     "key": "daily_liquid",
+     "label": "Sellable daily",
+     "unit": "share",
+     "value": 1.0,
+     "above": 18,
+     "below": 0,
+     "others": 19
+    },
+    {
+     "group": "Obligations",
+     "key": "ltv_to_trigger",
+     "label": "Loan against its margin-call level",
+     "unit": "share",
+     "value": 0.0,
+     "above": 0,
+     "below": 5,
+     "others": 19
+    },
+    {
+     "group": "Stated profile",
+     "key": "horizon_years",
+     "label": "Investment horizon",
+     "unit": "years",
+     "value": 22.0,
+     "above": 12,
+     "below": 6,
+     "others": 19
     }
    ],
    "goal_gap": [
@@ -2735,13 +3882,13 @@
     },
     {
      "key": "theme:luxury",
-     "label": "Luxury",
+     "label": "Luxury exposure",
      "from": 0.1827,
      "to": 0.1628
     },
     {
      "key": "theme:commodities",
-     "label": "Commodities",
+     "label": "Commodities exposure",
      "from": 0.1257,
      "to": 0.1404
     }
@@ -2787,27 +3934,30 @@
      "client_id": "CL-0015",
      "name": "Kim Do-Yoon",
      "similarity": 0.4,
-     "shared": [
+     "drivers": [
+      {
+       "key": "risk_tolerance",
+       "label": "Risk tolerance score",
+       "unit": "score",
+       "a": 6.0,
+       "b": 9.0,
+       "adds": 0.12
+      },
       {
        "key": "asset:Structured Products",
        "label": "Structured products",
        "unit": "share",
        "a": 0.129,
-       "b": 0.1284
+       "b": 0.1284,
+       "adds": 0.1
       },
       {
        "key": "horizon_years",
        "label": "Investment horizon",
        "unit": "years",
        "a": 25.0,
-       "b": 25.0
-      },
-      {
-       "key": "theme:shipping",
-       "label": "Shipping",
-       "unit": "share",
-       "a": 0.332,
-       "b": 0.1284
+       "b": 25.0,
+       "adds": 0.08
       }
      ]
     },
@@ -2815,27 +3965,30 @@
      "client_id": "CL-0002",
      "name": "Ravi Chandrasekaran",
      "similarity": 0.3,
-     "shared": [
-      {
-       "key": "risk_tolerance",
-       "label": "Risk tolerance score",
-       "unit": "score",
-       "a": 6.0,
-       "b": 8.0
-      },
+     "drivers": [
       {
        "key": "gated",
        "label": "Gated or illiquid",
        "unit": "share",
        "a": 0.129,
-       "b": 0.7172
+       "b": 0.7172,
+       "adds": 0.11
       },
       {
-       "key": "cash_need_cover",
-       "label": "Cash due in 24 months against daily-liquid assets",
-       "unit": "ratio",
-       "a": 0.1914,
-       "b": 0.4694
+       "key": "daily_liquid",
+       "label": "Sellable daily",
+       "unit": "share",
+       "a": 0.811,
+       "b": 0.2828,
+       "adds": 0.11
+      },
+      {
+       "key": "risk_tolerance",
+       "label": "Risk tolerance score",
+       "unit": "score",
+       "a": 6.0,
+       "b": 8.0,
+       "adds": 0.08
       }
      ]
     },
@@ -2843,29 +3996,84 @@
      "client_id": "CL-0013",
      "name": "Zhang Meiling",
      "similarity": 0.23,
-     "shared": [
-      {
-       "key": "asset:Structured Products",
-       "label": "Structured products",
-       "unit": "share",
-       "a": 0.129,
-       "b": 0.0709
-      },
+     "drivers": [
       {
        "key": "risk_tolerance",
        "label": "Risk tolerance score",
        "unit": "score",
        "a": 6.0,
-       "b": 8.0
+       "b": 8.0,
+       "adds": 0.11
+      },
+      {
+       "key": "asset:Structured Products",
+       "label": "Structured products",
+       "unit": "share",
+       "a": 0.129,
+       "b": 0.0709,
+       "adds": 0.1
       },
       {
        "key": "gated",
        "label": "Gated or illiquid",
        "unit": "share",
        "a": 0.129,
-       "b": 0.1362
+       "b": 0.1362,
+       "adds": 0.07
       }
      ]
+    }
+   ],
+   "fingerprint": [
+    {
+     "group": "Exposure, looked through",
+     "key": "theme:shipping",
+     "label": "Shipping exposure",
+     "unit": "share",
+     "value": 0.332,
+     "above": 19,
+     "below": 0,
+     "others": 19
+    },
+    {
+     "group": "Portfolio build",
+     "key": "asset:Structured Products",
+     "label": "Structured products",
+     "unit": "share",
+     "value": 0.129,
+     "above": 19,
+     "below": 0,
+     "others": 19
+    },
+    {
+     "group": "Liquidity",
+     "key": "daily_liquid",
+     "label": "Sellable daily",
+     "unit": "share",
+     "value": 0.811,
+     "above": 6,
+     "below": 13,
+     "others": 19
+    },
+    {
+     "group": "Obligations",
+     "key": "cash_need_cover",
+     "label": "Cash due in 24 months against daily-liquid assets",
+     "unit": "ratio",
+     "value": 0.1914,
+     "above": 13,
+     "below": 6,
+     "others": 19
+    },
+    {
+     "group": "Stated profile",
+     "key": "horizon_years",
+     "label": "Investment horizon",
+     "unit": "years",
+     "value": 25.0,
+     "above": 14,
+     "below": 3,
+     "others": 19
     }
    ],
    "goal_gap": [
@@ -2900,7 +4108,7 @@
     },
     {
      "key": "theme:energy",
-     "label": "Energy",
+     "label": "Energy exposure",
      "from": 0.0889,
      "to": 0.2184
     },
@@ -2952,27 +4160,30 @@
      "client_id": "CL-0017",
      "name": "Fong Enterprises Family Office",
      "similarity": 0.29,
-     "shared": [
-      {
-       "key": "uncalled_share",
-       "label": "Uncalled fund commitments",
-       "unit": "share",
-       "a": 0.0472,
-       "b": 0.1797
-      },
+     "drivers": [
       {
        "key": "horizon_years",
        "label": "Investment horizon",
        "unit": "years",
        "a": 28.0,
-       "b": 50.0
+       "b": 50.0,
+       "adds": 0.16
+      },
+      {
+       "key": "uncalled_share",
+       "label": "Uncalled fund commitments",
+       "unit": "share",
+       "a": 0.0472,
+       "b": 0.1797,
+       "adds": 0.16
       },
       {
        "key": "cash_need_cover",
        "label": "Cash due in 24 months against daily-liquid assets",
        "unit": "ratio",
        "a": 0.3417,
-       "b": 0.3057
+       "b": 0.3057,
+       "adds": 0.06
       }
      ]
     },
@@ -2980,27 +4191,30 @@
      "client_id": "CL-0001",
      "name": "Hartono Wijaya Kusuma",
      "similarity": 0.26,
-     "shared": [
+     "drivers": [
       {
        "key": "daily_liquid",
        "label": "Sellable daily",
        "unit": "share",
        "a": 0.9367,
-       "b": 0.8942
+       "b": 0.8942,
+       "adds": 0.11
       },
       {
        "key": "horizon_years",
        "label": "Investment horizon",
        "unit": "years",
        "a": 28.0,
-       "b": 25.0
+       "b": 25.0,
+       "adds": 0.1
       },
       {
        "key": "risk_tolerance",
        "label": "Risk tolerance score",
        "unit": "score",
        "a": 7.0,
-       "b": 6.0
+       "b": 6.0,
+       "adds": 0.07
       }
      ]
     },
@@ -3008,29 +4222,84 @@
      "client_id": "CL-0013",
      "name": "Zhang Meiling",
      "similarity": 0.23,
-     "shared": [
+     "drivers": [
       {
        "key": "risk_tolerance",
        "label": "Risk tolerance score",
        "unit": "score",
        "a": 7.0,
-       "b": 8.0
+       "b": 8.0,
+       "adds": 0.14
       },
       {
        "key": "asset:Equity",
        "label": "Equity",
        "unit": "share",
        "a": 0.7508,
-       "b": 0.7573
+       "b": 0.7573,
+       "adds": 0.09
       },
       {
-       "key": "theme:technology",
-       "label": "Technology",
-       "unit": "share",
-       "a": 0.1398,
-       "b": 0.5706
+       "key": "horizon_years",
+       "label": "Investment horizon",
+       "unit": "years",
+       "a": 28.0,
+       "b": 22.0,
+       "adds": 0.06
       }
      ]
+    }
+   ],
+   "fingerprint": [
+    {
+     "group": "Exposure, looked through",
+     "key": "theme:healthcare",
+     "label": "Healthcare exposure",
+     "unit": "share",
+     "value": 0.2936,
+     "above": 19,
+     "below": 0,
+     "others": 19
+    },
+    {
+     "group": "Portfolio build",
+     "key": "asset:Equity",
+     "label": "Equity",
+     "unit": "share",
+     "value": 0.7508,
+     "above": 18,
+     "below": 1,
+     "others": 19
+    },
+    {
+     "group": "Liquidity",
+     "key": "daily_liquid",
+     "label": "Sellable daily",
+     "unit": "share",
+     "value": 0.9367,
+     "above": 16,
+     "below": 3,
+     "others": 19
+    },
+    {
+     "group": "Obligations",
+     "key": "uncalled_share",
+     "label": "Uncalled fund commitments",
+     "unit": "share",
+     "value": 0.0472,
+     "above": 17,
+     "below": 2,
+     "others": 19
+    },
+    {
+     "group": "Stated profile",
+     "key": "horizon_years",
+     "label": "Investment horizon",
+     "unit": "years",
+     "value": 28.0,
+     "above": 17,
+     "below": 2,
+     "others": 19
     }
    ],
    "goal_gap": null,
@@ -3044,7 +4313,7 @@
     },
     {
      "key": "theme:technology",
-     "label": "Technology",
+     "label": "Technology exposure",
      "from": 0.1277,
      "to": 0.1398
     },
