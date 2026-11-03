@@ -36,9 +36,15 @@ Exact portfolio and suitability calculations remain deterministic. See
 The global **Ask TESSERA** assistant supports client-scoped questions with
 numbered source citations, microphone dictation and browser read-aloud. It works
 without cloud credentials using local factual retrieval, and can optionally
-combine Chroma semantic results with model-written answers. See
+combine Chroma semantic results with model-selected source extracts. See
 [`docs/RAG_CHAT_ASSISTANT.md`](docs/RAG_CHAT_ASSISTANT.md). Its API endpoint is
 `POST /api/chat`.
+
+Chat answers use server-rendered source extracts. The optional model selects
+citations rather than writing factual claims. Missing evidence produces an
+explicit refusal; external reports retain publisher links and are labelled as
+unverified. Run `python scripts/evaluate_chat.py` for the offline source and
+answer checks, or read the [evaluation results](docs/CHAT_EVALUATION_RESULTS.md).
 
 The template enables `TESSERA_RETRIEVAL_ENABLED`. Set it to `false` when
 running without Chroma configuration. Core calculations and local factual chat
@@ -115,8 +121,11 @@ Controlled CSV events remain source-labelled but do not have external links.
 The default sources are Yahoo Finance, CNBC, The Business Times, and the
 existing Google News market searches. Source links open
 the original article. Local approved events persist in `runtime/live_events.json`;
-hosted events use temporary instance storage and are returned directly to the
-loading website. Durable hosted news history requires a shared event store.
+hosted events use shared PostgreSQL storage and are mirrored to a temporary file
+for calculations. News survives worker restarts and redeployments. Analytical
+snapshots, review snapshots and chat outputs are also persisted in the database.
+See [deployment setup](DEPLOYMENT.md) to backfill local output files or share
+the cloud stores from local runs.
 
 ## Risk Analysis
 

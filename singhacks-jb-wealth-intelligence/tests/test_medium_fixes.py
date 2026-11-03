@@ -84,13 +84,14 @@ class MediumFixTests(unittest.TestCase):
 
     def test_chat_rejects_zero_negative_and_absent_citation_ids(self):
         evidence = [{"citation": 1, "source": "test", "excerpt": "Controlled fact"}]
-        for citation in ("[0]", "[-1]", "[2]", "[1] plus [0]"):
-            response = io.BytesIO(json.dumps({"choices": [{"message": {"content": "A fact " + citation}}]}).encode())
+        for citations in ([0], [-1], [2], [1, 0]):
+            selection = json.dumps({"citations": citations, "insufficient": False})
+            response = io.BytesIO(json.dumps({"choices": [{"message": {"content": selection}}]}).encode())
             with mock.patch("tessera.chat.urlopen", return_value=response), self.assertRaisesRegex(ValueError, "citations"):
                 _model_answer("Question", evidence, [], "test")
-        response = io.BytesIO(json.dumps({"choices": [{"message": {"content": "A fact [1]"}}]}).encode())
+        response = io.BytesIO(json.dumps({"choices": [{"message": {"content": '{"citations":[1],"insufficient":false}'}}]}).encode())
         with mock.patch("tessera.chat.urlopen", return_value=response):
-            self.assertEqual(_model_answer("Question", evidence, [], "test"), "A fact [1]")
+            self.assertEqual(_model_answer("Question", evidence, [], "test"), "Source extracts:\nRecorded evidence: Controlled fact [1]")
 
     def test_notification_outage_does_not_undo_hosted_news_refresh(self):
         import api.index as api

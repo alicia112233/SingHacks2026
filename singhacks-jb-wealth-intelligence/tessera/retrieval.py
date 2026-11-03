@@ -11,9 +11,12 @@ import csv
 import json
 import os
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from typing import Any, Iterable
 from urllib.request import Request, urlopen
+
+from tessera.source_policy import content_hash
 
 
 GATEWAY_EMBEDDINGS_URL = "https://ai-gateway.vercel.sh/v1/embeddings"
@@ -306,7 +309,21 @@ class ChromaKnowledgeService:
         distances = (response.get("distances") or [[]])[0]
         evidence: list[dict[str, Any]] = []
         for item_id, text, meta, distance in zip(ids, texts, metadata, distances):
+            meta = meta or {}
+            # Recheck returned rows: database filters alone are not an isolation boundary.
+            if meta.get("corpus") != CORPUS or meta.get("client_id") not in {client_id, "GLOBAL"}:
+                continue
+            source_type = meta.get("source_type")
+            if source_type not in {"rm_note", "controlled_event", "mandate_rule", "instrument_reference"}:
+                continue
+            if meta.get("client_id") == "GLOBAL" and source_type == "rm_note":
+                continue
             source_date = str((meta or {}).get("source_date", ""))
+            if source_type in {"rm_note", "controlled_event"}:
+                try:
+                    date.fromisoformat(source_date)
+                except ValueError:
+                    continue
             if as_of and source_date and source_date > as_of:
                 continue
             evidence.append(
@@ -317,6 +334,11 @@ class ChromaKnowledgeService:
                     "source_date": source_date or None,
                     "excerpt": str(text)[:500],
                     "distance": round(float(distance), 4),
+                    "client_id": meta["client_id"],
+                    "corpus": meta["corpus"],
+                    "evidence_kind": "recorded_evidence",
+                    "verification_status": "recorded_not_independently_verified",
+                    "content_sha256": content_hash(str(text)[:500]),
                 }
             )
             if len(evidence) >= limit:

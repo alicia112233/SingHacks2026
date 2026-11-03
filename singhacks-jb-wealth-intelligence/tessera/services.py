@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from tessera.engine import build_intelligence_payload, generate_alternative_recommendation
+from tessera.cloud_outputs import LIVE_EVENTS_KEY, mirror_events
 from tessera.market_news import refresh as refresh_market_news
 from tessera.notifications import scan_urgency_alerts
 from tessera.review_state import reviewed_snapshot, reviewed_intelligence, requested_action
@@ -24,8 +25,9 @@ ALLOWED_DECISIONS = {"approved", "dismissed", "edited", "pending"}
 class IntelligenceService:
     """Cache analytics until one of the controlled source files changes."""
 
-    def __init__(self, data_dir: Path, live_events_path: Path | None = None):
+    def __init__(self, data_dir: Path, live_events_path: Path | None = None, output_store=None):
         self.data_dir = data_dir
+        self.output_store = output_store
         self.live_events_path = live_events_path or data_dir.parent / "runtime" / "live_events.json"
         self._lock = threading.Lock()
         self._signature: tuple[tuple[str, int, int], ...] | None = None
@@ -42,10 +44,15 @@ class IntelligenceService:
     def get(self) -> dict[str, Any]:
         if os.environ.get("TESSERA_MODE", "demo").strip().lower() != "demo":
             raise RuntimeError("TESSERA supports demo mode only. Production use requires authenticated identities and client-level authorization.")
-        signature = self._source_signature()
         with self._lock:
+            if self.output_store is not None:
+                mirror_events(self.live_events_path, self.output_store.read_json(LIVE_EVENTS_KEY, []))
+            signature = self._source_signature()
             if self._payload is None or signature != self._signature:
-                self._payload = build_intelligence_payload(self.data_dir, self.live_events_path)
+                payload = build_intelligence_payload(self.data_dir, self.live_events_path)
+                if self.output_store is not None:
+                    self.output_store.put_json("intelligence/current.json", payload)
+                self._payload = payload
                 self._signature = signature
             return self._payload
 
@@ -338,9 +345,10 @@ def review_context(intelligence, store):
             "decisions": reviewed_snapshot(snapshot, intelligence)}
 
 
-def refresh_market_intelligence(data_dir, live_events_path, intelligence_provider, alert_store_factory):
+def refresh_market_intelligence(data_dir, live_events_path, intelligence_provider, alert_store_factory, output_store=None):
     """Return refreshed evidence even when the independent notification step fails."""
-    result = refresh_market_news(data_dir, live_events_path)
+    result = (refresh_market_news(data_dir, live_events_path, output_store=output_store)
+              if output_store is not None else refresh_market_news(data_dir, live_events_path))
     result["intelligence"] = intelligence_provider()
     try:
         result["urgency_alerts"] = scan_urgency_alerts(result["intelligence"], alert_store_factory())

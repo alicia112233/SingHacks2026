@@ -5,6 +5,7 @@ from __future__ import annotations
 import hmac
 import os
 import tempfile
+import uuid
 from functools import lru_cache
 from http import HTTPStatus
 from pathlib import Path
@@ -12,6 +13,7 @@ from pathlib import Path
 from flask import Flask, jsonify, request, send_from_directory
 
 from tessera.chat import answer_chat, chat_configuration_status
+from tessera.cloud_outputs import production_output_store
 from tessera.notifications import (
     TelegramNotificationError,
     TelegramNotifier,
@@ -38,7 +40,8 @@ from tessera.services import (
 ROOT = Path(__file__).resolve().parents[1]
 WEB = ROOT / "web"
 LIVE_EVENTS = Path(tempfile.gettempdir()) / f"tessera-live-events-{os.getpid()}.json"
-INTELLIGENCE = IntelligenceService(ROOT / "data", LIVE_EVENTS)
+OUTPUTS = production_output_store() if os.environ.get("DATABASE_URL") else None
+INTELLIGENCE = IntelligenceService(ROOT / "data", LIVE_EVENTS, output_store=OUTPUTS)
 app = Flask(__name__, static_folder=str(WEB), static_url_path="")
 app.config["MAX_CONTENT_LENGTH"] = MAX_REQUEST_BYTES
 
@@ -102,7 +105,10 @@ def intelligence():
 @app.get("/api/review")
 def get_review():
     try:
-        return jsonify(review_context(INTELLIGENCE.get(), decision_store()))
+        result = review_context(INTELLIGENCE.get(), decision_store())
+        if OUTPUTS is not None:
+            OUTPUTS.put_json("review/current.json", result)
+        return jsonify(result)
     except Exception:
         return jsonify(error="The current review could not be loaded."), HTTPStatus.SERVICE_UNAVAILABLE
 
@@ -200,7 +206,10 @@ def post_chat():
         body = request.get_json(silent=True)
         if body is None:
             raise ValueError("Request body must be valid JSON")
-        return jsonify(answer_chat(INTELLIGENCE.get(), body))
+        answer = answer_chat(INTELLIGENCE.get(), body)
+        if OUTPUTS is not None:
+            OUTPUTS.put_json(f"chat/{uuid.uuid4()}.json", answer)
+        return jsonify(answer)
     except (TypeError, ValueError) as error:
         return jsonify(error=str(error)), HTTPStatus.BAD_REQUEST
     except Exception:
@@ -210,20 +219,29 @@ def post_chat():
 
 @app.get("/health")
 def health():
+    output_status = "not_configured"
+    if OUTPUTS is not None:
+        try:
+            OUTPUTS.inventory()
+            output_status = "available"
+        except Exception:
+            output_status = "unavailable"
     return jsonify(
-        status="ok",
+        status="degraded" if output_status == "unavailable" else "ok",
         service="tessera",
         decision_storage="configured" if os.environ.get("DATABASE_URL") else "not_configured",
+        backend_output_storage=output_status,
+        market_news_storage="postgresql" if OUTPUTS is not None else "temporary",
         vector_search=retrieval_configuration_status()["status"],
         chat=chat_configuration_status()["status"],
         telegram_notifications=TelegramNotifier().configuration_status(),
-    )
+    ), HTTPStatus.SERVICE_UNAVAILABLE if output_status == "unavailable" else HTTPStatus.OK
 
 
 @app.post("/api/market-news/refresh")
 def market_news_refresh():
     try:
-        return jsonify(refresh_market_intelligence(ROOT / "data", LIVE_EVENTS, current_intelligence, urgency_alert_store))
+        return jsonify(refresh_market_intelligence(ROOT / "data", LIVE_EVENTS, current_intelligence, urgency_alert_store, output_store=OUTPUTS))
     except Exception:
         app.logger.exception("Market-news refresh failed")
         return jsonify(error="The market-news refresh could not be completed."), HTTPStatus.SERVICE_UNAVAILABLE

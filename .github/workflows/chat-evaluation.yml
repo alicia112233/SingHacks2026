@@ -1,0 +1,41 @@
+name: Evaluate chatbot evidence
+
+on:
+  push:
+    paths:
+      - "singhacks-jb-wealth-intelligence/**"
+      - ".github/workflows/chat-evaluation.yml"
+  pull_request:
+    paths:
+      - "singhacks-jb-wealth-intelligence/**"
+      - ".github/workflows/chat-evaluation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: singhacks-jb-wealth-intelligence
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: singhacks-jb-wealth-intelligence/requirements.txt
+      - run: python -m pip install -r requirements.txt
+      - run: python scripts/evaluate_chat.py
+      - run: python -m unittest discover -s tests -p 'test_chat*.py' -v
+      - run: python -m unittest discover -s tests -p test_retrieval.py -v
+      - run: python -m unittest discover -s tests -p test_source_policy.py -v
+      - run: python -m unittest discover -s tests -p test_market_news.py -v
+      - run: node --check web/app.js
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: chatbot-evaluation
+          path: singhacks-jb-wealth-intelligence/runtime/chat-evaluation.*

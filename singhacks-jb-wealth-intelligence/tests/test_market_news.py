@@ -62,6 +62,27 @@ class MarketNewsTests(unittest.TestCase):
         item.remove(item.find("source"))
         self.assertEqual(_approved_event(item, "The Business Times")["publisher"], "The Business Times")
 
+    def test_new_source_metadata_is_traceable_without_claiming_verification(self):
+        item = Element("item")
+        SubElement(item, "title").text = "Oil shipping market disruption"
+        SubElement(item, "link").text = "https://news.google.com/rss/articles/test"
+        SubElement(item, "source", {"url": "https://www.reuters.com"}).text = "Reuters"
+        SubElement(item, "pubDate").text = "Thu, 20 Aug 2026 10:00:00 GMT"
+        event = _approved_event(item)
+        self.assertEqual(event["publisher_policy"], "allowlisted_publisher")
+        self.assertEqual(event["verification_status"], "external_report_not_verified")
+        self.assertEqual(event["event_date"], "2026-08-20")
+        self.assertTrue(event["retrieved_at"])
+        self.assertEqual(len(event["content_sha256"]), 64)
+        item.find("source").set("url", "https://reuters.com.evil.test")
+        self.assertEqual(_approved_event(item)["publisher_policy"], "unreviewed_publisher")
+
+    def test_unknown_publication_date_is_not_replaced_with_today(self):
+        item = Element("item")
+        SubElement(item, "title").text = "Oil shipping market disruption"
+        SubElement(item, "link").text = "https://www.cnbc.com/test"
+        self.assertEqual(_approved_event(item)["event_date"], "")
+
     def test_refresh_approves_relevant_rss_and_deduplicates(self):
         rss = b'''<?xml version="1.0"?><rss><channel><item>
             <guid>story-1</guid><title>Oil shipping market risk surges</title>

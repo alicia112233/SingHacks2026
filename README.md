@@ -21,7 +21,7 @@ Built for SingHacks using controlled, non-production records. The application su
 
 Today shows the first five clients; **All clients** shows the complete queue. Follow-up labels are **Act now**, **Due today**, **Due by [date]**, **Monitor** and **Reviewed**, with **Overdue** shown for expired deadlines. Reviewed means the review was recorded, not that the underlying exposure disappeared.
 
-The **Ask TESSERA** assistant answers client-scoped questions with source citations. Local factual retrieval works without cloud credentials; semantic retrieval and model-written answers are optional. Dictation and read-aloud depend on browser support.
+The **Ask TESSERA** assistant answers client-scoped questions with source citations. Local factual retrieval works without cloud credentials; semantic retrieval and model selection of server-rendered source extracts are optional. Missing evidence produces an explicit refusal. Dictation and read-aloud depend on browser support.
 
 The **Market Events** register brings controlled events and exposure-relevant RSS headlines together, with source links and date filters. A relevant headline can trigger a review; it is not an instruction to trade.
 
@@ -98,7 +98,7 @@ Vercel hosting uses the Python API and PostgreSQL-backed ledgers. Hosted review 
 
 Only `TESSERA_MODE=demo` is supported. Other modes reject intelligence preparation and dependent review operations. This is not authentication: anyone who can reach the demo can access its sample data. Real client use requires authenticated identities, client-level authorisation and a separate security review.
 
-Follow-up deadlines come from the controlled snapshot and may already be overdue. Hosted news history needs a shared store to be durable. The All clients view works through in-app navigation, but the hosted Flask entry point currently lacks a direct `/all-clients` route, so opening or refreshing that URL is not supported. Alert locking prevents concurrent duplicate sends, but a crash after Telegram accepts a message and before state is saved can still cause a repeat.
+Follow-up deadlines come from the controlled snapshot and may already be overdue. Hosted news, analytical snapshots and chat outputs use the shared PostgreSQL store; `/all-clients` supports direct navigation and refresh. Alert locking prevents concurrent duplicate sends, but a crash after Telegram accepts a message and before state is saved can still cause a repeat.
 
 ## Documentation
 

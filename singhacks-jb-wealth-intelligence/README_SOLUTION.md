@@ -52,8 +52,9 @@ The global **Ask TESSERA** panel answers client-scoped questions about current
 allocations, liquidity needs, credit, scenarios, review priorities and proposed
 actions. Answers contain expandable numbered source citations. Local lexical
 retrieval works without cloud credentials; configured Chroma results are fused
-with those structured facts, and optional model generation falls back safely if
-the gateway is unavailable or returns an uncited answer.
+with those structured facts. The optional model selects citations; the server
+renders the original passages. Invalid selections fall back to source extracts,
+and missing evidence produces an explicit refusal.
 
 The microphone transcribes a question through supported browser speech APIs,
 and each response can be read aloud. Raw audio is not sent to or stored by the
@@ -137,10 +138,12 @@ Position, client, mandate, credit and event records
 
 AI work is split by data class. The second-layer action review runs on the bank's in-house model (a labelled stand-in in the demo), reviewing from three angles, and is disabled by default. When enabled, it receives a purpose-limited evidence packet without client name, client ID or raw RM notes. External models only triage public headlines. Their scores cannot override a deterministic hard stop or raise the deterministic score, and RM approval remains mandatory. A bank rollout should use approved private endpoints and its data-processing controls.
 
-Assistant model generation is also disabled by default. The chat remains usable
-through local extractive answers. When enabled, generation receives only the
-retrieved client-scoped chunks and short conversation history; invalid or
-unavailable model responses fall back to cited extractive output.
+Assistant model selection is also disabled by default. The chat remains usable
+through local source extracts. When enabled, the model receives only the current
+question and retrieved client-scoped chunks; request history is not forwarded.
+Invalid or unavailable model responses fall back to cited extracts. News retains
+publisher links and an external-report label. The offline evaluation reconciles
+answers with source records; see [the results](docs/CHAT_EVALUATION_RESULTS.md).
 
 ## Production integration path
 
