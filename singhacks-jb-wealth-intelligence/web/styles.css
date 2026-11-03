@@ -802,19 +802,20 @@ nav { display: grid; gap: 7px; }
 .queue-lane { display: flex; align-items: baseline; gap: 12px; padding: 10px 20px; background: #f4f0e8; border-top: 1px solid var(--line); font-size: 12px; }
 .queue-lane strong { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
 .queue-lane span { color: var(--muted); }
-.queue-lane.lane-breach, .queue-lane.lane-now, .queue-lane.lane-week, .queue-lane.lane-monitor { background: var(--lane-soft); border-left: 3px solid var(--lane); padding-left: 17px; }
+.queue-lane.lane-breach, .queue-lane.lane-now, .queue-lane.lane-week, .queue-lane.lane-monitor { background: #f4f0e8; border-left: 3px solid var(--lane); padding-left: 17px; }
 .queue-lane[class*="lane-"] strong { color: var(--lane, var(--ink)); }
 .lane-breach { --lane: var(--severity-severe); --lane-soft: var(--severity-severe-soft); }
 .lane-now { --lane: var(--severity-high); --lane-soft: var(--severity-high-soft); }
 .lane-week { --lane: var(--severity-medium); --lane-soft: var(--severity-medium-soft); }
 .lane-monitor { --lane: var(--severity-low); --lane-soft: var(--severity-low-soft); }
-.priority-chip[class*="lane-"] { color: var(--lane); background: var(--lane-soft); }
+.cell-copy .priority-chip { display: inline-block; margin-top: 0; }
+.priority-chip[class*="lane-"] { color: var(--lane); background: transparent; box-shadow: inset 0 0 0 1px var(--lane); }
 .queue-row.tier-breach { --lane: var(--severity-severe); }
 .queue-row.tier-now { --lane: var(--severity-high); }
 .queue-row.tier-week { --lane: var(--severity-medium); }
 .queue-row.tier-monitor { --lane: var(--severity-low); }
 .queue-row.tier-breach, .queue-row.tier-now, .queue-row.tier-week, .queue-row.tier-monitor { --priority-color: var(--lane); border-left-color: var(--lane); }
-.breach-panel { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 10px 20px 12px 104px; background: var(--severity-severe-soft); color: var(--severity-severe); font-size: 12px; line-height: 1.4; border-left: 3px solid var(--severity-severe); }
+.breach-panel { display: flex; justify-content: space-between; gap: 16px; align-items: center; padding: 10px 20px 12px 104px; background: #faf3f1; color: var(--severity-severe); font-size: 12px; line-height: 1.4; border-left: 3px solid var(--severity-severe); }
 .breach-panel strong { display: block; }
 .breach-panel span:not(.source-tag) { display: block; margin-top: 3px; }
 .breach-panel b { font-weight: 600; }
