@@ -454,6 +454,13 @@ nav { display: grid; gap: 7px; }
 .validation-flags { margin-top: 15px; padding: 12px; display: grid; gap: 5px; color: #76551e; background: #f6eddc; font-size: 10px; line-height: 1.4; }
 .validation-flags.blocked { color: var(--coral); background: var(--coral-soft); }
 .validation-flags strong { font-size: 10px; }
+.claim-sources { margin-top: 15px; font-size: 12px; }
+.claim-sources > strong { display: block; margin-bottom: 6px; font-size: 12px; }
+.claim-sources table { width: 100%; border-collapse: collapse; }
+.claim-sources th { padding: 6px 10px; border-bottom: 1px solid var(--line); color: var(--muted); font-size: 10px; font-weight: 600; letter-spacing: .08em; text-align: left; text-transform: uppercase; }
+.claim-sources td { padding: 8px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.claim-sources td:first-child { width: 110px; font-weight: 600; white-space: nowrap; }
+.claim-sources td small { display: block; margin-top: 2px; color: var(--muted); font-size: 11px; }
 .evaluation-panel { margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--line); }
 .evaluation-launch { display: flex; justify-content: space-between; gap: 18px; align-items: center; }
 .evaluation-launch > div > strong, .evaluation-launch > div > span { display: block; }

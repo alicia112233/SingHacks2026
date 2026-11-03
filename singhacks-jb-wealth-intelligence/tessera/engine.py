@@ -1279,7 +1279,7 @@ def _recommendation_risk_validation(
     caps = [
         {
             "value": 84,
-            "reason": "Predictive model is not calibrated on recommendation outcomes.",
+            "reason": "the rubric is not yet tested against the results of past RM decisions.",
         }
     ]
     if conflict_relevant and any(item.get("status") == "Review" for item in passport):
@@ -1681,7 +1681,7 @@ def build_intelligence_payload(
                     "Missing suitability condition",
                     "Action is not explicitly reversible",
                 ],
-                "calibration": "Provisional: confidence is capped at 84 until a predictive model is back-tested on recommendation outcomes.",
+                "calibration": "Provisional: confidence is capped at 84 until the results of past RM decisions are tracked.",
             },
             "principles": [
                 "Sourced events only: every event shows where it came from, the controlled register or filtered live news. News can raise a breach alert, and the RM confirms or dismisses it.",
