@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Slides · TESSERA</title>
+<meta name="description" content="TESSERA by SAPTrio: the three-minute finals deck for the Singapore FinTech Festival.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400..700&display=swap"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+* { box-sizing: border-box }
+html, body { margin: 0; height: 100%; background: #0e1311; color: #f4efe6; font-family: "IBM Plex Sans", Arial, sans-serif; overflow: hidden }
+.bar { position: fixed; inset: 0 0 auto 0; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; font-size: 14px }
+.bar a, .bar button { color: #c9c2b4; text-decoration: none; background: rgba(14,19,17,.78); border: 1px solid #3a443f; border-radius: 999px; padding: 6px 12px; font: inherit; cursor: pointer; white-space: nowrap }
+.bar a:hover, .bar button:hover { color: #f4efe6; border-color: #9c9686 }
+.bar .group { display: flex; align-items: center; gap: 8px }
+.count { padding: 4px 10px; border-radius: 999px; background: rgba(14,19,17,.78); color: #c9c2b4; font-variant-numeric: tabular-nums; min-width: 48px; text-align: center; white-space: nowrap }
+.viewport { position: fixed; inset: 0; overflow: hidden }
+.stage { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform-origin: center; box-shadow: 0 20px 60px rgba(0,0,0,.45) }
+.stage section { position: absolute; inset: 0; width: 1920px; height: 1080px; overflow: hidden; opacity: 0; visibility: hidden; transition: opacity .35s ease, visibility .35s }
+.stage section.active { opacity: 1; visibility: visible }
+.stage p, .stage h1, .stage h2, .stage h3 { margin: 0 }
+.stage aside { display: none }
+.notes { position: fixed; left: 16px; right: 16px; bottom: 16px; z-index: 3; max-height: 32vh; overflow: auto; padding: 14px 18px; border-radius: 12px; background: rgba(14,19,17,.94); border: 1px solid #3a443f; font-size: 15px; line-height: 1.55; color: #dcd6ca; display: none }
+.notes.on { display: block }
+body.fs .bar { opacity: 0; transition: opacity .3s }
+body.fs .bar:hover { opacity: 1 }
+@media (max-width: 640px) { .bar { padding: 8px; gap: 6px } .bar .hint, #fs-btn { display: none } .bar a, .bar button { padding: 5px 10px; font-size: 13px } .count { min-width: 0 } }
+</style>
+</head>
+<body>
+<div class="bar">
+  <a href="index.html">← TESSERA</a>
+  <div class="group">
+    <button type="button" data-go="-1" aria-label="Previous slide">←</button>
+    <span class="count" id="count" aria-live="polite">1 / 6</span>
+    <button type="button" data-go="1" aria-label="Next slide">→</button>
+  </div>
+  <div class="group">
+    <button type="button" id="notes-btn" aria-pressed="false">Notes <span class="hint">(N)</span></button>
+    <button type="button" id="fs-btn">Full screen <span class="hint">(F)</span></button>
+  </div>
+</div>
+<div class="viewport"><div class="stage" id="stage">
+<section id="cover" data-transition="fade" style="background:#18201C;color:#F4EFE6;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;justify-content:space-between">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#D4B26A">SingHacks 2026 · Julius Bär Wealth Intelligence</p>
+<div style="display:flex;flex-direction:column;gap:32px">
+<h1 style="font-family:'EB Garamond', Georgia, serif;font-size:160px;font-weight:500;letter-spacing:12px;line-height:1">TESSERA</h1>
+<p style="font-family:'EB Garamond', Georgia, serif;font-size:56px;line-height:1.25;color:#F4EFE6;width:1300px">Finding the client conversation a portfolio report misses.</p>
+</div>
+<div style="display:flex;justify-content:space-between;align-items:end">
+<p style="font-size:32px;color:#C9C2B4">Code calculates. AI reads. The RM decides.</p>
+<p style="font-size:24px;color:#9C9686">SAPTrio · [Presenter names] · Singapore FinTech Festival, 18 Nov 2026</p>
+</div>
+<aside>Siang Woo · 5 seconds. “We’re TESSERA. Code calculates, AI reads, and the relationship manager decides.”</aside>
+</section>
+<section id="rm-day" data-transition="fade" style="background:#F6F2EA;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">An RM’s Monday morning</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">Start with the right client, not the next report</h2>
+</div>
+<div style="display:flex;flex-direction:column">
+<div style="display:flex;gap:48px;padding:0 0 12px;border-bottom:2px solid #18201C"><p style="width:760px;font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#6B6F69">Today</p><p style="flex:1;font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#1F4A3F">With TESSERA</p></div>
+<div style="display:flex;gap:48px;padding:22px 0;border-bottom:1px solid #D8D0C0"><p style="width:760px;font-size:30px;line-height:1.35;color:#4B524D">Open each client’s report, one by one</p><p style="flex:1;font-size:30px;line-height:1.35;font-weight:600">One queue: who may be exposed today, then by urgency</p></div>
+<div style="display:flex;gap:48px;padding:22px 0;border-bottom:1px solid #D8D0C0"><p style="width:760px;font-size:30px;line-height:1.35;color:#4B524D">Spot clashes between goals and holdings from memory</p><p style="flex:1;font-size:30px;line-height:1.35;font-weight:600">Code compares what each client said with what they hold</p></div>
+<div style="display:flex;gap:48px;padding:22px 0;border-bottom:1px solid #D8D0C0"><p style="width:760px;font-size:30px;line-height:1.35;color:#4B524D">Read the news, then guess who it affects</p><p style="flex:1;font-size:30px;line-height:1.35;font-weight:600">Each headline is matched to every portfolio, with what to check</p></div>
+<div style="display:flex;gap:48px;padding:22px 0"><p style="width:760px;font-size:30px;line-height:1.35;color:#4B524D">Prepare every conversation from scratch</p><p style="flex:1;font-size:30px;line-height:1.35;font-weight:600">A brief: how to open, what to show, what to ask, what to avoid</p></div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B6F69">Pain points from our check with a relationship manager. RMs spend 41% of their time on operations: Capgemini, World Wealth Report 2026.</p>
+<aside>Siang Woo · 30 seconds. “We checked with a relationship manager to understand their pain points. Today an RM opens each report one by one, spots clashes from memory, reads the news and guesses who it affects, and preps every conversation from scratch. That’s part of why RMs spend 41% of their time on operations. With TESSERA they start with one queue, the clashes are already found, every headline is matched to every portfolio, and the brief is ready.” Read the left column quickly, land on the right.</aside>
+</section>
+<section id="demo" data-transition="fade" style="background:#18201C;color:#F4EFE6;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:56px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#D4B26A">Demo · 45 seconds</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">A Monday morning with TESSERA</h2>
+</div>
+<div style="display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;gap:32px;align-items:start"><p style="font-family:'EB Garamond', Georgia, serif;font-size:64px;line-height:1;color:#D4B26A;width:64px">1</p><p style="font-size:40px;line-height:1.35">The queue: who may be exposed today, then by urgency</p></div>
+<div style="display:flex;gap:32px;align-items:start"><p style="font-family:'EB Garamond', Georgia, serif;font-size:64px;line-height:1;color:#D4B26A;width:64px">2</p><p style="font-size:40px;line-height:1.35">Abdullah: what he said, what he holds, how far he has drifted</p></div>
+<div style="display:flex;gap:32px;align-items:start"><p style="font-family:'EB Garamond', Georgia, serif;font-size:64px;line-height:1;color:#D4B26A;width:64px">3</p><p style="font-size:40px;line-height:1.35">The RM approves an action, and it goes into the ledger</p></div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#9C9686">Backup if the network fails: replay walkthrough, same steps. [Link or QR]</p>
+<aside>Siang Woo narrates over the recording · 45 seconds. “Monday morning. Clients who may be exposed today come first: Ravi’s flag shows which holdings a headline touches and what to check. But the most important conversation isn’t always the most urgent one. Abdullah told us to build wealth outside shipping and energy. His share there has grown from 29 to 42 percent in eight months. The RM gets a brief, approves an action, and it goes into an append-only ledger.”</aside>
+</section>
+<section id="since" data-transition="fade" style="background:#EFE9DD;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">Since SingHacks</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">Six things we built since SingHacks</h2>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:24px">
+<div style="display:flex;flex-direction:column;gap:10px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:12px;padding:28px 30px"><h3 style="font-size:30px;font-weight:600">Contradiction detection</h3><p style="font-size:24px;line-height:1.4;color:#4B524D">Reads any client’s record. No client is named in the rules.</p></div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:12px;padding:28px 30px"><h3 style="font-size:30px;font-weight:600">News triage</h3><p style="font-size:24px;line-height:1.4;color:#4B524D">Three public models vote on every headline. They never see a client.</p></div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:12px;padding:28px 30px"><h3 style="font-size:30px;font-weight:600">Exposure flags</h3><p style="font-size:24px;line-height:1.4;color:#4B524D">Which clients a headline may touch, and what to check. No forecasts.</p></div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:12px;padding:28px 30px"><h3 style="font-size:30px;font-weight:600">In-house review</h3><p style="font-size:24px;line-height:1.4;color:#4B524D">The bank’s own model checks each action from three angles, and can only lower confidence.</p></div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#1F4A3F;border-radius:12px;padding:28px 30px"><p style="font-size:24px;font-weight:600;letter-spacing:3px;color:#D4B26A">NEW</p><h3 style="font-size:30px;font-weight:600;color:#F4EFE6">Customer vectors</h3><p style="font-size:24px;line-height:1.4;color:#DCE6E1">Every client as 24 named numbers: lookalike clients, and drift from their own goal. Abdullah: 29.4% to 42.1% in eight months.</p></div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:12px;padding:28px 30px"><h3 style="font-size:30px;font-weight:600">Labelled sources</h3><p style="font-size:24px;line-height:1.4;color:#4B524D">Every figure says if it is client data, a calculation, an illustration or public news.</p></div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B6F69">Shaped by our check with a relationship manager and our own review. 135 automated tests pass.</p>
+<aside>[Teammate] · 35 seconds. “Since SingHacks we’ve built six things. Detection that reads any client’s record, with no client-specific rules. News triage, where three public models vote on each headline without ever seeing a client. Exposure flags that say who to check, not what will happen. An in-house review that can only lower confidence. Labels on every figure. And the newest: customer vectors. Every client is 24 named numbers, so TESSERA finds lookalike clients and measures drift. Abdullah’s share in what he asked to leave grew from 29 to 42 percent in eight months.” Point at the green card last.</aside>
+</section>
+<section id="trust" data-transition="fade" style="background:#F6F2EA;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">Why RMs can trust it</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">Built for how a private bank works</h2>
+</div>
+<div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:32px">
+<div style="display:flex;gap:24px;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:36px">
+<svg viewBox="0 0 24 24" style="color:#1F4A3F;width:48px;height:48px;flex:none" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:36px;font-weight:600">Client data stays in the bank</h3><p style="font-size:28px;line-height:1.4;color:#4B524D">Outside models only read public headlines. Client data goes only to the bank’s own model.</p></div>
+</div>
+<div style="display:flex;gap:24px;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:36px">
+<svg viewBox="0 0 24 24" style="color:#1F4A3F;width:48px;height:48px;flex:none" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:36px;font-weight:600">Every number has a source</h3><p style="font-size:28px;line-height:1.4;color:#4B524D">Each figure traces to a record, and says if it is client data, a calculation, an illustration or news.</p></div>
+</div>
+<div style="display:flex;gap:24px;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:36px">
+<svg viewBox="0 0 24 24" style="color:#1F4A3F;width:48px;height:48px;flex:none" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5"/><path d="M12 18h.01"/></svg>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:36px;font-weight:600">AI can only lower confidence</h3><p style="font-size:28px;line-height:1.4;color:#4B524D">The review takes the lower of the code’s score and the model’s. No forecasts; scenarios are labelled.</p></div>
+</div>
+<div style="display:flex;gap:24px;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:36px">
+<svg viewBox="0 0 24 24" style="color:#1F4A3F;width:48px;height:48px;flex:none" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h14v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/><path d="M9 7h7"/></svg>
+<div style="flex:1;display:flex;flex-direction:column;gap:8px"><h3 style="font-size:36px;font-weight:600">The RM decides, on the record</h3><p style="font-size:28px;line-height:1.4;color:#4B524D">Approve, edit or dismiss. Every decision goes into an append-only ledger.</p></div>
+</div>
+</div>
+<aside>[Teammate] · 30 seconds. “Why can an RM trust it? Client data never leaves the bank: outside models only read public headlines. Every number traces to a source and says what kind of number it is. The AI can only lower confidence, never raise it, and nothing is a forecast. And the RM decides: every approval, edit or dismissal is on the record.”</aside>
+</section>
+<section id="integration" data-transition="fade" style="background:#18201C;color:#F4EFE6;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#D4B26A">Fitting into Julius Bär</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">It plugs into what the bank already runs</h2>
+</div>
+<div style="display:flex;flex-direction:column">
+<div style="display:flex;gap:48px;padding:0 0 12px;border-bottom:2px solid #F4EFE6"><p style="width:520px;font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#9C9686">The bank has</p><p style="flex:1;font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#D4B26A">TESSERA connects it</p></div>
+<div style="display:flex;gap:48px;padding:20px 0;border-bottom:1px solid #3A443F"><p style="width:520px;font-size:30px;line-height:1.35;font-weight:600">Its own research and market reviews</p><p style="flex:1;font-size:30px;line-height:1.35;color:#DCD6CA">Added as news feeds beside Yahoo Finance, CNBC and The Business Times, then matched to every client’s holdings</p></div>
+<div style="display:flex;gap:48px;padding:20px 0;border-bottom:1px solid #3A443F"><p style="width:520px;font-size:30px;line-height:1.35;font-weight:600">Portfolio and client systems</p><p style="flex:1;font-size:30px;line-height:1.35;color:#DCD6CA">Read through the tables TESSERA already uses: clients, holdings, mandates, loans, cash needs</p></div>
+<div style="display:flex;gap:48px;padding:20px 0;border-bottom:1px solid #3A443F"><p style="width:520px;font-size:30px;line-height:1.35;font-weight:600">Its in-house AI model</p><p style="flex:1;font-size:30px;line-height:1.35;color:#DCD6CA">One setting points the action review at it. Nothing else changes</p></div>
+<div style="display:flex;gap:48px;padding:20px 0"><p style="width:520px;font-size:30px;line-height:1.35;font-weight:600">Audit and RM tools</p><p style="flex:1;font-size:30px;line-height:1.35;color:#DCD6CA">The ledger writes to the bank’s database; alerts go where RMs already work</p></div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-family:'EB Garamond', Georgia, serif;font-size:36px;color:#F4EFE6">The portfolio defensible. The future discussable. The RM indispensable.</p>
+<aside>Siang Woo · 30 seconds. “How does it fit into Julius Bär? Your own research and market reviews become news feeds next to the public ones, and TESSERA matches every headline to every client’s holdings. It reads the portfolio data you already have. One setting points the review at your in-house model. And every decision lands in your own database. The portfolio defensible. The future discussable. The RM indispensable. Thank you.” Stop on the closing line.</aside>
+</section>
+</div></div>
+<div class="notes" id="notes" aria-live="polite"></div>
+<script>
+(function () {
+  var stage = document.getElementById('stage');
+  var slides = stage.querySelectorAll('section');
+  var notes = document.getElementById('notes');
+  var count = document.getElementById('count');
+  var current = 0;
+  function fit() {
+    var scale = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    stage.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
+  }
+  function show(i) {
+    current = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach(function (s, n) { s.classList.toggle('active', n === current); });
+    count.textContent = (current + 1) + ' / ' + slides.length;
+    var aside = slides[current].querySelector('aside');
+    notes.textContent = aside ? aside.textContent : '';
+    try { history.replaceState(null, '', '#' + (current + 1)); } catch (e) {}
+  }
+  function toggleNotes() {
+    var on = notes.classList.toggle('on');
+    document.getElementById('notes-btn').setAttribute('aria-pressed', String(on));
+  }
+  function toggleFull() {
+    if (!document.fullscreenElement && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen();
+    else if (document.exitFullscreen) document.exitFullscreen();
+  }
+  document.addEventListener('fullscreenchange', function () { document.body.classList.toggle('fs', !!document.fullscreenElement); });
+  document.querySelectorAll('[data-go]').forEach(function (b) { b.addEventListener('click', function () { show(current + Number(b.dataset.go)); }); });
+  document.getElementById('notes-btn').addEventListener('click', toggleNotes);
+  document.getElementById('fs-btn').addEventListener('click', toggleFull);
+  document.addEventListener('keydown', function (e) {
+    if (['ArrowRight', 'ArrowDown', 'PageDown', ' ', 'Enter'].indexOf(e.key) > -1) { e.preventDefault(); show(current + 1); }
+    else if (['ArrowLeft', 'ArrowUp', 'PageUp', 'Backspace'].indexOf(e.key) > -1) { e.preventDefault(); show(current - 1); }
+    else if (e.key === 'Home') show(0);
+    else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key === 'n' || e.key === 'N') toggleNotes();
+    else if (e.key === 'f' || e.key === 'F') toggleFull();
+  });
+  document.querySelector('.viewport').addEventListener('click', function (e) {
+    show(current + (e.clientX > window.innerWidth / 2 ? 1 : -1));
+  });
+  var startX = null;
+  document.addEventListener('touchstart', function (e) { startX = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend', function (e) {
+    if (startX === null) return;
+    var dx = e.changedTouches[0].clientX - startX;
+    if (Math.abs(dx) > 40) show(current + (dx < 0 ? 1 : -1));
+    startX = null;
+  });
+  window.addEventListener('resize', fit);
+  fit();
+  show((parseInt(location.hash.slice(1), 10) || 1) - 1);
+})();
+</script>
+</body>
+</html>
