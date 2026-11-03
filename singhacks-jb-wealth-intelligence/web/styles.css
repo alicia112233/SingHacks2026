@@ -161,9 +161,9 @@ nav { display: grid; gap: 7px; }
 .events-hero p { max-width: 620px; margin: 0; color: var(--muted); line-height: 1.6; }
 .all-events-panel { padding: 26px; }
 .event-filters { display: flex; align-items: end; gap: 12px; margin: 20px 0 4px; padding: 14px; background: #eee9df; border: 1px solid var(--line); }
-.event-filters label { display: grid; flex: 1 1 155px; gap: 5px; min-width: 145px; color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
-.event-filters input, .event-filters select { min-height: 36px; padding: 7px 9px; color: var(--ink); border: 1px solid var(--line); background: var(--paper-2); font: inherit; letter-spacing: 0; text-transform: none; }
-.event-filters button { min-height: 36px; color: var(--teal); border-color: var(--teal); background: transparent; font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.event-filters label { display: grid; flex: 1 1 155px; gap: 6px; min-width: 145px; color: var(--muted); font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.event-filters input, .event-filters select { min-height: 36px; padding: 7px 9px; color: var(--ink); border: 1px solid var(--line); background: var(--paper-2); font: 400 13px "Segoe UI", Inter, Arial, sans-serif; letter-spacing: 0; text-transform: none; }
+.event-filters button { min-height: 36px; color: var(--teal); border-color: var(--teal); background: transparent; font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
 .event-filters button:hover:not(:disabled) { color: white; border-color: var(--teal); background: var(--teal); }
 .event-filters button:disabled { opacity: .38; cursor: not-allowed; }
 .all-events-list { display: grid; }
@@ -324,34 +324,36 @@ nav { display: grid; gap: 7px; }
 .recommendation:first-child { padding-top: 0; border-top: 0; }
 .recommendation header { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
 .recommendation-badges { display: flex; gap: 6px; align-items: center; }
-.confidence-chip { display: flex; gap: 6px; align-items: center; padding: 4px 7px; border: 1px solid #c9a96f; color: #7a5a24; background: #f6eddc; cursor: pointer; }
-.confidence-chip b { font-size: 10px; }
-.confidence-chip span { white-space: nowrap; font-size: 7px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+.confidence-chip { display: flex; gap: 6px; align-items: center; padding: 5px 9px; font-family: inherit; border: 1px solid #c9a96f; color: #7a5a24; background: #f6eddc; cursor: pointer; }
+.confidence-chip b { font-size: 13px; font-weight: 600; }
+.confidence-chip span { white-space: nowrap; font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
 .confidence-chip.verify-first, .confidence-chip.blocked { color: var(--coral); border-color: #d9a39a; background: var(--coral-soft); }
 .confidence-chip.strong-support { color: var(--teal); border-color: #8ab2aa; background: var(--teal-soft); }
-.recommendation h4 { margin: 0 0 6px; font-size: 13px; }
-.recommendation p { margin: 0; color: var(--muted); font-size: 11px; line-height: 1.45; }
+.recommendation h4 { margin: 0 0 6px; font-size: 15px; font-weight: 600; }
+.recommendation p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
 .recommendation footer { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; }
 .action-rationale { margin-top: 13px; border: 1px solid var(--line); background: #f8f5ef; }
 .action-rationale summary { min-height: 38px; padding: 9px 12px; display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--teal); cursor: pointer; list-style: none; }
 .action-rationale summary::-webkit-details-marker { display: none; }
 .action-rationale summary::after { content: "+"; width: 18px; flex: 0 0 18px; font-size: 17px; line-height: 1; text-align: center; }
 .action-rationale[open] summary::after { content: "−"; }
-.action-rationale summary span { font-size: 10px; font-weight: 800; letter-spacing: .04em; text-transform: uppercase; }
-.action-rationale summary small { margin-left: auto; color: var(--muted); font-size: 9px; }
+.action-rationale summary span { white-space: nowrap; font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.action-rationale summary small { margin-left: auto; color: var(--muted); font-size: 11px; text-align: right; }
+.action-rationale summary .priority-tag { font-style: normal; }
 .rationale-body { padding: 15px; border-top: 1px solid var(--line); background: white; }
-.recommendation .rationale-summary { color: var(--ink); font-size: 11px; }
+.recommendation .rationale-summary { color: var(--ink); font-size: 13px; }
 .rationale-section { margin-top: 14px; }
-.rationale-section > strong { display: block; margin-bottom: 5px; color: var(--gold); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+.rationale-section > strong { display: block; margin-bottom: 5px; color: var(--gold); font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.rationale-priority { margin: 0 0 14px; }
 .recommendation .rationale-section p { color: var(--ink); }
 .rationale-evidence { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; }
 .rationale-evidence > div { padding: 9px 10px; border-left: 2px solid var(--teal); background: var(--teal-soft); }
 .rationale-evidence span, .rationale-evidence small { display: block; }
-.rationale-evidence span { color: var(--ink); font-size: 10px; line-height: 1.35; }
-.rationale-evidence small { margin-top: 4px; color: var(--muted); font-size: 8px; line-height: 1.35; }
-.rationale-section ul { margin: 0; padding-left: 17px; color: var(--ink); font-size: 10px; line-height: 1.5; }
-.recommendation .rationale-method { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 9px; }
-.suitability { color: var(--teal); font-size: 9px; }
+.rationale-evidence span { color: var(--ink); font-size: 13px; line-height: 1.4; }
+.rationale-evidence small { margin-top: 4px; color: var(--muted); font-size: 11px; line-height: 1.4; }
+.rationale-section ul { margin: 0; padding-left: 17px; color: var(--ink); font-size: 13px; line-height: 1.5; }
+.recommendation .rationale-method { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 11px; }
+.suitability { color: var(--teal); font-size: 11px; }
 .urgency-alert-control { display: flex; justify-content: space-between; gap: 18px; align-items: center; margin: 18px 0; padding: 16px 18px; border: 1px solid #d9b5a3; background: var(--coral-soft); }
 .urgency-alert-control strong, .urgency-alert-control p { display: block; }
 .urgency-alert-control strong { font-size: 13px; }
@@ -454,11 +456,9 @@ nav { display: grid; gap: 7px; }
 .validation-flags { margin-top: 15px; padding: 12px; display: grid; gap: 5px; color: #76551e; background: #f6eddc; font-size: 10px; line-height: 1.4; }
 .validation-flags.blocked { color: var(--coral); background: var(--coral-soft); }
 .validation-flags strong { font-size: 10px; }
-.priority-tag { white-space: nowrap; display: inline-flex; align-items: center; padding: 4px 8px; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); }
+.priority-tag { white-space: nowrap; display: inline-flex; align-items: center; padding: 3px 7px; font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); box-shadow: inset 0 0 0 1px var(--line); }
 .priority-tag.priority-high { color: #fff; background: var(--severity-severe); box-shadow: none; }
 .priority-tag.priority-medium { color: #fff; background: var(--severity-medium); box-shadow: none; }
-.priority-reason { margin: 6px 0 0; color: var(--ink-2); font-size: 12px; }
-.priority-reason b { font-weight: 600; }
 .claim-sources { margin-top: 15px; font-size: 12px; }
 .claim-sources > strong { display: block; margin-bottom: 6px; font-size: 12px; }
 .claim-sources table { width: 100%; border-collapse: collapse; }

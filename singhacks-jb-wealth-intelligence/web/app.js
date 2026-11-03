@@ -684,11 +684,10 @@ function recommendationHTML(client, recommendation, index) {
   const blocked = approvalBlocked(recommendation);
   const replacementChip = recommendation.replacement_for ? `<span class="replacement-chip" title="Generated after the RM dismissed: ${esc(recommendation.replacement_for)}">Replacement suggestion</span>` : "";
   return `<article class="recommendation" data-recommendation="${index}">
-    <header><h4>${index + 1}. ${esc(recommendation.title)}</h4><div class="recommendation-badges">${replacementChip}${recommendation.priority ? `<span class="priority-tag priority-${recommendation.priority.band.toLowerCase()}">${esc(recommendation.priority.band)} priority</span>` : ""}${validation ? `<button class="confidence-chip ${validation.band.toLowerCase().replaceAll(" ", "-")}" data-risk-index="${index}" aria-label="Open evidence rubric for ${esc(recommendation.title)}"><span>Evidence</span><b>${validation.score}</b><span>${esc(validation.band)}</span></button>` : ""}${status !== "pending" ? `<span class="decision-status ${status}">${esc(status)}</span>` : ""}</div></header>
+    <header><h4>${index + 1}. ${esc(recommendation.title)}</h4><div class="recommendation-badges">${replacementChip}${validation ? `<button class="confidence-chip ${validation.band.toLowerCase().replaceAll(" ", "-")}" data-risk-index="${index}" aria-label="Open evidence rubric for ${esc(recommendation.title)}"><span>Evidence</span><b>${validation.score}</b><span>${esc(validation.band)}</span></button>` : ""}${status !== "pending" ? `<span class="decision-status ${status}">${esc(status)}</span>` : ""}</div></header>
     <p>${esc(detail)}</p>
-    ${recommendation.priority ? `<p class="priority-reason"><b>Why ${index ? "here" : "first"}:</b> ${esc(recommendation.priority.reason)}</p>` : ""}
     ${blocked ? `<div class="validation-flags blocked"><strong>Needs correction</strong>${(validation?.blockers?.length ? validation.blockers : [validation?.disposition || "Validation is unavailable"]).map(reason => `<span>${esc(reason)}</span>`).join("")}</div>` : ""}
-    ${recommendationRationaleHTML(recommendation)}
+    ${recommendationRationaleHTML(recommendation, index)}
     <footer><span class="suitability">${esc(recommendation.suitability)}</span><div class="recommendation-actions">
       <button class="action-button" data-decision="edit" data-index="${index}">Edit</button>
       ${status === "approved" && !blocked ? `<button class="action-button" data-decision="pending" data-index="${index}">Reopen</button>` : blocked ? `<span class="action-tooltip" data-tooltip="Correct the action and pass validation before approval" tabindex="0"><button class="action-button" disabled aria-label="Approval blocked">Blocked</button></span>` : `<button class="action-button approve" data-decision="approved" data-index="${index}">Approve</button>`}
@@ -697,14 +696,16 @@ function recommendationHTML(client, recommendation, index) {
   </article>`;
 }
 
-function recommendationRationaleHTML(recommendation) {
+function recommendationRationaleHTML(recommendation, index) {
   const rationale = recommendation.decision_rationale;
   if (!rationale) return "";
   const evidence = rationale.supporting_evidence || [];
   const checks = rationale.rm_checks || [];
+  const priority = recommendation.priority;
   return `<details class="action-rationale">
-    <summary><span>Why this action</span><small>View rationale and evidence</small></summary>
+    <summary><span>Why this action</span>${priority ? `<em class="priority-tag priority-${priority.band.toLowerCase()}">${esc(priority.band)} priority</em>` : ""}<small>View rationale and evidence</small></summary>
     <div class="rationale-body">
+      ${priority ? `<div class="rationale-section rationale-priority"><strong>Why ${index ? "it sits here" : "it comes first"}</strong><p>${esc(priority.reason)}</p></div>` : ""}
       <p class="rationale-summary">${esc(rationale.summary)}</p>
       <div class="rationale-section"><strong>Trigger</strong><p>${esc(rationale.trigger)}</p></div>
       ${evidence.length ? `<div class="rationale-section"><strong>Evidence used</strong><div class="rationale-evidence">${evidence.map((item) => `<div><span>${esc(item.claim)}</span><small>${esc(item.source)} · ${esc(item.status)}</small></div>`).join("")}</div></div>` : ""}
