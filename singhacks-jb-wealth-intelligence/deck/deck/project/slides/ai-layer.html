@@ -1,0 +1,25 @@
+<section id="ai-layer" data-transition="fade" style="background:#EFE9DD;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">How the AI is used</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">Public data goes to any approved model. Client data stays in the bank.</h2>
+</div>
+<div style="display:flex;flex-direction:column;gap:28px">
+<div style="display:flex;align-items:center;gap:24px">
+<div style="width:420px;display:flex;flex-direction:column;gap:6px;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:28px 32px"><p style="font-size:24px;font-weight:600;color:#4A5A70">C1 to C2 · public</p><p style="font-size:32px;font-weight:600">News and market reviews</p></div>
+<x-shape kind="arrow-right" style="background:#B9B2A3;width:96px;height:48px"></x-shape>
+<div style="width:520px;display:flex;flex-direction:column;gap:6px;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:28px 32px"><p style="font-size:24px;font-weight:600;color:#4A5A70">External models</p><p style="font-size:32px;font-weight:600">GPT, Claude, Gemini</p></div>
+<x-shape kind="arrow-right" style="background:#B9B2A3;width:96px;height:48px"></x-shape>
+<p style="flex:1;font-size:30px;line-height:1.35">Which headlines matter, which topic, how serious</p>
+</div>
+<div style="display:flex;align-items:center;gap:24px">
+<div style="width:420px;display:flex;flex-direction:column;gap:6px;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:28px 32px"><p style="font-size:24px;font-weight:600;color:#A8483C">C3 to C4 · client data</p><p style="font-size:32px;font-weight:600">Portfolios and actions</p></div>
+<x-shape kind="arrow-right" style="background:#B9B2A3;width:96px;height:48px"></x-shape>
+<div style="width:520px;display:flex;flex-direction:column;gap:6px;background:#1F4A3F;border-radius:12px;padding:28px 32px"><p style="font-size:24px;font-weight:600;color:#CFE0D8">Bank’s in-house model</p><p style="font-size:32px;font-weight:600;color:#F4EFE6">Offline, inside the bank</p></div>
+<x-shape kind="arrow-right" style="background:#B9B2A3;width:96px;height:48px"></x-shape>
+<p style="flex:1;font-size:30px;line-height:1.35">Reviews each action for suitability, client fit and evidence</p>
+</div>
+</div>
+<p style="font-size:30px;line-height:1.4;color:#4B524D">The model review can only lower confidence, never raise it. The RM still decides.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B6F69">Data classes: C1 to C2 public, C3 to C4 client data. In the demo, a labelled stand-in plays the in-house model.</p>
+<aside>[Teammate D]. About 40 seconds. This is built: three external models vote on each public headline, and one model reviews each action from three angles. If asked about the demo: a hosted model stands in for the in-house one and only sees a de-identified packet; it can also run on a local offline model.</aside>
+</section>

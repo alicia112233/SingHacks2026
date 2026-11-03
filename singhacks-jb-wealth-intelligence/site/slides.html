@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Slides · TESSERA</title>
-<meta name="description" content="TESSERA by SAPTrio: the three-minute finals deck for the Singapore FinTech Festival.">
+<meta name="description" content="TESSERA by SAPTrio: the full deck, from the problem to how it scales in Julius Bär.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400..700&display=swap"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
@@ -34,7 +34,7 @@ body.fs .bar:hover { opacity: 1 }
   <a href="index.html">← TESSERA</a>
   <div class="group">
     <button type="button" data-go="-1" aria-label="Previous slide">←</button>
-    <span class="count" id="count" aria-live="polite">1 / 7</span>
+    <span class="count" id="count" aria-live="polite">1 / 23</span>
     <button type="button" data-go="1" aria-label="Next slide">→</button>
   </div>
   <div class="group">
@@ -43,26 +43,403 @@ body.fs .bar:hover { opacity: 1 }
   </div>
 </div>
 <div class="viewport"><div class="stage" id="stage">
-<section id="cover" style="background:#18201C;color:#F4EFE6;font-family:'IBM Plex Sans', Arial, sans-serif;padding:112px 128px 96px;display:flex;flex-direction:column;justify-content:space-between">
-<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#D4B26A">Julius Bär Wealth Intelligence · SAPTrio</p>
-<div style="display:flex;flex-direction:column;gap:28px">
-<h1 style="font-family:'EB Garamond', Georgia, serif;font-size:150px;font-weight:500;letter-spacing:12px;line-height:1">TESSERA</h1>
-<p style="font-family:'EB Garamond', Georgia, serif;font-size:54px;line-height:1.2;width:1400px">Finding the client conversation a portfolio report misses.</p>
-</div>
-<div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:40px">
-<div style="display:flex;flex-direction:column;gap:10px;padding-top:24px;border-top:3px solid #D4B26A"><p style="font-size:22px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#D4B26A">Who first</p><p style="font-size:32px;line-height:1.35">One queue: who may be exposed to today’s news, then by urgency</p></div>
-<div style="display:flex;flex-direction:column;gap:10px;padding-top:24px;border-top:3px solid #D4B26A"><p style="font-size:22px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#D4B26A">What doesn’t add up</p><p style="font-size:32px;line-height:1.35">Each client’s own words checked against what they hold</p></div>
-<div style="display:flex;flex-direction:column;gap:10px;padding-top:24px;border-top:3px solid #D4B26A"><p style="font-size:22px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#D4B26A">What to do</p><p style="font-size:32px;line-height:1.35">A brief for the conversation, and actions for the RM to approve</p></div>
+<section id="cover" data-transition="fade" style="background:#18201C;color:#F4EFE6;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px;display:flex;flex-direction:column;justify-content:space-between">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#D4B26A">SingHacks 2026 · Julius Bär Wealth Intelligence</p>
+<div style="display:flex;flex-direction:column;gap:32px">
+<h1 style="font-family:'EB Garamond', Georgia, serif;font-size:160px;font-weight:500;letter-spacing:12px;line-height:1">TESSERA</h1>
+<p style="font-family:'EB Garamond', Georgia, serif;font-size:56px;line-height:1.25;color:#F4EFE6;width:1300px">Finding the client conversation a portfolio report misses.</p>
 </div>
 <div style="display:flex;justify-content:space-between;align-items:end">
-<p style="font-size:30px;color:#C9C2B4">Code calculates. AI reads. The RM decides.</p>
-<p style="font-size:22px;color:#9C9686">[Presenter names] · Singapore FinTech Festival, 18 Nov 2026</p>
+<p style="font-size:32px;color:#C9C2B4">Code calculates. AI reads. The RM decides.</p>
+<p style="font-size:24px;color:#9C9686">SAPTrio · [Presenter names] · Singapore FinTech Festival, 18 Nov 2026</p>
 </div>
-<aside>Siang Woo · 25 seconds. “We’re SAPTrio, and this is TESSERA. It finds the client conversation a portfolio report misses. Every morning it tells the relationship manager who to look at first, what doesn’t add up between what a client said and what they hold, and what to do about it. Code calculates, AI reads, and the RM decides.”</aside>
+<aside>Siang Woo · 5 seconds. “We’re TESSERA. Code calculates, AI reads, and the relationship manager decides.”</aside>
+</section>
+<section id="wealth" data-transition="fade" style="background:#F6F2EA;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:72px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">Why now · More wealth</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">Asia-Pacific is creating wealth faster than anywhere else</h2>
+</div>
+<div style="display:flex;flex-direction:column;gap:32px">
+<p style="font-size:32px;font-weight:600">Growth in high-net-worth wealth, 2025</p>
+<div style="display:flex;align-items:center;gap:32px">
+<p style="font-size:36px;width:300px;font-weight:600">Asia-Pacific</p>
+<div style="width:1000px;height:120px;background:#1F4A3F;border-radius:6px"></div>
+<p style="font-family:'EB Garamond', Georgia, serif;font-size:72px;line-height:1;color:#1F4A3F">+10.5%</p>
+</div>
+<div style="display:flex;align-items:center;gap:32px">
+<p style="font-size:36px;width:300px;color:#4B524D">Global</p>
+<div style="width:829px;height:120px;background:#B9B2A3;border-radius:6px"></div>
+<p style="font-family:'EB Garamond', Georgia, serif;font-size:72px;line-height:1;color:#4B524D">+8.7%</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B6F69">Source: Capgemini, World Wealth Report 2026. Global HNWI wealth reached a record USD 98.3 trillion.</p>
+<aside>Siang Woo. About 20 seconds. “Asia-Pacific grew its millionaire wealth faster than any other region last year.” One comparison only; the millionaire-count pair was cut so the slide makes one point.</aside>
+</section>
+<section id="family-offices" data-transition="fade" style="background:#F6F2EA;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">Why now · More complexity</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">Singapore’s single family offices grew five-fold since 2020</h2>
+</div>
+<div style="display:flex;gap:80px;align-items:end">
+<div style="position:relative;width:930px;height:510px">
+<svg aria-label="Line rising from about 400 in 2020 to about 1,400 at end-2023 and over 2,000 at end-2025" style="position:absolute;left:0;top:0" width="930" height="510" viewBox="0 0 930 510">
+<path d="M 90 367 L 540 185 L 840 76 L 840 440 L 90 440 Z" fill="#DCE6E1" stroke="none"/>
+<line x1="40" y1="440" x2="900" y2="440" stroke="#B9B2A3" stroke-width="3"/>
+<path d="M 90 367 L 540 185 L 840 76" fill="none" stroke="#1F4A3F" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="90" cy="367" r="12" fill="#7E9C8F"/>
+<circle cx="540" cy="185" r="12" fill="#7E9C8F"/>
+<circle cx="840" cy="76" r="16" fill="#1F4A3F"/>
+</svg>
+<p style="position:absolute;left:0;top:300px;width:180px;font-size:32px;font-weight:600;text-align:center">~400</p>
+<p style="position:absolute;left:450px;top:118px;width:180px;font-size:32px;font-weight:600;text-align:center">~1,400</p>
+<p style="position:absolute;left:750px;top:6px;width:180px;font-size:32px;font-weight:600;text-align:center">2,000+</p>
+<p style="position:absolute;left:0;top:458px;width:180px;font-size:28px;color:#4B524D;text-align:center">2020</p>
+<p style="position:absolute;left:450px;top:458px;width:180px;font-size:28px;color:#4B524D;text-align:center">End-2023</p>
+<p style="position:absolute;left:750px;top:458px;width:180px;font-size:28px;color:#4B524D;text-align:center">End-2025</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:24px;padding:0 0 48px">
+<p style="font-family:'EB Garamond', Georgia, serif;font-size:44px;line-height:1.25">Each family office brings trusts, holding companies and cross-border rules to the same relationship manager.</p>
+<p style="font-size:28px;color:#4B524D;line-height:1.45">More structures per client means more to check before every conversation.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B6F69">Source: Monetary Authority of Singapore, single family offices awarded tax incentives (s13O and s13U); 2020 figure as reported by industry press.</p>
+<aside>Siang Woo. About 25 seconds. “Singapore now has more than 2,000 single family offices, five times 2020. Every one of them adds structures an RM has to keep track of.” Years are spaced to scale. Use MAS’s own wording from the parliamentary reply before presenting.</aside>
+</section>
+<section id="rm-time" data-transition="fade" style="background:#F6F2EA;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:56px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">Why now · The same RM</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">Relationship managers spend 41% of their time on operations</h2>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:32px;font-weight:600">How an RM’s working time splits</p>
+<div style="display:flex;height:96px">
+<div style="width:41%;background:#A8483C;border-radius:4px 0 0 4px;display:flex;align-items:center;padding:0 32px"><p style="font-size:32px;font-weight:600;color:#FBF7F0">41% operational tasks</p></div>
+<div style="width:59%;background:#D9D2C3;border-radius:0 4px 4px 0;display:flex;align-items:center;padding:0 32px"><p style="font-size:32px;color:#18201C">59% everything else, including clients</p></div>
+</div>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:40px">
+<p style="font-family:'EB Garamond', Georgia, serif;font-size:96px;line-height:1;color:#1F4A3F">76%</p>
+<p style="font-size:32px;line-height:1.35">of RMs strongly support AI to take on these tasks</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:40px">
+<p style="font-family:'EB Garamond', Georgia, serif;font-size:96px;line-height:1;color:#1F4A3F">~50%</p>
+<p style="font-size:32px;line-height:1.35">of operational RM time could be freed by AI</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B6F69">Source: Capgemini, Global Relationship Manager Survey 2026 (1,317 respondents, 16 markets), in World Wealth Report 2026.</p>
+<aside>Siang Woo. About 25 seconds. “And the people looking after this wealth spend 41% of their time on operations, not clients. Three in four want AI to help.” This is the strongest workload number; keep it.</aside>
+</section>
+<section id="squeeze" data-transition="fade" style="background:#18201C;color:#F4EFE6;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;justify-content:center;gap:64px">
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:120px;font-weight:500;line-height:1.05">More clients.<br>More complexity.<br><span style="color:#D4B26A">The same RM.</span></h2>
+<div style="display:flex;gap:48px">
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;border-left:4px solid #D4B26A;padding:0 0 0 32px">
+<p style="font-size:32px;line-height:1.4;color:#E4DED2">Our check with a relationship manager found the same pain: every review is still prepared by hand, one client at a time.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;border-left:4px solid #5E7A6E;padding:0 0 0 32px">
+<p style="font-size:32px;line-height:1.4;color:#E4DED2">Banks are racing to hire. RBC Wealth Management Asia grew its RM headcount by more than 50% in two years.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#9C9686">Sources: our check with a relationship manager, October 2026; RBC Wealth Management Asia newsroom, June 2026.</p>
+<aside>Siang Woo. About 20 seconds. “More clients, more complexity, the same RM. That’s where the conversation that matters gets missed.” </aside>
+</section>
+<section id="abdullah" data-transition="fade" style="background:#F6F2EA;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">One client · Abdullah</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">A great year on paper. The wrong conversation in reality.</h2>
+</div>
+<div style="display:flex;gap:72px;align-items:end">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:28px;font-weight:600">Bank-held portfolio value, USD m <span style="color:#6B6F69">(axis from 24)</span></p>
+<div style="position:relative;width:760px;height:460px">
+<svg aria-label="Portfolio value rising from 25.6 in December 2025 to 32.2 in August 2026, steepest from March to June" style="position:absolute;left:0;top:0" width="760" height="460" viewBox="0 0 760 460">
+<path d="M 60 340 L 220 317 L 300 268 L 540 120 L 700 90 L 700 400 L 60 400 Z" fill="#DCE6E1" stroke="none"/>
+<line x1="30" y1="400" x2="740" y2="400" stroke="#B9B2A3" stroke-width="3"/>
+<path d="M 60 340 L 220 317 L 300 268 L 540 120 L 700 90" fill="none" stroke="#1F4A3F" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="60" cy="340" r="10" fill="#7E9C8F"/>
+<circle cx="220" cy="317" r="10" fill="#7E9C8F"/>
+<circle cx="300" cy="268" r="10" fill="#7E9C8F"/>
+<circle cx="540" cy="120" r="10" fill="#7E9C8F"/>
+<circle cx="700" cy="90" r="14" fill="#1F4A3F"/>
+</svg>
+<p style="position:absolute;left:22px;top:284px;width:76px;font-size:24px;text-align:center">25.6</p>
+<p style="position:absolute;left:182px;top:261px;width:76px;font-size:24px;text-align:center">26.2</p>
+<p style="position:absolute;left:262px;top:212px;width:76px;font-size:24px;text-align:center">27.5</p>
+<p style="position:absolute;left:502px;top:64px;width:76px;font-size:24px;text-align:center">31.4</p>
+<p style="position:absolute;left:652px;top:28px;width:96px;font-size:28px;font-weight:600;text-align:center">32.2</p>
+<p style="position:absolute;left:22px;top:414px;width:76px;font-size:24px;color:#4B524D;text-align:center">Dec</p>
+<p style="position:absolute;left:182px;top:414px;width:76px;font-size:24px;color:#4B524D;text-align:center">Feb</p>
+<p style="position:absolute;left:262px;top:414px;width:76px;font-size:24px;color:#4B524D;text-align:center">Mar</p>
+<p style="position:absolute;left:502px;top:414px;width:76px;font-size:24px;color:#4B524D;text-align:center">Jun</p>
+<p style="position:absolute;left:662px;top:414px;width:76px;font-size:24px;color:#4B524D;text-align:center">Aug</p>
+</div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;flex-direction:column;gap:6px;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:28px 32px">
+<p style="font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#8A6A2C">He said</p>
+<p style="font-size:30px;line-height:1.35">“Build wealth outside the Gulf and outside shipping.”</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:28px 32px">
+<p style="font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#A8483C">The portfolio does</p>
+<p style="font-size:30px;line-height:1.35"><b>42.1%</b> shipping and energy, once you look inside a structured note</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:28px 32px">
+<p style="font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#8A6A2C">Coming up</p>
+<p style="font-size:30px;line-height:1.35"><b>USD 5m</b> for a family office in 2027, with <b>USD 2.4m</b> in cash</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B6F69">Synthetic client from the Julius Bär SingHacks case dataset. Dec 2025 to Aug 2026, months to scale. Value path includes market moves, trades and currency effects.</p>
+<aside>Siang Woo. About 45 seconds. “Abdullah’s portfolio is up 26% this year. Every report says great year. But he told us to build his wealth outside the Gulf and outside shipping. Once you look inside his structured note, 42% is shipping and energy, the same bet as the business he already owns. And next year he needs 5 million dollars, with 2.4 million in cash. No report flagged this. TESSERA did.”</aside>
+</section>
+<section id="rm-day" data-transition="fade" style="background:#F6F2EA;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">An RM’s Monday morning</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">Start with the right client, not the next report</h2>
+</div>
+<div style="display:flex;flex-direction:column">
+<div style="display:flex;gap:48px;padding:0 0 12px;border-bottom:2px solid #18201C"><p style="width:760px;font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#6B6F69">Today</p><p style="flex:1;font-size:24px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:#1F4A3F">With TESSERA</p></div>
+<div style="display:flex;gap:48px;padding:22px 0;border-bottom:1px solid #D8D0C0"><p style="width:760px;font-size:30px;line-height:1.35;color:#4B524D">Open each client’s report, one by one</p><p style="flex:1;font-size:30px;line-height:1.35;font-weight:600">One queue: who may be exposed today, then by urgency</p></div>
+<div style="display:flex;gap:48px;padding:22px 0;border-bottom:1px solid #D8D0C0"><p style="width:760px;font-size:30px;line-height:1.35;color:#4B524D">Spot clashes between goals and holdings from memory</p><p style="flex:1;font-size:30px;line-height:1.35;font-weight:600">Code compares what each client said with what they hold</p></div>
+<div style="display:flex;gap:48px;padding:22px 0;border-bottom:1px solid #D8D0C0"><p style="width:760px;font-size:30px;line-height:1.35;color:#4B524D">Read the news, then guess who it affects</p><p style="flex:1;font-size:30px;line-height:1.35;font-weight:600">Each headline is matched to every portfolio, with what to check</p></div>
+<div style="display:flex;gap:48px;padding:22px 0"><p style="width:760px;font-size:30px;line-height:1.35;color:#4B524D">Prepare every conversation from scratch</p><p style="flex:1;font-size:30px;line-height:1.35;font-weight:600">A brief: how to open, what to show, what to ask, what to avoid</p></div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B6F69">Pain points from our check with a relationship manager. RMs spend 41% of their time on operations: Capgemini, World Wealth Report 2026.</p>
+<aside>Siang Woo · 30 seconds. “We checked with a relationship manager to understand their pain points. Today an RM opens each report one by one, spots clashes from memory, reads the news and guesses who it affects, and preps every conversation from scratch. That’s part of why RMs spend 41% of their time on operations. With TESSERA they start with one queue, the clashes are already found, every headline is matched to every portfolio, and the brief is ready.” Read the left column quickly, land on the right.</aside>
+</section>
+<section id="tessera" data-transition="fade" style="background:#EFE9DD;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">What TESSERA does</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">Three questions, answered for every client</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:44px">
+<svg viewBox="0 0 24 24" style="color:#1F4A3F;width:56px;height:56px;flex:none" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+<h3 style="font-size:40px;font-weight:600">What is happening</h3>
+<p style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1;color:#1F4A3F">42.1%</p>
+<p style="font-size:28px;line-height:1.4;color:#4B524D">of Abdullah’s portfolio is tied to shipping and energy, the sector he asked to diversify away from.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:44px">
+<svg viewBox="0 0 24 24" style="color:#A8483C;width:56px;height:56px;flex:none" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5"/><path d="M12 18h.01"/></svg>
+<h3 style="font-size:40px;font-weight:600">What could happen next</h3>
+<p style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1;color:#A8483C">−6.3%</p>
+<p style="font-size:28px;line-height:1.4;color:#4B524D">about USD 2.0m, if the Strait reopens. An illustrative scenario, not a forecast.</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:44px">
+<svg viewBox="0 0 24 24" style="color:#1F4A3F;width:56px;height:56px;flex:none" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.5a5 5 0 0 1 5.5 5"/></svg>
+<h3 style="font-size:40px;font-weight:600">What to consider</h3>
+<p style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1;color:#1F4A3F">USD 5m</p>
+<p style="font-size:28px;line-height:1.4;color:#4B524D">Ring-fence the family-office seed capital due from 2027. The RM approves, edits or dismisses.</p>
+</div>
+</div>
+<p style="font-family:'EB Garamond', Georgia, serif;font-size:56px;line-height:1.2;color:#1F4A3F">Code calculates. AI reads. The RM decides.</p>
+<aside>Siang Woo · 25 seconds. “For every client, TESSERA answers the challenge’s three questions. What is happening: 42.1% of Abdullah’s portfolio is tied to shipping and energy, the exact sector he asked to diversify away from. What could happen next: in an illustrative scenario, he gives back about two million dollars. And what to consider: ring-fence the five million he needs for his family office in 2027.”</aside>
+</section>
+<section id="demo" data-transition="fade" style="background:#18201C;color:#F4EFE6;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:56px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#D4B26A">Demo · 45 seconds</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">A Monday morning with TESSERA</h2>
+</div>
+<div style="display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;gap:32px;align-items:start"><p style="font-family:'EB Garamond', Georgia, serif;font-size:64px;line-height:1;color:#D4B26A;width:64px">1</p><p style="font-size:40px;line-height:1.35">The queue: who may be exposed today, then by urgency</p></div>
+<div style="display:flex;gap:32px;align-items:start"><p style="font-family:'EB Garamond', Georgia, serif;font-size:64px;line-height:1;color:#D4B26A;width:64px">2</p><p style="font-size:40px;line-height:1.35">Abdullah: what he said, what he holds, how far he has drifted</p></div>
+<div style="display:flex;gap:32px;align-items:start"><p style="font-family:'EB Garamond', Georgia, serif;font-size:64px;line-height:1;color:#D4B26A;width:64px">3</p><p style="font-size:40px;line-height:1.35">The RM approves an action, and it goes into the ledger</p></div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#9C9686">Backup if the network fails: replay walkthrough, same steps. [Link or QR]</p>
+<aside>Siang Woo narrates over the recording · 45 seconds. “Monday morning. Clients who may be exposed today come first: Ravi’s flag shows which holdings a headline touches and what to check. But the most important conversation isn’t always the most urgent one. Abdullah told us to build wealth outside shipping and energy. His share there has grown from 29 to 42 percent in eight months. The RM gets a brief, approves an action, and it goes into an append-only ledger.”</aside>
+</section>
+<section id="detection" data-transition="fade" style="background:#F6F2EA;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">No client-specific rules</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">It surfaced three clients nobody had flagged</h2>
+</div>
+<div style="display:flex;flex-direction:column;gap:60px">
+<div style="display:flex;gap:32px;align-items:center"><p style="font-size:28px;font-weight:600">Urgency score out of 99</p><p style="font-size:24px;color:#4B524D"><span style="color:#8C8577">●</span> hand-written rules  <span style="color:#1F4A3F">●</span> detection from the client’s record</p></div>
+<div style="display:flex;gap:32px;align-items:center">
+<div style="width:520px;display:flex;flex-direction:column;gap:4px"><p style="font-size:30px;font-weight:600">Ravi</p><p style="font-size:24px;color:#4B524D">Software founder, 89% in tech, 72% hard to sell</p></div>
+<div style="position:relative;width:1112px;height:80px">
+<div style="position:absolute;left:0;top:38px;width:1040px;height:4px;background:#E1DACB"></div>
+<div style="position:absolute;left:373px;top:36px;width:324px;height:8px;background:#7E9C8F"></div>
+<div style="position:absolute;left:357px;top:24px;width:32px;height:32px;background:#8C8577;border-radius:50%"></div>
+<div style="position:absolute;left:677px;top:20px;width:40px;height:40px;background:#1F4A3F;border-radius:50%"></div>
+<p style="position:absolute;left:273px;top:20px;width:70px;font-size:28px;color:#4B524D;text-align:right">33</p>
+<p style="position:absolute;left:733px;top:18px;width:80px;font-size:32px;font-weight:600">65</p>
+</div>
+</div>
+<div style="display:flex;gap:32px;align-items:center">
+<div style="width:520px;display:flex;flex-direction:column;gap:4px"><p style="font-size:30px;font-weight:600">Aishah</p><p style="font-size:24px;color:#4B524D">Wants out of palm oil, still holds it</p></div>
+<div style="position:relative;width:1112px;height:80px">
+<div style="position:absolute;left:0;top:38px;width:1040px;height:4px;background:#E1DACB"></div>
+<div style="position:absolute;left:454px;top:36px;width:162px;height:8px;background:#7E9C8F"></div>
+<div style="position:absolute;left:438px;top:24px;width:32px;height:32px;background:#8C8577;border-radius:50%"></div>
+<div style="position:absolute;left:596px;top:20px;width:40px;height:40px;background:#1F4A3F;border-radius:50%"></div>
+<p style="position:absolute;left:354px;top:20px;width:70px;font-size:28px;color:#4B524D;text-align:right">41</p>
+<p style="position:absolute;left:652px;top:18px;width:80px;font-size:32px;font-weight:600">57</p>
+</div>
+</div>
+<div style="display:flex;gap:32px;align-items:center">
+<div style="width:520px;display:flex;flex-direction:column;gap:4px"><p style="font-size:30px;font-weight:600">Chalermchai</p><p style="font-size:24px;color:#4B524D">Needs income from 2027, holds long bonds</p></div>
+<div style="position:relative;width:1112px;height:80px">
+<div style="position:absolute;left:0;top:38px;width:1040px;height:4px;background:#E1DACB"></div>
+<div style="position:absolute;left:272px;top:36px;width:212px;height:8px;background:#7E9C8F"></div>
+<div style="position:absolute;left:256px;top:24px;width:32px;height:32px;background:#8C8577;border-radius:50%"></div>
+<div style="position:absolute;left:464px;top:20px;width:40px;height:40px;background:#1F4A3F;border-radius:50%"></div>
+<p style="position:absolute;left:172px;top:20px;width:70px;font-size:28px;color:#4B524D;text-align:right">23</p>
+<p style="position:absolute;left:520px;top:18px;width:80px;font-size:32px;font-weight:600">44</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B6F69">Synthetic clients from the Julius Bär case dataset. Scores before news, on a 0 to 99 track.</p>
+<aside>[Teammate C]. About 45 seconds. “Our rules name no client. Run across the book, detection found three cases nobody had coded. A new client is analysed the same way on day one.” If a judge compares with the live app: Ravi and Chalermchai show 5 points higher there because recent news adds to their score.</aside>
+</section>
+<section id="scoring" data-transition="fade" style="background:#EFE9DD;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">How a client gets ranked</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">Code scores. The RM decides.</h2>
+</div>
+<div style="display:flex;gap:24px;align-items:start">
+<p style="font-size:40px;font-weight:600;padding:22px 0 0">urgency =</p>
+<div style="display:flex;flex-direction:column;gap:12px;align-items:center">
+<p style="font-size:40px;border:3px solid #1F4A3F;border-radius:50%;padding:20px 44px;white-space:nowrap">goal + liquidity + rules + time ± fit</p>
+<p style="font-size:24px;font-weight:600;color:#1F4A3F">Code · from the client’s own record</p>
+</div>
+<p style="font-size:40px;font-weight:600;padding:22px 0 0">+</p>
+<div style="display:flex;flex-direction:column;gap:12px;align-items:center">
+<p style="font-size:40px;border:3px solid #4A5A70;border-radius:50%;padding:20px 44px">news</p>
+<p style="font-size:24px;font-weight:600;color:#4A5A70;text-align:center;line-height:1.3">AI · public models<br>capped at 8 points</p>
+</div>
+</div>
+<div style="position:relative;width:1664px;height:340px">
+<div style="position:absolute;left:931px;top:40px;width:0;height:290px;border-left:3px dashed #8A6A2C"></div>
+<div style="position:absolute;left:1148px;top:40px;width:0;height:290px;border-left:3px dashed #A8483C"></div>
+<p style="position:absolute;left:831px;top:0;width:200px;font-size:24px;color:#8A6A2C;text-align:center">this week · 45</p>
+<p style="position:absolute;left:1048px;top:0;width:200px;font-size:24px;color:#A8483C;text-align:center">act now · 70</p>
+<p style="position:absolute;left:0;top:64px;width:500px;font-size:32px;font-weight:600">Tan Boon Huat</p>
+<p style="position:absolute;left:0;top:106px;width:500px;font-size:24px;color:#4B524D">mandate breaches, review due</p>
+<p style="position:absolute;left:0;top:164px;width:500px;font-size:32px;font-weight:600">Abdullah Al-Mansoori</p>
+<p style="position:absolute;left:0;top:206px;width:500px;font-size:24px;color:#4B524D">goal clash at maximum, nothing due yet</p>
+<p style="position:absolute;left:0;top:264px;width:500px;font-size:32px;font-weight:600">Andreas Lindqvist</p>
+<p style="position:absolute;left:0;top:306px;width:500px;font-size:24px;color:#4B524D">cash outside its band</p>
+<div style="position:absolute;left:540px;top:70px;width:860px;height:48px;background:#DDD5C6;border-radius:6px"></div>
+<div style="position:absolute;left:540px;top:170px;width:860px;height:48px;background:#DDD5C6;border-radius:6px"></div>
+<div style="position:absolute;left:540px;top:270px;width:860px;height:48px;background:#DDD5C6;border-radius:6px"></div>
+<div style="position:absolute;left:540px;top:70px;width:660px;height:48px;background:#A8483C;border-radius:6px"></div>
+<div style="position:absolute;left:540px;top:170px;width:478px;height:48px;background:#8A6A2C;border-radius:6px"></div>
+<div style="position:absolute;left:540px;top:270px;width:226px;height:48px;background:#8C8577;border-radius:6px"></div>
+<p style="position:absolute;left:1414px;top:72px;width:90px;font-size:36px;font-weight:600;text-align:right">76</p>
+<p style="position:absolute;left:1414px;top:172px;width:90px;font-size:36px;font-weight:600;text-align:right">55</p>
+<p style="position:absolute;left:1414px;top:272px;width:90px;font-size:36px;font-weight:600;text-align:right">26</p>
+<p style="position:absolute;left:1520px;top:76px;width:144px;font-size:24px;font-weight:600;color:#A8483C">ACT NOW</p>
+<p style="position:absolute;left:1520px;top:176px;width:144px;font-size:24px;font-weight:600;color:#8A6A2C">THIS WEEK</p>
+<p style="position:absolute;left:1520px;top:276px;width:144px;font-size:24px;font-weight:600;color:#6B6F69">MONITOR</p>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B6F69">Live scores from TESSERA, synthetic clients. A “May be exposed” flag puts a client at the top whatever the score. Weights are illustrative, not calibrated.</p>
+<aside>About 30 seconds. “Every point in this score comes from code reading the client’s own record. The only AI input is the news, read by public models and capped at 8 points. The score decides the order; the RM decides what happens.” Abdullah has the maximum goal clash but nothing due this week, which is why he sits in This week, not Act now.</aside>
+</section>
+<section id="b-score" data-transition="fade" style="background:#F6F2EA;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">Backup · Urgency score</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">How one urgency score is built: Tan, 76 of 99</h2>
+</div>
+<div style="display:flex;height:88px">
+<div style="width:600px;background:#1F4A3F;border-radius:4px 0 0 4px;display:flex;align-items:center;padding:0 24px"><p style="font-size:28px;font-weight:600;color:#F4EFE6">Goal 30</p></div>
+<div style="width:400px;background:#4E7A6B;display:flex;align-items:center;padding:0 24px"><p style="font-size:28px;font-weight:600;color:#F4EFE6">Rules 20</p></div>
+<div style="width:300px;background:#8FB0A2;display:flex;align-items:center;padding:0 24px"><p style="font-size:28px;font-weight:600;color:#18201C">Time 15</p></div>
+<div style="width:220px;background:#C9D9D1;border-radius:0 4px 4px 0;display:flex;align-items:center;padding:0 24px"><p style="font-size:28px;font-weight:600;color:#18201C">Fit 11</p></div>
+</div>
+<table style="font-size:26px;color:#18201C;width:1664px">
+<tr><th style="width:22%;text-align:left">Part</th><th style="width:12%;text-align:right">Max</th><th style="width:12%;text-align:right">Tan</th><th style="width:54%;text-align:left">What it measures</th></tr>
+<tr><td>Goal</td><td style="text-align:right">40</td><td style="text-align:right">30</td><td>The client’s own words vs the portfolio</td></tr>
+<tr><td>Liquidity</td><td style="text-align:right">25</td><td style="text-align:right">0</td><td>Cash due by end-2027 vs assets sellable in a day</td></tr>
+<tr><td>Rules (governance)</td><td style="text-align:right">20</td><td style="text-align:right">20</td><td>Mandate breaches and loans near a margin call</td></tr>
+<tr><td>Time</td><td style="text-align:right">15</td><td style="text-align:right">15</td><td>Compliance review or a cash need due soon</td></tr>
+<tr><td>News</td><td style="text-align:right">8</td><td style="text-align:right">0</td><td>Recent topic-specific headlines that hit the client’s holdings</td></tr>
+<tr><td>Risk fit</td><td style="text-align:right">±12</td><td style="text-align:right">11</td><td>Risk tolerance and the gap to expected risk assets</td></tr>
+</table>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B6F69">Synthetic client from the Julius Bär case dataset. Weights are illustrative and tunable, not calibrated.</p>
+<aside>Use if asked how the ranking works or why Abdullah is not first: his goal score is the maximum (40), but he has no rule breaches and nothing due this week, so his total is lower.</aside>
+</section>
+<section id="lanes" data-transition="fade" style="background:#F6F2EA;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">How the queue decides</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">A score for built-up pressure, a flag for sudden exposure</h2>
+</div>
+<div style="display:flex;gap:32px">
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FBF8F2;border:1px solid #E1DACB;border-top:8px solid #1F4A3F;border-radius:12px;padding:40px">
+<h3 style="font-size:44px;font-weight:600">Act now</h3>
+<p style="font-size:30px;line-height:1.4;color:#4B524D">Urgency score of 70 or more, built from the client’s own record: contradictions, cash needs, rule breaches and deadlines.</p>
+<p style="font-size:28px;font-weight:600;color:#1F4A3F">Like a patient with several long-term conditions</p>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:16px;background:#FBF8F2;border:1px solid #E1DACB;border-top:8px solid #A8483C;border-radius:12px;padding:40px">
+<h3 style="font-size:44px;font-weight:600">May be exposed</h3>
+<p style="font-size:30px;line-height:1.4;color:#4B524D">A recent headline touches this portfolio hard enough to check today, whatever the score. The RM confirms or dismisses it.</p>
+<p style="font-size:28px;font-weight:600;color:#A8483C">Like a patient whose vital signs just dropped</p>
+</div>
+</div>
+<p style="font-family:'EB Garamond', Georgia, serif;font-size:44px;line-height:1.25">News nudges the score. Real exposure gets flagged for the RM to check.</p>
+<aside>[Teammate D]. About 40 seconds. This also answers the likely judge question: “didn’t you rank strictly by score?” We flag possible exposure and what to check; we do not predict what the news will do.</aside>
+</section>
+<section id="conversation" data-transition="fade" style="background:#F6F2EA;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:44px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">Better client conversations</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">The RM walks in with a brief, not a report</h2>
+</div>
+<div style="display:grid;grid-template-columns:repeat(2, 1fr);gap:32px">
+<div style="display:flex;flex-direction:column;gap:12px;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:36px">
+<p style="font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#1F4A3F">Open with</p>
+<p style="font-family:'EB Garamond', Georgia, serif;font-size:36px;line-height:1.3">“The energy thesis has worked. That success has quietly rebuilt the same risk your Asia portfolio was meant to diversify.”</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:36px">
+<p style="font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#1F4A3F">Ask</p>
+<p style="font-family:'EB Garamond', Georgia, serif;font-size:36px;line-height:1.3">“If the Strait reopened next month, how much of this year’s gain are you willing to give back?”</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:36px">
+<p style="font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#1F4A3F">Show</p>
+<p style="font-size:28px;line-height:1.4;color:#4B524D">The look-through of the structured note, both scenarios, and the USD 5m need from 2027.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:12px;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:36px">
+<p style="font-size:24px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#A8483C">Avoid</p>
+<p style="font-size:28px;line-height:1.4;color:#4B524D">Implying we know when the Strait normalises, or valuing his operating business without data.</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B6F69">Taken from TESSERA’s conversation brief for Abdullah Al-Mansoori. Synthetic client from the Julius Bär case dataset.</p>
+<aside>About 20 seconds. This is what the RM takes into the meeting. The “Avoid” box is the compliance guardrail: it stops the RM overclaiming.</aside>
+</section>
+<section id="opportunities" data-transition="fade" style="background:#EFE9DD;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:44px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">Risks and opportunities</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">The same gap is often the next advisory moment</h2>
+</div>
+<table style="font-size:28px;color:#18201C;width:1664px">
+<tr><th style="width:20%;text-align:left">Client</th><th style="width:40%;text-align:left">The gap TESSERA flags</th><th style="width:40%;text-align:left">The opening for the RM</th></tr>
+<tr><td>Lindqvist</td><td>45% in cash vs a 2 to 18% band, after he said he wants proceeds invested long term</td><td>About USD 14m ready to deploy into the allocation he asked for</td></tr>
+<tr><td>Ravi</td><td>68% in alternatives while he waits on a founder-share sale</td><td>The sale proceeds fund the diversified portfolio and family trust he plans</td></tr>
+<tr><td>Abdullah</td><td>42.1% tied to the sector he wants to leave</td><td>A new Singapore family office: a new structure and mandate to advise on</td></tr>
+</table>
+<p style="font-family:'EB Garamond', Georgia, serif;font-size:48px;line-height:1.25;color:#1F4A3F">A risk to manage, or a reason to call. The RM decides which.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B6F69">Figures from the Julius Bär case dataset (synthetic clients). Gaps are detected today; tagging them as opportunities is the next build step.</p>
+<aside>About 25 seconds. Be honest if asked: TESSERA detects the gaps now; labelling each one as risk or opportunity is planned. [Update this footer if the opportunity detector ships before 13 Nov.]</aside>
+</section>
+<section id="since" data-transition="fade" style="background:#EFE9DD;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">Since SingHacks</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">Six things we built since SingHacks</h2>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:24px">
+<div style="display:flex;flex-direction:column;gap:10px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:12px;padding:28px 30px"><h3 style="font-size:30px;font-weight:600">Contradiction detection</h3><p style="font-size:24px;line-height:1.4;color:#4B524D">Reads any client’s record. No client is named in the rules.</p></div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:12px;padding:28px 30px"><h3 style="font-size:30px;font-weight:600">News triage</h3><p style="font-size:24px;line-height:1.4;color:#4B524D">Three public models vote on every headline. They never see a client.</p></div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:12px;padding:28px 30px"><h3 style="font-size:30px;font-weight:600">Exposure flags</h3><p style="font-size:24px;line-height:1.4;color:#4B524D">Which clients a headline may touch, and what to check. No forecasts.</p></div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:12px;padding:28px 30px"><h3 style="font-size:30px;font-weight:600">In-house review</h3><p style="font-size:24px;line-height:1.4;color:#4B524D">The bank’s own model checks each action from three angles, and can only lower confidence.</p></div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#1F4A3F;border-radius:12px;padding:28px 30px"><p style="font-size:24px;font-weight:600;letter-spacing:3px;color:#D4B26A">NEW</p><h3 style="font-size:30px;font-weight:600;color:#F4EFE6">Customer vectors</h3><p style="font-size:24px;line-height:1.4;color:#DCE6E1">Every client as 24 named numbers: lookalike clients, and drift from their own goal. Abdullah: 29.4% to 42.1% in eight months.</p></div>
+<div style="display:flex;flex-direction:column;gap:10px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:12px;padding:28px 30px"><h3 style="font-size:30px;font-weight:600">Labelled sources</h3><p style="font-size:24px;line-height:1.4;color:#4B524D">Every figure says if it is client data, a calculation, an illustration or public news.</p></div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B6F69">Shaped by our check with a relationship manager and our own review. 135 automated tests pass.</p>
+<aside>[Teammate] · 35 seconds. “Since SingHacks we’ve built six things. Detection that reads any client’s record, with no client-specific rules. News triage, where three public models vote on each headline without ever seeing a client. Exposure flags that say who to check, not what will happen. An in-house review that can only lower confidence. Labels on every figure. And the newest: customer vectors. Every client is 24 named numbers, so TESSERA finds lookalike clients and measures drift. Abdullah’s share in what he asked to leave grew from 29 to 42 percent in eight months.” Point at the green card last.</aside>
 </section>
 <section id="how-it-works" data-transition="fade" style="background:#F6F2EA;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:32px">
 <div style="display:flex;flex-direction:column;gap:16px">
-<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">How it works</p>
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">What just happened</p>
 <h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">Code calculates. AI reads. The RM decides.</h2>
 </div>
 <div style="position:relative;width:1664px;height:540px">
@@ -90,139 +467,32 @@ body.fs .bar:hover { opacity: 1 }
 <p style="position:absolute;left:976px;top:876px;width:816px;font-size:24px;line-height:1.3"><b>5</b>  The RM approves, edits or dismisses.</p>
 <p style="position:absolute;left:976px;top:912px;width:816px;font-size:24px;line-height:1.3"><b>6</b>  Each decision goes into an append-only ledger.</p>
 <p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B6F69">Data classes: C1 to C2 public, C3 to C4 client data. In the demo, a labelled stand-in plays the in-house model.</p>
-<aside>[Teammate] · 30 seconds. “Here’s how it works. Client records never leave the bank. Code reads them and finds the contradiction. Public headlines go to three outside models, which vote on topic and severity. They never see a client. Code matches those votes to holdings and scores urgency. The bank’s own model reviews each action from three angles, and can only lower confidence. The RM decides, and the ledger records it.”</aside>
+<aside>[Teammate] · 30 seconds, click on each step. “Here’s what just happened. Client records never leave the bank. Code reads them and finds the contradiction. (click) Public headlines go to three outside models, which vote on topic and severity. They never see a client. (click) Code matches those votes to holdings and scores urgency. (click) The bank’s own model reviews each action from three angles, and can only lower confidence. (click) The RM decides, (click) and the ledger records it.”</aside>
 </section>
-<section id="shifts-a" style="background:#EFE9DD;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:120px 128px 150px;display:flex;flex-direction:column;gap:40px">
+<section id="ai-layer" data-transition="fade" style="background:#EFE9DD;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
 <div style="display:flex;flex-direction:column;gap:16px">
-<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">Since SingHacks · shifts 1 to 3</p>
-<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">From a prototype to a tool a bank can run</h2>
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">How the AI is used</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">Public data goes to any approved model. Client data stays in the bank.</h2>
 </div>
-<div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:32px;margin:auto 0">
-<div style="display:flex;flex-direction:column;gap:18px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:14px;padding:32px 34px">
-<div style="display:flex;align-items:baseline;gap:16px"><p style="font-family:'EB Garamond', Georgia, serif;font-size:52px;line-height:1;color:#8A6A2C">1</p><h3 style="font-size:32px;font-weight:600;line-height:1.2">Client data stays in the bank</h3></div>
-<svg viewBox="0 0 460 250" style="width:100%;height:auto" aria-hidden="true" font-family="IBM Plex Sans, Arial, sans-serif">
-<defs><marker id="sa-g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1F4A3F"/></marker><marker id="sa-s" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L10 5L0 10z" fill="#4A5A70"/></marker></defs>
-<rect x="1" y="1" width="246" height="248" rx="12" fill="none" stroke="#1F4A3F" stroke-width="2" stroke-dasharray="7 6"/>
-<rect x="262" y="1" width="197" height="248" rx="12" fill="#E6EBF0"/>
-<text x="18" y="32" font-size="15" font-weight="600" letter-spacing="1.5" fill="#1F4A3F">INSIDE THE BANK</text>
-<text x="278" y="32" font-size="15" font-weight="600" letter-spacing="1.5" fill="#4A5A70">OUTSIDE</text>
-<rect x="18" y="56" width="212" height="58" rx="8" fill="#FBF8F2" stroke="#B9B2A3" stroke-width="2"/><text x="124" y="92" font-size="20" font-weight="600" text-anchor="middle">Client data</text>
-<line x1="124" y1="114" x2="124" y2="166" stroke="#1F4A3F" stroke-width="3" marker-end="url(#sa-g)"/>
-<rect x="18" y="168" width="212" height="58" rx="8" fill="#1F4A3F"/><text x="124" y="204" font-size="20" font-weight="600" text-anchor="middle" fill="#F4EFE6">In-house model</text>
-<rect x="278" y="56" width="165" height="58" rx="8" fill="#FBF8F2" stroke="#4A5A70" stroke-width="2"/><text x="360" y="92" font-size="20" font-weight="600" text-anchor="middle">Headlines</text>
-<line x1="360" y1="114" x2="360" y2="166" stroke="#4A5A70" stroke-width="3" marker-end="url(#sa-s)"/>
-<rect x="278" y="168" width="165" height="58" rx="8" fill="#FBF8F2" stroke="#4A5A70" stroke-width="2"/><text x="360" y="204" font-size="20" font-weight="600" text-anchor="middle">Outside models</text>
-</svg>
-<p style="font-size:26px;line-height:1.4;color:#4B524D">Outside models read public headlines only. Actions are reviewed by the bank’s own model.</p>
+<div style="display:flex;flex-direction:column;gap:28px">
+<div style="display:flex;align-items:center;gap:24px">
+<div style="width:420px;display:flex;flex-direction:column;gap:6px;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:28px 32px"><p style="font-size:24px;font-weight:600;color:#4A5A70">C1 to C2 · public</p><p style="font-size:32px;font-weight:600">News and market reviews</p></div>
+<svg viewBox="0 0 96 48" preserveAspectRatio="none" style="width:96px;height:48px;flex:none" aria-hidden="true"><path d="M0 16H60V2L96 24L60 46V32H0Z" fill="#B9B2A3"/></svg>
+<div style="width:520px;display:flex;flex-direction:column;gap:6px;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:28px 32px"><p style="font-size:24px;font-weight:600;color:#4A5A70">External models</p><p style="font-size:32px;font-weight:600">GPT, Claude, Gemini</p></div>
+<svg viewBox="0 0 96 48" preserveAspectRatio="none" style="width:96px;height:48px;flex:none" aria-hidden="true"><path d="M0 16H60V2L96 24L60 46V32H0Z" fill="#B9B2A3"/></svg>
+<p style="flex:1;font-size:30px;line-height:1.35">Which headlines matter, which topic, how serious</p>
 </div>
-<div style="display:flex;flex-direction:column;gap:18px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:14px;padding:32px 34px">
-<div style="display:flex;align-items:baseline;gap:16px"><p style="font-family:'EB Garamond', Georgia, serif;font-size:52px;line-height:1;color:#8A6A2C">2</p><h3 style="font-size:32px;font-weight:600;line-height:1.2">Screening, not predicting</h3></div>
-<svg viewBox="0 0 460 250" style="width:100%;height:auto" aria-hidden="true" font-family="IBM Plex Sans, Arial, sans-serif">
-<defs><marker id="sb-r" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L10 5L0 10z" fill="#A8483C"/></marker></defs>
-<rect x="0" y="96" width="140" height="58" rx="8" fill="#FBF8F2" stroke="#4A5A70" stroke-width="2"/><text x="70" y="132" font-size="20" font-weight="600" text-anchor="middle">Headline</text>
-<path d="M140 125 C 185 125 190 40 228 40" fill="none" stroke="#A8483C" stroke-width="3" marker-end="url(#sb-r)"/>
-<path d="M140 125 C 185 125 190 98 228 98" fill="none" stroke="#A8483C" stroke-width="3" marker-end="url(#sb-r)"/>
-<path d="M140 125 C 185 125 190 156 228 156" fill="none" stroke="#C9C2B4" stroke-width="2" stroke-dasharray="5 5"/>
-<path d="M140 125 C 185 125 190 214 228 214" fill="none" stroke="#C9C2B4" stroke-width="2" stroke-dasharray="5 5"/>
-<rect x="230" y="18" width="230" height="44" rx="8" fill="#F7E3DF" stroke="#A8483C" stroke-width="2"/><text x="246" y="46" font-size="18" font-weight="600" fill="#A8483C">Client A · check loan</text>
-<rect x="230" y="76" width="230" height="44" rx="8" fill="#F7E3DF" stroke="#A8483C" stroke-width="2"/><text x="246" y="104" font-size="18" font-weight="600" fill="#A8483C">Client B · check fund</text>
-<rect x="230" y="134" width="230" height="44" rx="8" fill="#FBF8F2" stroke="#DDD5C6" stroke-width="2"/><text x="246" y="162" font-size="18" fill="#6B6F69">Client C · not touched</text>
-<rect x="230" y="192" width="230" height="44" rx="8" fill="#FBF8F2" stroke="#DDD5C6" stroke-width="2"/><text x="246" y="220" font-size="18" fill="#6B6F69">Client D · not touched</text>
-</svg>
-<p style="font-size:26px;line-height:1.4;color:#4B524D">A headline flags the clients it touches and what to check. No forecasts.</p>
-</div>
-<div style="display:flex;flex-direction:column;gap:18px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:14px;padding:32px 34px">
-<div style="display:flex;align-items:baseline;gap:16px"><p style="font-family:'EB Garamond', Georgia, serif;font-size:52px;line-height:1;color:#8A6A2C">3</p><h3 style="font-size:32px;font-weight:600;line-height:1.2">Detection for any client</h3></div>
-<svg viewBox="0 0 460 250" style="width:100%;height:auto" aria-hidden="true" font-family="IBM Plex Sans, Arial, sans-serif">
-<text x="0" y="26" font-size="15" font-weight="600" letter-spacing="1.5" fill="#8A6A2C">WHAT ABDULLAH SAID</text>
-<text x="0" y="64" font-size="24" font-style="italic" font-family="EB Garamond, Georgia, serif">“Build wealth outside shipping.”</text>
-<text x="0" y="118" font-size="15" font-weight="600" letter-spacing="1.5" fill="#8A6A2C">WHAT HE HOLDS, LOOKED THROUGH</text>
-<rect x="0" y="134" width="460" height="40" rx="6" fill="#E6E0D4"/>
-<rect x="0" y="134" width="194" height="40" rx="6" fill="#A8483C"/>
-<text x="206" y="161" font-size="20" font-weight="600">42.1% shipping and energy</text>
-<line x1="0" y1="206" x2="460" y2="206" stroke="#DDD5C6" stroke-width="2"/>
-<text x="0" y="236" font-size="18" fill="#4B524D">The same rules check every client.</text>
-</svg>
-<p style="font-size:26px;line-height:1.4;color:#4B524D">Code compares each client’s own words with their holdings. No client is named in the rules.</p>
+<div style="display:flex;align-items:center;gap:24px">
+<div style="width:420px;display:flex;flex-direction:column;gap:6px;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:28px 32px"><p style="font-size:24px;font-weight:600;color:#A8483C">C3 to C4 · client data</p><p style="font-size:32px;font-weight:600">Portfolios and actions</p></div>
+<svg viewBox="0 0 96 48" preserveAspectRatio="none" style="width:96px;height:48px;flex:none" aria-hidden="true"><path d="M0 16H60V2L96 24L60 46V32H0Z" fill="#B9B2A3"/></svg>
+<div style="width:520px;display:flex;flex-direction:column;gap:6px;background:#1F4A3F;border-radius:12px;padding:28px 32px"><p style="font-size:24px;font-weight:600;color:#CFE0D8">Bank’s in-house model</p><p style="font-size:32px;font-weight:600;color:#F4EFE6">Offline, inside the bank</p></div>
+<svg viewBox="0 0 96 48" preserveAspectRatio="none" style="width:96px;height:48px;flex:none" aria-hidden="true"><path d="M0 16H60V2L96 24L60 46V32H0Z" fill="#B9B2A3"/></svg>
+<p style="flex:1;font-size:30px;line-height:1.35">Reviews each action for suitability, client fit and evidence</p>
 </div>
 </div>
-<p style="position:absolute;left:128px;bottom:56px;width:1664px;font-size:24px;color:#6B6F69">Shaped by our check with a relationship manager and our own research.</p>
-<aside>[Teammate] · 30 seconds. “Since SingHacks we made six shifts. One: client data stays in the bank. Outside models only read public headlines; actions go to the bank’s own model. Two: we screen, we don’t predict. A headline tells the RM which clients it touches and what to check. Three: detection works for any client. Code compares what each client said with what they hold, with no client named in the rules.”</aside>
-</section>
-<section id="shifts-b" style="background:#EFE9DD;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:120px 128px 150px;display:flex;flex-direction:column;gap:40px">
-<div style="display:flex;flex-direction:column;gap:16px">
-<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">Since SingHacks · shifts 4 to 6</p>
-<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">Clearer numbers, a fuller view, the right order</h2>
-</div>
-<div style="display:grid;grid-template-columns:repeat(3, 1fr);gap:32px;margin:auto 0">
-<div style="display:flex;flex-direction:column;gap:18px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:14px;padding:32px 34px">
-<div style="display:flex;align-items:baseline;gap:16px"><p style="font-family:'EB Garamond', Georgia, serif;font-size:52px;line-height:1;color:#8A6A2C">4</p><h3 style="font-size:32px;font-weight:600;line-height:1.2">Every figure labelled</h3></div>
-<svg viewBox="0 0 460 250" style="width:100%;height:auto" aria-hidden="true" font-family="IBM Plex Sans, Arial, sans-serif">
-<text x="0" y="62" font-size="64" font-family="EB Garamond, Georgia, serif">42.1%</text>
-<rect x="250" y="28" width="168" height="40" rx="20" fill="#E3EEE9"/><circle cx="272" cy="48" r="6" fill="#1F4A3F"/><text x="288" y="54" font-size="17" font-weight="600" letter-spacing="1" fill="#1F4A3F">CALCULATED</text>
-<line x1="0" y1="96" x2="460" y2="96" stroke="#DDD5C6" stroke-width="2"/>
-<circle cx="10" cy="128" r="7" fill="#8B8F87"/><text x="30" y="134" font-size="19">Client record (synthetic in the demo)</text>
-<circle cx="10" cy="166" r="7" fill="#1F4A3F"/><text x="30" y="172" font-size="19">Calculated by TESSERA</text>
-<circle cx="10" cy="204" r="7" fill="#8A6A2C"/><text x="30" y="210" font-size="19">Scenario, not a forecast</text>
-<circle cx="10" cy="242" r="7" fill="#4A5A70"/><text x="30" y="248" font-size="19">Public news</text>
-</svg>
-<p style="font-size:26px;line-height:1.4;color:#4B524D">Real and simulated are never mixed up. Each number traces to its record.</p>
-</div>
-<div style="display:flex;flex-direction:column;gap:18px;background:#1F4A3F;border-radius:14px;padding:32px 34px;color:#F4EFE6">
-<div style="display:flex;align-items:baseline;gap:16px"><p style="font-family:'EB Garamond', Georgia, serif;font-size:52px;line-height:1;color:#D4B26A">5</p><h3 style="font-size:32px;font-weight:600;line-height:1.2">Customer vectors</h3></div>
-<svg viewBox="0 0 460 250" style="width:100%;height:auto" aria-hidden="true" font-family="IBM Plex Sans, Arial, sans-serif">
-<text x="0" y="22" font-size="15" font-weight="600" letter-spacing="1.5" fill="#CFE0D8">ABDULLAH · SHARE IN WHAT HE ASKED TO LEAVE</text>
-<line x1="20" y1="206" x2="440" y2="206" stroke="#4E7468" stroke-width="2"/>
-<polyline points="30,169 135,168 240,138 345,90 430,84" fill="none" stroke="#E2B4A6" stroke-width="4"/>
-<circle cx="30" cy="169" r="6" fill="#E2B4A6"/><circle cx="135" cy="168" r="6" fill="#E2B4A6"/><circle cx="240" cy="138" r="6" fill="#E2B4A6"/><circle cx="345" cy="90" r="6" fill="#E2B4A6"/><circle cx="430" cy="84" r="8" fill="#F4EFE6"/>
-<text x="30" y="152" font-size="20" font-weight="600" text-anchor="middle" fill="#F4EFE6">29.4%</text>
-<text x="430" y="66" font-size="22" font-weight="600" text-anchor="end" fill="#F4EFE6">42.1%</text>
-<text x="30" y="236" font-size="17" fill="#CFE0D8">Dec 2025</text>
-<text x="440" y="236" font-size="17" text-anchor="end" fill="#CFE0D8">Aug 2026</text>
-</svg>
-<p style="font-size:26px;line-height:1.4;color:#DCE6E1">Every client as 24 named numbers, kept in the bank: drift from their own goal, and lookalike clients.</p>
-</div>
-<div style="display:flex;flex-direction:column;gap:18px;background:#FBF8F2;border:1px solid #DDD5C6;border-radius:14px;padding:32px 34px">
-<div style="display:flex;align-items:baseline;gap:16px"><p style="font-family:'EB Garamond', Georgia, serif;font-size:52px;line-height:1;color:#8A6A2C">6</p><h3 style="font-size:32px;font-weight:600;line-height:1.2">Most pressing first</h3></div>
-<svg viewBox="0 0 460 250" style="width:100%;height:auto" aria-hidden="true" font-family="IBM Plex Sans, Arial, sans-serif">
-<text x="0" y="22" font-size="15" font-weight="600" letter-spacing="1.5" fill="#6B6F69">LAU CHI MING’S ACTIONS</text>
-<text x="460" y="22" font-size="15" font-weight="600" letter-spacing="1.5" fill="#6B6F69" text-anchor="end">EVIDENCE</text>
-<text x="0" y="68" font-size="19" font-weight="600">Protect the loan</text>
-<rect x="0" y="80" width="340" height="12" rx="6" fill="#E6E0D4"/><rect x="0" y="80" width="306" height="12" rx="6" fill="#B9232D"/>
-<rect x="392" y="52" width="68" height="40" rx="6" fill="#F6EDDC" stroke="#C9A96F"/><text x="426" y="79" font-size="20" font-weight="600" text-anchor="middle" fill="#7A5A24">84</text>
-<text x="0" y="140" font-size="19" font-weight="600">Fund USD 7.7m due soon</text>
-<rect x="0" y="152" width="340" height="12" rx="6" fill="#E6E0D4"/><rect x="0" y="152" width="289" height="12" rx="6" fill="#B9232D"/>
-<rect x="392" y="124" width="68" height="40" rx="6" fill="#F6EDDC" stroke="#C9A96F"/><text x="426" y="151" font-size="20" font-weight="600" text-anchor="middle" fill="#7A5A24">65</text>
-<text x="0" y="212" font-size="19" font-weight="600">Separate one hidden bet</text>
-<rect x="0" y="224" width="340" height="12" rx="6" fill="#E6E0D4"/><rect x="0" y="224" width="119" height="12" rx="6" fill="#8B8F87"/>
-<rect x="392" y="196" width="68" height="40" rx="6" fill="#F6EDDC" stroke="#C9A96F"/><text x="426" y="223" font-size="20" font-weight="600" text-anchor="middle" fill="#7A5A24">81</text>
-</svg>
-<p style="font-size:26px;line-height:1.4;color:#4B524D">Priority from what is at stake sets the order. Evidence is scored separately.</p>
-</div>
-</div>
-<p style="position:absolute;left:128px;bottom:56px;width:1664px;font-size:24px;color:#6B6F69">Synthetic clients from the Julius Bär case dataset. 135 automated tests pass.</p>
-<aside>[Teammate] · 30 seconds. “Four: every figure says what it is, a client record, a calculation, a scenario or public news. Five, our newest: customer vectors. Abdullah has drifted from 29 to 42 percent in what he asked to leave. Six: actions come in order of what is at stake. Lau’s loan is next to its margin call, so it comes first, and how well each action is evidenced is scored separately.”</aside>
-</section>
-<section id="bookmap" style="background:#18201C;color:#F4EFE6;font-family:'IBM Plex Sans', Arial, sans-serif;padding:100px 128px 120px;display:flex;flex-direction:column;gap:28px">
-<div style="display:flex;flex-direction:column;gap:14px">
-<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#D4B26A">New since SingHacks · customer vectors</p>
-<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:68px;font-weight:500;line-height:1.08">Every client is a vector. Lookalike books sit together.</h2>
-</div>
-<div style="display:flex;gap:48px;align-items:flex-start">
-<div style="width:1000px;display:flex;flex-direction:column;gap:14px">
-<div style="display:flex;gap:32px;font-size:22px;color:#C9C2B4"><span style="display:inline-flex;align-items:center;gap:10px"><i style="width:16px;height:16px;border-radius:50%;background:#E06A5A"></i>May be exposed</span><span style="display:inline-flex;align-items:center;gap:10px"><i style="width:16px;height:16px;border-radius:50%;background:#D9822B"></i>Act now</span><span style="display:inline-flex;align-items:center;gap:10px"><i style="width:16px;height:16px;border-radius:50%;background:#D4B26A"></i>This week</span><span style="display:inline-flex;align-items:center;gap:10px"><i style="width:16px;height:16px;border-radius:50%;background:#8FA3C0"></i>Monitor</span></div>
-<svg viewBox="0 0 1000 600" style="width:1000px;height:600px;background:#1A221E;border:1px solid #2C3631;border-radius:14px" aria-hidden="true" font-family="IBM Plex Sans, Arial, sans-serif"><line x1="500.0" y1="20" x2="500.0" y2="580" stroke="#2C3631" stroke-width="2"/><line x1="20" y1="300.0" x2="980" y2="300.0" stroke="#2C3631" stroke-width="2"/><line x1="523" y1="122" x2="555" y2="60" stroke="#D4B26A" stroke-width="3" stroke-dasharray="8 7"/><line x1="523" y1="122" x2="732" y2="186" stroke="#D4B26A" stroke-width="3" stroke-dasharray="8 7"/><line x1="523" y1="122" x2="184" y2="131" stroke="#D4B26A" stroke-width="3" stroke-dasharray="8 7"/><circle cx="625" cy="470" r="10" fill="#D4B26A"/><circle cx="60" cy="416" r="10" fill="#E06A5A"/><circle cx="579" cy="285" r="10" fill="#D9822B"/><circle cx="523" cy="122" r="22" fill="none" stroke="#F4EFE6" stroke-width="3"/><circle cx="523" cy="122" r="13" fill="#D4B26A"/><circle cx="802" cy="313" r="10" fill="#D4B26A"/><circle cx="323" cy="183" r="10" fill="#D4B26A"/><circle cx="540" cy="229" r="10" fill="#8FA3C0"/><circle cx="732" cy="186" r="10" fill="#8FA3C0"/><circle cx="622" cy="256" r="10" fill="#8FA3C0"/><circle cx="559" cy="347" r="10" fill="#8FA3C0"/><circle cx="195" cy="136" r="10" fill="#D9822B"/><circle cx="555" cy="60" r="10" fill="#D4B26A"/><circle cx="422" cy="490" r="10" fill="#8FA3C0"/><circle cx="184" cy="131" r="10" fill="#D9822B"/><circle cx="404" cy="471" r="10" fill="#8FA3C0"/><circle cx="828" cy="322" r="10" fill="#D4B26A"/><circle cx="256" cy="402" r="10" fill="#D4B26A"/><circle cx="832" cy="304" r="10" fill="#8FA3C0"/><circle cx="405" cy="405" r="10" fill="#D4B26A"/><circle cx="555" cy="473" r="10" fill="#8FA3C0"/><text x="539" y="130" font-size="24" font-weight="600" text-anchor="start" fill="#F4EFE6" paint-order="stroke" stroke="#18201C" stroke-width="6">Chalermchai</text><text x="571" y="68" font-size="24" font-weight="600" text-anchor="start" fill="#F4EFE6" paint-order="stroke" stroke="#18201C" stroke-width="6">Cheung</text><text x="748" y="194" font-size="24" font-weight="600" text-anchor="start" fill="#F4EFE6" paint-order="stroke" stroke="#18201C" stroke-width="6">Chen</text><text x="168" y="139" font-size="24" font-weight="600" text-anchor="end" fill="#F4EFE6" paint-order="stroke" stroke="#18201C" stroke-width="6">Lau</text><text x="641" y="478" font-size="20" font-weight="400" text-anchor="start" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Hartono</text><text x="76" y="424" font-size="20" font-weight="400" text-anchor="start" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Ravi</text><text x="595" y="293" font-size="20" font-weight="400" text-anchor="start" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Margarethe</text><text x="786" y="321" font-size="20" font-weight="400" text-anchor="end" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Aishah</text><text x="339" y="191" font-size="20" font-weight="400" text-anchor="start" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Nguyen</text><text x="556" y="237" font-size="20" font-weight="400" text-anchor="start" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Alistair</text><text x="638" y="264" font-size="20" font-weight="400" text-anchor="start" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Andreas</text><text x="575" y="355" font-size="20" font-weight="400" text-anchor="start" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Priya</text><text x="211" y="144" font-size="20" font-weight="400" text-anchor="start" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Tan</text><text x="438" y="498" font-size="20" font-weight="400" text-anchor="start" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Zhang</text><text x="388" y="479" font-size="20" font-weight="400" text-anchor="end" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Kim</text><text x="828" y="354" font-size="20" font-weight="400" text-anchor="middle" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Yamamoto</text><text x="272" y="410" font-size="20" font-weight="400" text-anchor="start" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Fong</text><text x="848" y="312" font-size="20" font-weight="400" text-anchor="start" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Elena</text><text x="421" y="413" font-size="20" font-weight="400" text-anchor="start" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Abdullah</text><text x="555" y="455" font-size="20" font-weight="400" text-anchor="middle" fill="#C9C2B4" paint-order="stroke" stroke="#18201C" stroke-width="6">Grace</text><text x="512" y="30" font-size="18" fill="#9C9686" font-family="IBM Plex Mono, monospace">↑ fixed income, property exposure</text><text x="980" y="582" font-size="18" fill="#9C9686" text-anchor="end" font-family="IBM Plex Mono, monospace">sellable daily, held outside base currency →</text></svg>
-</div>
-<div style="flex:1;display:flex;flex-direction:column;gap:18px">
-<h3 style="font-family:'EB Garamond', Georgia, serif;font-size:48px;font-weight:500;line-height:1.1">Chalermchai Suphanburi</h3>
-<p style="display:flex;align-items:center;gap:14px;font-size:24px;color:#C9C2B4"><span style="padding:4px 14px;border-radius:999px;background:#D4B26A;color:#18201C;font-weight:600;letter-spacing:2px;text-transform:uppercase;font-size:20px">This week</span>Urgency 49 / 99</p>
-<p style="font-size:24px;line-height:1.4;color:#DCD6CA">Lifetime income vs long-duration holdings</p>
-<p style="margin-top:6px;font-size:20px;font-weight:600;letter-spacing:3px;text-transform:uppercase;color:#9C9686">Clients like this one</p>
-<div style="display:flex;flex-direction:column;gap:6px;padding:20px 24px;background:#1E2622;border:1px solid #2C3631;border-radius:12px"><div style="display:flex;justify-content:space-between;align-items:baseline"><p style="font-size:28px;font-weight:600">Cheung Kwok Wing</p><p style="font-size:26px;font-weight:600;color:#D4B26A">0.85</p></div><p style="font-size:21px;line-height:1.4;color:#B9B2A3">Risk tolerance score 3/10 vs 3/10 · Fixed income 65% vs 67%</p></div><div style="display:flex;flex-direction:column;gap:6px;padding:20px 24px;background:#1E2622;border:1px solid #2C3631;border-radius:12px"><div style="display:flex;justify-content:space-between;align-items:baseline"><p style="font-size:28px;font-weight:600">Chen Wei Ling</p><p style="font-size:26px;font-weight:600;color:#D4B26A">0.39</p></div><p style="font-size:21px;line-height:1.4;color:#B9B2A3">Fixed income 65% vs 32% · Gated or illiquid 5% vs 0%</p></div><div style="display:flex;flex-direction:column;gap:6px;padding:20px 24px;background:#1E2622;border:1px solid #2C3631;border-radius:12px"><div style="display:flex;justify-content:space-between;align-items:baseline"><p style="font-size:28px;font-weight:600">Lau Chi Ming</p><p style="font-size:26px;font-weight:600;color:#D4B26A">0.29</p></div><p style="font-size:21px;line-height:1.4;color:#B9B2A3">Fixed income 65% vs 44% · Investment horizon 18 yrs vs 12 yrs</p></div>
-</div>
-</div>
-<p style="position:absolute;left:128px;bottom:52px;width:1664px;font-size:22px;color:#9C9686">24 named numbers per client: exposures, liquidity, obligations, stated profile. Calculated inside the bank, never sent to a model. Similarity, not prediction.</p>
-<aside>Siang Woo · 25 seconds. “Our newest feature: customer vectors. Every client becomes 24 named numbers, calculated inside the bank, so books that look alike sit together on this map. Chalermchai’s closest match is Cheung, at 0.85: both are about two-thirds in fixed income with a cautious profile. When an RM handles one, they know which other books to look at, and they can see the reasons, not a black box.”</aside>
+<p style="font-size:30px;line-height:1.4;color:#4B524D">The model review can only lower confidence, never raise it. The RM still decides.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B6F69">Data classes: C1 to C2 public, C3 to C4 client data. In the demo, a labelled stand-in plays the in-house model.</p>
+<aside>[Teammate D]. About 40 seconds. This is built: three external models vote on each public headline, and one model reviews each action from three angles. If asked about the demo: a hosted model stands in for the in-house one and only sees a de-identified packet; it can also run on a local offline model.</aside>
 </section>
 <section id="trust" data-transition="fade" style="background:#F6F2EA;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
 <div style="display:flex;flex-direction:column;gap:16px">
@@ -249,6 +519,25 @@ body.fs .bar:hover { opacity: 1 }
 </div>
 <aside>[Teammate] · 30 seconds. “Why can an RM trust it? Client data never leaves the bank: outside models only read public headlines. Every number traces to a source and says what kind of number it is. The AI can only lower confidence, never raise it, and nothing is a forecast. And the RM decides: every approval, edit or dismissal is on the record.”</aside>
 </section>
+<section id="b-models" data-transition="fade" style="background:#F6F2EA;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">Backup · What the models saw</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">The review sees the action, never the client</h2>
+</div>
+<table style="font-size:28px;color:#18201C;width:1664px">
+<tr><th style="width:50%;text-align:left">Sent for review</th><th style="width:50%;text-align:left">Never leaves TESSERA</th></tr>
+<tr><td>The action, as TESSERA wrote it</td><td>Name and client ID</td></tr>
+<tr><td>Risk profile and risk indicators</td><td>Nationality and residence</td></tr>
+<tr><td>Wealth band, e.g. USD 25 to 50m</td><td>The client’s own words</td></tr>
+<tr><td>Detected contradiction, e.g. “diversify away from shipping”</td><td>RM notes and note references</td></tr>
+<tr><td>Key numbers: cash needs, asset mix, scenario results</td><td>Any wording edited by the RM</td></tr>
+</table>
+<div style="display:flex;gap:32px">
+<p style="flex:1;font-size:28px;line-height:1.4;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:28px 32px">A code check blocks the packet if anything identifying slips in.</p>
+<p style="flex:1;font-size:28px;line-height:1.4;background:#FBF8F2;border:1px solid #E1DACB;border-radius:12px;padding:28px 32px">Every packet is fingerprinted in the ledger, and the app shows exactly what was sent.</p>
+</div>
+<aside>Use if asked about privacy or sending data to AI companies. In production the review runs on the bank’s in-house model; external models only see public data. [Update if the team changes the AI layer.]</aside>
+</section>
 <section id="integration" data-transition="fade" style="background:#18201C;color:#F4EFE6;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
 <div style="display:flex;flex-direction:column;gap:16px">
 <p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#D4B26A">Fitting into Julius Bär</p>
@@ -263,6 +552,44 @@ body.fs .bar:hover { opacity: 1 }
 </div>
 <p style="position:absolute;left:128px;bottom:64px;width:1664px;font-family:'EB Garamond', Georgia, serif;font-size:36px;color:#F4EFE6">The portfolio defensible. The future discussable. The RM indispensable.</p>
 <aside>Siang Woo · 30 seconds. “How does it fit into Julius Bär? Your own research and market reviews become news feeds next to the public ones, and TESSERA matches every headline to every client’s holdings. It reads the portfolio data you already have. One setting points the review at your in-house model. And every decision lands in your own database. The portfolio defensible. The future discussable. The RM indispensable. Thank you.” Stop on the closing line.</aside>
+</section>
+<section id="b-trust-tax" data-transition="fade" style="background:#EFE9DD;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#A8483C">[Planned feature] · Event screen</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">China’s 20% offshore trust tax: who should the RM check?</h2>
+</div>
+<table style="font-size:28px;color:#18201C;width:1664px">
+<tr><th style="width:24%;text-align:left">Client</th><th style="width:18%;text-align:left">Result</th><th style="width:58%;text-align:left">Why</th></tr>
+<tr><td>Zhang Meiling</td><td>Check now</td><td>PRC national in Hong Kong; mainland business; plans a family office</td></tr>
+<tr><td>Marchetti-Wong</td><td>Check</td><td>Italian tax resident, business across Greater China</td></tr>
+<tr><td>Fong Family Office</td><td>Data gap</td><td>Existing structure; beneficiaries’ tax residence not recorded</td></tr>
+<tr><td>Ravi, Priya</td><td>Not affected</td><td>Trusts, but no China link</td></tr>
+</table>
+<p style="font-size:30px;line-height:1.4;color:#4B524D">It screens exposure in seconds and shows what it doesn’t know. It does not predict the tax outcome.</p>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B6F69">Real event: MOF and STA Announcement No. 21 of 2026 (24 Jul 2026), as reported by Withers, Walkers and Morgan Lewis. Clients are synthetic.</p>
+<aside>Planned, not built yet. If the event screen is built before the finals, this becomes the opening hook. Present the rule as “20% on offshore trust activity”; sources differ on the exact tax base.</aside>
+</section>
+<section id="ask" data-transition="fade" style="background:#18201C;color:#F4EFE6;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:48px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#D4B26A">Our ask</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">A 30-day shadow pilot with one desk</h2>
+</div>
+<div style="display:flex;gap:64px">
+<div style="flex:1;display:flex;flex-direction:column;gap:24px">
+<p style="font-size:32px;color:#C9C2B4">What we would measure</p>
+<div style="display:flex;flex-direction:column;gap:20px">
+<p style="font-size:32px;line-height:1.35;border-left:4px solid #D4B26A;padding:0 0 0 24px">Time from opening the book to the first high-value review</p>
+<p style="font-size:32px;line-height:1.35;border-left:4px solid #D4B26A;padding:0 0 0 24px">Share of actions with complete, current evidence</p>
+<p style="font-size:32px;line-height:1.35;border-left:4px solid #D4B26A;padding:0 0 0 24px">Why RMs override TESSERA, and how often</p>
+</div>
+</div>
+<div style="width:440px;display:flex;flex-direction:column;gap:20px">
+<div style="width:440px;height:300px;border:2px dashed #5E6A62;border-radius:12px;display:flex;align-items:center;justify-content:center"><p style="font-size:28px;color:#9C9686">[Team photo]</p></div>
+<div style="display:flex;gap:20px;align-items:center"><div style="width:120px;height:120px;border:2px dashed #5E6A62;border-radius:8px"></div><p style="font-size:24px;color:#9C9686;width:300px">[QR code to explainer hub and replay]</p></div>
+</div>
+</div>
+<p style="font-family:'EB Garamond', Georgia, serif;font-size:48px;line-height:1.25;color:#D4B26A">The portfolio defensible. The future discussable. The RM indispensable.</p>
+<aside>Siang Woo · 25 seconds. “Our ask: a 30-day shadow pilot with one desk. We’d measure how fast an RM reaches the first high-value review, how much of the evidence is complete, and why RMs override us. The portfolio defensible. The future discussable. The RM indispensable. Thank you.” Stop, make eye contact, wait for questions.</aside>
 </section>
 </div></div>
 <div class="notes" id="notes" aria-live="polite"></div>

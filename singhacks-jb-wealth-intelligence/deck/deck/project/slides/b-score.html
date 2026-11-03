@@ -1,0 +1,23 @@
+<section id="b-score" data-transition="fade" style="background:#F6F2EA;color:#18201C;font-family:'IBM Plex Sans', Arial, sans-serif;padding:128px 128px 160px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-direction:column;gap:16px">
+<p style="font-size:24px;font-weight:600;letter-spacing:4px;text-transform:uppercase;color:#8A6A2C">Backup · Urgency score</p>
+<h2 style="font-family:'EB Garamond', Georgia, serif;font-size:72px;font-weight:500;line-height:1.1">How one urgency score is built: Tan, 76 of 99</h2>
+</div>
+<div style="display:flex;height:88px">
+<div style="width:600px;background:#1F4A3F;border-radius:4px 0 0 4px;display:flex;align-items:center;padding:0 24px"><p style="font-size:28px;font-weight:600;color:#F4EFE6">Goal 30</p></div>
+<div style="width:400px;background:#4E7A6B;display:flex;align-items:center;padding:0 24px"><p style="font-size:28px;font-weight:600;color:#F4EFE6">Rules 20</p></div>
+<div style="width:300px;background:#8FB0A2;display:flex;align-items:center;padding:0 24px"><p style="font-size:28px;font-weight:600;color:#18201C">Time 15</p></div>
+<div style="width:220px;background:#C9D9D1;border-radius:0 4px 4px 0;display:flex;align-items:center;padding:0 24px"><p style="font-size:28px;font-weight:600;color:#18201C">Fit 11</p></div>
+</div>
+<table style="font-size:26px;color:#18201C;width:1664px">
+<tr><th style="width:22%;text-align:left">Part</th><th style="width:12%;text-align:right">Max</th><th style="width:12%;text-align:right">Tan</th><th style="width:54%;text-align:left">What it measures</th></tr>
+<tr><td>Goal</td><td style="text-align:right">40</td><td style="text-align:right">30</td><td>The client’s own words vs the portfolio</td></tr>
+<tr><td>Liquidity</td><td style="text-align:right">25</td><td style="text-align:right">0</td><td>Cash due by end-2027 vs assets sellable in a day</td></tr>
+<tr><td>Rules (governance)</td><td style="text-align:right">20</td><td style="text-align:right">20</td><td>Mandate breaches and loans near a margin call</td></tr>
+<tr><td>Time</td><td style="text-align:right">15</td><td style="text-align:right">15</td><td>Compliance review or a cash need due soon</td></tr>
+<tr><td>News</td><td style="text-align:right">8</td><td style="text-align:right">0</td><td>Recent topic-specific headlines that hit the client’s holdings</td></tr>
+<tr><td>Risk fit</td><td style="text-align:right">±12</td><td style="text-align:right">11</td><td>Risk tolerance and the gap to expected risk assets</td></tr>
+</table>
+<p style="position:absolute;left:128px;bottom:64px;width:1664px;font-size:24px;color:#6B6F69">Synthetic client from the Julius Bär case dataset. Weights are illustrative and tunable, not calibrated.</p>
+<aside>Use if asked how the ranking works or why Abdullah is not first: his goal score is the maximum (40), but he has no rule breaches and nothing due this week, so his total is lower.</aside>
+</section>
