@@ -418,7 +418,7 @@ function breachPanelHTML(item) {
 
 function queueRowHTML(item, nextUpId) {
   const nextUp = item.client_id === nextUpId;
-  const chip = item.tier.key === "breach" || item.tier.key === "now" ? "now" : item.tier.key === "week" ? "next" : item.tier.key === "resolved" ? "done" : item.tier.key;
+  const chip = item.tier.key === "resolved" ? "done" : `lane-${item.tier.key}`;
   return `
     <a class="queue-row tier-${item.tier.key}" href="${routeFor("client", item.client_id)}" data-open-client="${esc(item.client_id)}" aria-label="Open client review for ${esc(item.client_name)}">
       <div class="score-ring" style="--score:${item.score}"><b>${item.score}</b></div>
