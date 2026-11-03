@@ -743,7 +743,7 @@ nav { display: grid; gap: 7px; }
 .queue-stat span { display: block; margin-top: 6px; color: var(--muted); font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; }
 .queue-stat small { color: var(--muted); font-size: 15px; }
 .stat-exposed { --stat: var(--severity-severe); }
-.stat-now { --stat: var(--severity-high); }
+.stat-now { --stat: #c4501b; }
 .stat-week { --stat: var(--severity-medium); }
 .stat-monitor { --stat: var(--severity-low); }
 .stat-reviewed { --stat: var(--ink); border-top-color: var(--line); border-right: 0; background: #f4f0e8; }
@@ -802,16 +802,17 @@ nav { display: grid; gap: 7px; }
 .queue-lane { display: flex; align-items: baseline; gap: 12px; padding: 10px 20px; background: #f4f0e8; border-top: 1px solid var(--line); font-size: 12px; }
 .queue-lane strong { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; }
 .queue-lane span { color: var(--muted); }
-.queue-lane.lane-breach, .queue-lane.lane-now, .queue-lane.lane-week, .queue-lane.lane-monitor { background: #f4f0e8; border-left: 3px solid var(--lane); padding-left: 17px; }
-.queue-lane[class*="lane-"] strong { color: var(--lane, var(--ink)); }
+.queue-lane.lane-breach, .queue-lane.lane-now, .queue-lane.lane-week, .queue-lane.lane-monitor { background: var(--lane); border-top-color: var(--lane); }
+.queue-lane[class*="lane-"] strong { color: #fff; }
+.queue-lane[class*="lane-"] span { color: rgba(255, 255, 255, .82); }
 .lane-breach { --lane: var(--severity-severe); --lane-soft: var(--severity-severe-soft); }
-.lane-now { --lane: var(--severity-high); --lane-soft: var(--severity-high-soft); }
+.lane-now { --lane: #c4501b; --lane-soft: var(--severity-high-soft); }
 .lane-week { --lane: var(--severity-medium); --lane-soft: var(--severity-medium-soft); }
 .lane-monitor { --lane: var(--severity-low); --lane-soft: var(--severity-low-soft); }
 .cell-copy .priority-chip { display: inline-block; margin-top: 0; }
-.priority-chip[class*="lane-"] { color: var(--lane); background: transparent; box-shadow: inset 0 0 0 1px var(--lane); }
+.priority-chip[class*="lane-"] { color: #fff; background: var(--lane); }
 .queue-row.tier-breach { --lane: var(--severity-severe); }
-.queue-row.tier-now { --lane: var(--severity-high); }
+.queue-row.tier-now { --lane: #c4501b; }
 .queue-row.tier-week { --lane: var(--severity-medium); }
 .queue-row.tier-monitor { --lane: var(--severity-low); }
 .queue-row.tier-breach, .queue-row.tier-now, .queue-row.tier-week, .queue-row.tier-monitor { --priority-color: var(--lane); border-left-color: var(--lane); }
