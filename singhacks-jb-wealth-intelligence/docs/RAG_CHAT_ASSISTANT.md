@@ -20,9 +20,15 @@ Each request follows a constrained hybrid path:
    fusion combines the remaining passages and limits the packet to six chunks.
    AUM, allocation, credit metrics and risk-profile questions use their structured
    source types, preventing an RM note or news assertion from replacing those records.
-5. The optional model selects up to three citation IDs using a strict JSON contract.
-   The server renders complete source excerpts. Free-form model sentences never
-   enter the answer. Invalid selections and gateway failures fall back to local extracts.
+5. Liquidity summaries combine structured cash balances and dated cash needs into
+   complete sentences, with a cash-versus-needs comparison when all amounts are
+   available. Cash estimates use the displayed AUM and allocation, so they are
+   approximate. Daily-liquid investments are distinguished from uninvested cash;
+   the comparison does not establish current payment status or a funding plan.
+   Other answers use source passages in separate paragraphs. The optional model
+   selects up to three citation IDs using a strict JSON contract. Free-form model
+   sentences never enter the answer. Invalid selections and gateway failures fall
+   back to local extracts.
 6. With no relevant evidence, the API returns `mode=insufficient_evidence` with no
    citations. It does not substitute a generic portfolio summary.
 
@@ -36,7 +42,7 @@ Explicit requests for another client ID/name are refused before retrieval.
 
 ## Optional model generation
 
-Source extracts are enabled by default. To opt into model selection of those
+Structured liquidity summaries and source passages work without a model. To opt into model selection of those
 extracts through the existing Vercel AI Gateway integration, configure:
 
 ```text
@@ -54,6 +60,10 @@ client. Follow-up questions should restate their subject. The model returns
 `insufficient=true`; extra keys, duplicate/unknown/non-integer citations and
 free-form prose are rejected. The server renders the original passages and labels
 recorded evidence, calculated assessments and external reports separately.
+
+The chat displays readable paragraphs with inline citation buttons. Original
+source excerpts and provenance stay in a collapsed sources section; selecting a
+citation opens and focuses its source. Read-aloud reads all answer paragraphs.
 
 This constrains unsupported generated prose; it does not establish that the
 source itself is true, complete, current or applicable to the question. Relevance
@@ -85,10 +95,38 @@ do not change the separate holdings snapshot date. Captured passages are RSS
 headlines/summaries, not the complete article. The source hash detects differences
 between captured texts; it does not prove authenticity or provide immutable storage.
 
+## Conversation history
+
+The assistant saves a separate conversation for each RM name and client ID in
+browser local storage, including message text, answer labels and source citations.
+Switching the client selector or opening another client review restores that
+client's conversation. History also survives closing the panel and refreshing
+the page in the same browser and site. It does not sync across browsers or devices.
+The full transcript is retained; requests still send only the last six messages
+for API compatibility, and the model does not use that history as evidence.
+
+**Delete conversation** opens a centred TESSERA popup over a dimmed page, naming the client,
+with Cancel focused by default. Cancel or Escape keeps the conversation; only
+the explicit Delete conversation button removes it. Switching clients or closing
+chat dismisses the confirmation. Deletion removes only the selected
+client's saved browser history. It also stops audio, clears the input and cancels
+any pending reply for that conversation so it cannot reappear after deletion.
+Replies arriving after a client switch remain attached to their original client.
+Deleting this browser history does not remove the separate server-side chat
+output records described in the deployment guide.
+
+If browser storage is unavailable or full, conversations remain available in
+memory during the session and the assistant shows a storage warning. A failed
+storage deletion is reported rather than claimed as a successful saved deletion.
+
 ## Audio behavior
 
 Voice input uses the browser's Web Speech Recognition implementation. Read-aloud
-uses browser speech synthesis. TESSERA does not upload or persist raw audio.
+uses browser speech synthesis, preferring a recognised female English voice at
+1.25× speed. Available voices depend on the browser and operating system; when
+no recognised female English voice is available, playback uses an available
+English voice or the browser default. Voice loading is cancelled when switching
+clients or closing the panel. TESSERA does not upload or persist raw audio.
 Browser/platform speech services may process audio according to their own
 policies, so a production bank rollout should replace this with an approved
 private transcription and text-to-speech service where required.
@@ -108,7 +146,7 @@ The command writes Markdown and JSON reports and exits nonzero on a failed check
 It uses no credentials, never loads `.env.local` and makes no external requests.
 
 `evals/chat_grounding.v1.json` contains a frozen synthetic source snapshot with
-23 manually labelled questions covering numeric facts, recorded facts, derived
+24 manually labelled questions covering numeric facts, liquidity summaries, recorded facts, derived
 scenarios, missing records, conflicting narrative amounts, prompt injection,
 future dates, unknown publishers, poisoned history and other-client requests.
 Eight simulated gateway completions exercise the real selection validator.
@@ -117,8 +155,9 @@ for all 20 clients and recorded credit LTV/trigger values for five single-facili
 clients. AUM tolerates USD 5,000 rounding because the application displays two
 decimal places in millions. Other source fields are not exhaustively reconciled.
 
-Reports separate primary-source recall at six, citation-source precision, extract
-fidelity, numerical answer-key matches, answerability/refusal, client isolation,
+Reports separate primary-source recall at six, citation-source precision, source
+excerpt integrity, extract fidelity for passage answers, paragraph citations for
+structured summaries, numerical answer-key matches, answerability/refusal, client isolation,
 news provenance, CSV reconciliation and simulated-model contract checks. They
 include fixture, implementation and source-file fingerprints. Extract fidelity
 measures faithful copying, not independent source truth. This small suite is a

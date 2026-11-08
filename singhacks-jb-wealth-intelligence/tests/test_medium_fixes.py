@@ -91,7 +91,7 @@ class MediumFixTests(unittest.TestCase):
                 _model_answer("Question", evidence, [], "test")
         response = io.BytesIO(json.dumps({"choices": [{"message": {"content": '{"citations":[1],"insufficient":false}'}}]}).encode())
         with mock.patch("tessera.chat.urlopen", return_value=response):
-            self.assertEqual(_model_answer("Question", evidence, [], "test"), "Source extracts:\nRecorded evidence: Controlled fact [1]")
+            self.assertEqual(_model_answer("Question", evidence, [], "test"), "Controlled fact [1]")
 
     def test_notification_outage_does_not_undo_hosted_news_refresh(self):
         import api.index as api

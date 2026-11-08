@@ -54,6 +54,65 @@ class ChatAssistantTests(unittest.TestCase):
         self.assertEqual(payload["client_id"], "CL-0001")
         self.assertEqual(payload["generation"]["status"], "grounded_fallback")
 
+    def test_liquidity_summary_compares_cash_with_the_recorded_need_in_sentences(self):
+        with mock.patch.dict("os.environ", {}, clear=True):
+            result = answer_chat(self.intelligence, {
+                "client_id": "CL-0003", "question": "Summarise the client's liquidity and upcoming cash needs.",
+            })
+        self.assertEqual(result["mode"], "grounded_summary")
+        self.assertIn("approximately USD 1.71m", result["answer"])
+        self.assertIn("daily-liquid represent 88.3%", result["answer"])
+        self.assertIn("a confirmed, one-off cash need of EUR 3,400,000 (USD 3.71m)", result["answer"])
+        self.assertIn("between 1 Oct 2026 and 31 Dec 2026", result["answer"])
+        self.assertIn("Cash alone is approximately USD 2.00m below", result["answer"])
+        self.assertNotIn("Source extracts:", result["answer"])
+        self.assertNotIn("Recorded evidence:", result["answer"])
+        self.assertEqual([item["source_id"] for item in result["citations"]], ["liquidity", "cash:0"])
+        self.assertIn("due 2026-10-01 to 2026-12-31", result["citations"][1]["excerpt"])
+        self.assertTrue(all("[" in paragraph for paragraph in result["answer"].split("\n\n")))
+
+    def test_liquidity_summary_does_not_use_semantic_mandates_or_call_a_model(self):
+        with mock.patch.dict("os.environ", {"TESSERA_CHAT_ENABLED": "true", "AI_GATEWAY_API_KEY": "test"}, clear=True), mock.patch("tessera.chat._model_answer") as model:
+            result = answer_chat(self.intelligence, {
+                "client_id": "CL-0003", "question": "Summarise liquidity and upcoming cash needs.",
+            })
+        model.assert_not_called()
+        self.assertNotIn("Balanced mandate", result["answer"])
+        self.assertTrue(all(item["source_type"] in {"liquidity_snapshot", "cash_need"} for item in result["citations"]))
+
+    def test_missing_cash_balance_is_not_treated_as_zero_or_an_inferred_shortfall(self):
+        intelligence = copy.deepcopy(self.intelligence)
+        intelligence["client_profiles"]["CL-0003"]["asset_mix"] = []
+        with mock.patch.dict("os.environ", {}, clear=True):
+            result = answer_chat(intelligence, {"client_id": "CL-0003", "question": "Summarise liquidity and upcoming cash needs."})
+        self.assertIn("EUR 3,400,000", result["answer"])
+        self.assertIn("could not retrieve a recorded cash balance", result["answer"])
+        self.assertNotIn("Cash alone", result["answer"])
+        self.assertNotIn("USD 0.00m", result["answer"])
+
+    def test_liquidity_summary_keeps_multiple_obligations_and_their_certainty(self):
+        intelligence = copy.deepcopy(self.intelligence)
+        client = intelligence["client_profiles"]["CL-0003"]
+        client["cash_needs"].append({
+            **client["cash_needs"][0], "id": "CN-extra", "description": "Education funding",
+            "currency": "USD", "amount": 1_000_000, "amount_usd_m": 1.0, "certainty": "Indicative",
+        })
+        with mock.patch.dict("os.environ", {}, clear=True):
+            result = answer_chat(intelligence, {"client_id": "CL-0003", "question": "Summarise liquidity and upcoming cash needs."})
+        self.assertIn("Education funding", result["answer"])
+        self.assertIn("recorded certainty is indicative", result["answer"])
+        self.assertIn("USD 3.00m below", result["answer"])
+        self.assertEqual(len(result["citations"]), 3)
+
+    def test_incomplete_cash_need_retrieval_does_not_claim_a_total_funding_gap(self):
+        intelligence = copy.deepcopy(self.intelligence)
+        client = intelligence["client_profiles"]["CL-0003"]
+        client["cash_needs"] *= 8
+        with mock.patch.dict("os.environ", {}, clear=True):
+            result = answer_chat(intelligence, {"client_id": "CL-0003", "question": "Summarise liquidity and upcoming cash needs."})
+        self.assertNotIn("Cash alone", result["answer"])
+        self.assertIn("of 8 recorded cash needs", result["answer"])
+
     def test_model_failure_degrades_to_grounded_answer(self):
         with (
             mock.patch.dict(

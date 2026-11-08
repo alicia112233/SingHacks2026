@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#17201e" />
   <title>TESSERA · Wealth Decision Intelligence</title>
-  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/styles.css?v=20261108-popup-title" />
 </head>
 
 <body>
@@ -97,6 +97,10 @@
       <span>Client context</span>
       <select id="chat-client" aria-label="Client context"></select>
     </label>
+    <div class="chat-history-controls">
+      <span id="chat-storage-status">History saved in this browser</span>
+      <button id="chat-delete" type="button" disabled>Delete conversation</button>
+    </div>
     <div id="chat-messages" class="chat-messages" role="log" aria-live="polite" aria-relevant="additions">
       <article class="chat-message assistant">
         <div><b>TESSERA</b><span>Grounded assistant</span></div>
@@ -119,9 +123,27 @@
       <span id="chat-status">No audio is stored by TESSERA</span>
     </footer>
   </aside>
+
+  <dialog id="chat-delete-dialog" class="chat-delete-dialog" aria-labelledby="chat-delete-title" aria-describedby="chat-delete-description">
+    <div class="chat-delete-heading">
+      <span class="section-kicker">TESSERA</span>
+      <button class="chat-delete-close" type="button" data-chat-delete-cancel aria-label="Cancel deletion">&times;</button>
+    </div>
+    <div class="chat-delete-title-row">
+      <div class="chat-delete-symbol" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7M14 10v7" /></svg>
+      </div>
+      <h2 id="chat-delete-title">Delete conversation?</h2>
+    </div>
+    <p id="chat-delete-description">Delete the saved conversation for <strong id="chat-delete-client-name"></strong> from this browser? This cannot be undone.</p>
+    <div class="chat-delete-actions">
+      <button id="chat-delete-cancel" type="button" autofocus>Cancel</button>
+      <button id="chat-delete-confirm" type="button">Delete conversation</button>
+    </div>
+  </dialog>
   
 
-  <script src="/app.js" defer></script>
+  <script src="/app.js?v=20261108-popup" defer></script>
 </body>
 
 </html>
