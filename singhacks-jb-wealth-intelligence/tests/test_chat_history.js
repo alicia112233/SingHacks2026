@@ -18,6 +18,7 @@ function browser(storage = new Map(), rm = "Test RM") {
       listeners: new Map(),
       attributes: {},
       setAttribute(name, value) { this.attributes[name] = value; },
+      removeAttribute(name) { delete this.attributes[name]; },
       classList: { add() {}, remove() {} },
       focus() { context.document.activeElement = this; },
       showModal() { this.returnFocus = context.document.activeElement; this.open = true; },

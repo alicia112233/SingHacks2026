@@ -11,10 +11,14 @@ const state = {
   chartRange: "YTD",
   dismissedListOpen: false,
   chatClient: null,
+  chatClientResults: [],
+  chatClientActiveIndex: -1,
   chatConversations: new Map(),
   chatStorageWarningShown: false,
   chatRecognition: null,
   chatSpeechRequest: null,
+  chatSpeechMessage: null,
+  chatPlayback: "idle",
   chatMessageSequence: 0,
   chatDeleteClient: null,
   eventFilters: { from: "", to: "", sort: "newest", severity: "all", source: "all" },
@@ -64,12 +68,6 @@ function showToast(message, tone = "default") {
 function syncChatContext(clientId = state.currentClient) {
   if (!state.data) return;
   const allProfiles = profiles();
-  const select = $("#chat-client");
-  if (!select.options.length) {
-    select.innerHTML = Object.values(allProfiles).map((client) => (
-      `<option value="${esc(client.client_id)}">${esc(client.name)} · ${esc(client.client_id)}</option>`
-    )).join("");
-  }
   const nextClient = allProfiles[clientId] ? clientId : state.chatClient || Object.keys(allProfiles)[0];
   if (nextClient !== state.chatClient) {
     cancelChatDeletion();
@@ -78,7 +76,86 @@ function syncChatContext(clientId = state.currentClient) {
     $("#chat-input").value = "";
     renderChatTranscript();
   }
-  select.value = state.chatClient;
+  const client = allProfiles[state.chatClient];
+  $("#chat-client").value = state.chatClient;
+  $("#chat-client").title = `${client.name} · ${client.client_id}`;
+  $("#chat-client-name").textContent = client.name;
+  $("#chat-client-id").textContent = client.client_id;
+  toggleChatClientPicker(false);
+}
+
+function toggleChatClientPicker(open, restoreFocus = false) {
+  const menu = $("#chat-client-menu");
+  menu.hidden = !open;
+  $("#chat-client").setAttribute("aria-expanded", String(open));
+  const search = $("#chat-client-search");
+  search.setAttribute("aria-expanded", String(open));
+  if (open) {
+    search.value = "";
+    renderChatClientOptions();
+    search.focus();
+  } else {
+    search.removeAttribute("aria-activedescendant");
+    if (restoreFocus) $("#chat-client").focus();
+  }
+}
+
+function renderChatClientOptions() {
+  const normalize = (value) => String(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase();
+  const terms = normalize($("#chat-client-search").value).trim().split(/\s+/).filter(Boolean);
+  const clients = Object.values(profiles());
+  state.chatClientResults = clients.filter((client) => {
+    const label = normalize(`${client.name} ${client.client_id}`);
+    return terms.every((term) => label.includes(term));
+  });
+  const matches = state.chatClientResults;
+  $("#chat-client-count").textContent = terms.length
+    ? `${matches.length} of ${clients.length} clients`
+    : `${clients.length} client${clients.length === 1 ? "" : "s"}`;
+  $("#chat-client-list").innerHTML = matches.length ? matches.map((client, index) => `
+    <div id="chat-client-option-${index}" class="chat-client-option" role="option" aria-selected="${client.client_id === state.chatClient}" data-chat-client="${esc(client.client_id)}">
+      <span class="chat-client-option-avatar" aria-hidden="true">${esc(initials(client.name))}</span>
+      <span class="chat-client-option-copy"><strong>${esc(client.name)}</strong><small>${esc(client.client_id)}</small></span>
+      ${client.client_id === state.chatClient ? '<svg class="chat-client-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>' : ""}
+    </div>`).join("") : '<div class="chat-client-empty"><strong>No clients found</strong><p>Try another name or client ID.</p></div>';
+  const selectedIndex = matches.findIndex((client) => client.client_id === state.chatClient);
+  setChatClientActiveOption(matches.length ? Math.max(0, selectedIndex) : -1);
+}
+
+function setChatClientActiveOption(index) {
+  state.chatClientActiveIndex = index;
+  $$("[data-chat-client]").forEach((option, optionIndex) => option.classList.toggle("is-active", optionIndex === index));
+  const search = $("#chat-client-search");
+  if (index < 0) {
+    search.removeAttribute("aria-activedescendant");
+    return;
+  }
+  const id = `chat-client-option-${index}`;
+  search.setAttribute("aria-activedescendant", id);
+  $(`#${id}`).scrollIntoView({ block: "nearest" });
+}
+
+function handleChatClientKeydown(event) {
+  if (event.isComposing) return;
+  if (event.key === "Escape") {
+    event.preventDefault();
+    event.stopPropagation();
+    toggleChatClientPicker(false, true);
+  } else if (event.key === "Tab") {
+    // Return to the trigger before letting the browser advance focus normally.
+    toggleChatClientPicker(false, true);
+  } else if (["ArrowDown", "ArrowUp"].includes(event.key)) {
+    event.preventDefault();
+    const count = state.chatClientResults.length;
+    if (count) setChatClientActiveOption((state.chatClientActiveIndex + (event.key === "ArrowDown" ? 1 : -1) + count) % count);
+  } else if (event.key === "Enter") {
+    event.preventDefault();
+    const client = state.chatClientResults[state.chatClientActiveIndex];
+    if (client) {
+      syncChatContext(client.client_id);
+      $("#chat-client").focus();
+    }
+  }
 }
 
 function chatStorageKey(clientId) {
@@ -132,6 +209,7 @@ function updateChatControls() {
   $("#chat-delete").disabled = !conversation.messages.length;
   $("#chat-storage-status").textContent = conversation.storageAvailable ? "History saved in this browser" : "History available for this session only";
   $("#chat-status").textContent = conversation.status;
+  updateChatAudioControls();
 }
 
 function renderChatTranscript() {
@@ -139,7 +217,7 @@ function renderChatTranscript() {
   const conversation = chatConversation();
   messages.innerHTML = "";
   if (conversation.messages.length) {
-    conversation.messages.forEach((message) => messages.append(chatMessageElement(message)));
+    conversation.messages.forEach((message, index) => messages.append(chatMessageElement(message, index)));
   } else {
     messages.innerHTML = `<article class="chat-message assistant"><div><b>TESSERA</b><span>Client conversation</span></div><p>Ask about ${esc(profiles()[state.chatClient].name)}'s portfolio, liquidity, credit, scenarios, actions, or source evidence.</p></article>`;
   }
@@ -188,18 +266,68 @@ function confirmChatDeletion() {
   showToast(deleted ? "Conversation deleted for this client." : "Conversation cleared for this session. Saved browser history could not be deleted.", deleted ? "default" : "error");
 }
 
+function updateChatAudioControls() {
+  const messages = $("#chat-messages");
+  chatConversation().messages.forEach((message, index) => {
+    if (message.role !== "assistant") return;
+    const button = $(`[data-speak-message="${index}"]`, messages);
+    if (!button) return;
+    const playback = message === state.chatSpeechMessage ? state.chatPlayback : "idle";
+    const labels = {
+      loading: ["Loading…", "Loading voice for this answer"],
+      speaking: ["Pause", "Pause this answer"],
+      paused: ["Resume", "Resume this answer"],
+      idle: ["Listen", "Read this answer aloud"],
+    }[playback];
+    button.textContent = labels[0];
+    button.setAttribute("aria-label", labels[1]);
+    button.dataset.playback = playback;
+    button.disabled = playback === "loading";
+  });
+  const status = {
+    loading: "Loading voice…",
+    speaking: "Reading answer aloud…",
+    paused: "Audio paused",
+  }[state.chatPlayback];
+  if (status) $("#chat-status").textContent = status;
+}
+
+function toggleChatAudio() {
+  if (!state.chatSpeechRequest || !["speaking", "paused"].includes(state.chatPlayback)) return;
+  const pause = state.chatPlayback === "speaking";
+  if (pause) window.speechSynthesis.pause();
+  else window.speechSynthesis.resume();
+  state.chatPlayback = pause ? "paused" : "speaking";
+  updateChatAudioControls();
+}
+
 function stopChatAudio(status = "No audio is stored by TESSERA") {
   state.chatSpeechRequest?.abort();
   state.chatSpeechRequest = null;
+  state.chatSpeechMessage = null;
+  state.chatPlayback = "idle";
+  updateChatAudioControls();
   if (state.chatRecognition) {
     state.chatRecognition.abort?.();
     state.chatRecognition = null;
   }
   window.speechSynthesis?.cancel();
+  if (window.speechSynthesis?.paused) window.speechSynthesis.resume();
   const microphone = $("#chat-mic");
   microphone.classList.remove("listening");
   microphone.textContent = "Mic";
   $("#chat-status").textContent = status;
+}
+
+function toggleChatExpanded(force) {
+  const panel = $("#chat-panel");
+  const expanded = typeof force === "boolean" ? force : !panel.classList.contains("is-expanded");
+  panel.classList.toggle("is-expanded", expanded);
+  const button = $("#chat-expand");
+  const label = expanded ? "Collapse chat" : "Expand chat";
+  button.setAttribute("aria-expanded", String(expanded));
+  button.setAttribute("aria-label", label);
+  button.setAttribute("title", label);
 }
 
 function toggleChat(force) {
@@ -211,6 +339,7 @@ function toggleChat(force) {
     syncChatContext(state.currentView === "client" ? state.currentClient : state.chatClient);
     window.setTimeout(() => $("#chat-input").focus(), 0);
   } else {
+    toggleChatClientPicker(false);
     cancelChatDeletion();
     stopChatAudio();
   }
@@ -239,21 +368,23 @@ function chatAnswerHTML(content, citations, sourcePrefix) {
   }).join("");
 }
 
-function chatMessageElement({ role, content, mode, citations }) {
+function chatMessageElement({ role, content, mode, citations }, index) {
   const article = document.createElement("article");
   article.className = `chat-message ${role}`;
   const label = role === "user" ? "You" : "TESSERA";
   const modeLabel = mode === "error" ? "Assistant unavailable" : mode === "insufficient_evidence" ? "Insufficient evidence" : mode === "grounded_summary" ? "Summary" : "From client records";
   const sources = citations || [];
   const sourcePrefix = `chat-source-${++state.chatMessageSequence}`;
-  article.innerHTML = `<header class="chat-message-header"><b>${label}</b>${role === "assistant" ? `<span>${esc(modeLabel)}</span><button type="button" data-speak-message aria-label="Read this answer aloud">Listen</button>` : ""}</header><div class="chat-answer" data-chat-answer>${chatAnswerHTML(content, sources, sourcePrefix)}</div>${chatCitationsHTML(sources, sourcePrefix)}`;
+  article.innerHTML = `<header class="chat-message-header"><b>${label}</b>${role === "assistant" ? `<span>${esc(modeLabel)}</span><button type="button" data-speak-message="${index}" aria-label="Read this answer aloud">Listen</button>` : ""}</header><div class="chat-answer" data-chat-answer>${chatAnswerHTML(content, sources, sourcePrefix)}</div>${chatCitationsHTML(sources, sourcePrefix)}`;
   return article;
 }
 
 function addChatMessage(clientId, role, content, payload = {}) {
-  chatConversation(clientId).messages.push({ role, content, mode: payload.mode, citations: payload.citations || [] });
+  const message = { role, content, mode: payload.mode, citations: payload.citations || [] };
+  chatConversation(clientId).messages.push(message);
   saveChatConversation(clientId);
   if (state.chatClient === clientId) renderChatTranscript();
+  return message;
 }
 
 function preferredChatVoice(voices) {
@@ -267,7 +398,7 @@ function preferredChatVoice(voices) {
     || english[0];
 }
 
-function speakAnswer(text) {
+function speakAnswer(message) {
   if (!("speechSynthesis" in window)) {
     showToast("Audio playback is not supported in this browser.", "error");
     return;
@@ -275,18 +406,30 @@ function speakAnswer(text) {
   state.chatSpeechRequest?.abort();
   const request = new AbortController();
   state.chatSpeechRequest = request;
+  state.chatSpeechMessage = message;
+  state.chatPlayback = "loading";
+  updateChatAudioControls();
   const synthesis = window.speechSynthesis;
   synthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text.replace(/\[\d+\]/g, ""));
+  if (synthesis.paused) synthesis.resume();
+  const utterance = new SpeechSynthesisUtterance(message.content.replace(/\[\d+\]/g, ""));
   utterance.rate = 1.25;
-  utterance.onstart = () => {
-    if (state.chatSpeechRequest === request) $("#chat-status").textContent = "Reading answer aloud…";
+  const syncPlayback = () => {
+    if (state.chatSpeechRequest !== request) return;
+    state.chatPlayback = synthesis.paused ? "paused" : "speaking";
+    updateChatAudioControls();
   };
+  utterance.onstart = syncPlayback;
+  utterance.onpause = syncPlayback;
+  utterance.onresume = syncPlayback;
   const finish = (status) => {
     if (state.chatSpeechRequest !== request) return;
     $("#chat-status").textContent = status;
     request.abort();
     state.chatSpeechRequest = null;
+    state.chatSpeechMessage = null;
+    state.chatPlayback = "idle";
+    updateChatAudioControls();
   };
   utterance.onend = () => finish("No audio is stored by TESSERA");
   utterance.onerror = () => finish("Audio playback stopped");
@@ -312,7 +455,6 @@ function speakAnswer(text) {
   if (synthesis.getVoices().length) {
     speak();
   } else {
-    $("#chat-status").textContent = "Loading voice…";
     synthesis.addEventListener("voiceschanged", voicesChanged);
     timer = window.setTimeout(speak, 1000);
   }
@@ -378,8 +520,8 @@ async function sendChatQuestion(question) {
     if (!response.ok) throw new Error(payload.error || `Request failed (${response.status})`);
     if (conversation.request !== request) return;
     conversation.status = payload.mode === "insufficient_evidence" ? "Insufficient evidence for this question" : `Answer with ${payload.citations.length} source${payload.citations.length === 1 ? "" : "s"}`;
-    addChatMessage(clientId, "assistant", payload.answer, payload);
-    if (state.chatClient === clientId && !$("#chat-panel").hidden && $("#chat-auto-speak").checked) speakAnswer(payload.answer);
+    const answer = addChatMessage(clientId, "assistant", payload.answer, payload);
+    if (state.chatClient === clientId && !$("#chat-panel").hidden && $("#chat-auto-speak").checked) speakAnswer(answer);
   } catch (error) {
     if (conversation.request !== request) return;
     conversation.status = "Assistant unavailable";
@@ -1332,10 +1474,22 @@ function showChartPoint(point) {
 
 function bindEvents() {
   document.addEventListener("click", async (event) => {
+    if (!event.target.closest("#chat-client-picker")) toggleChatClientPicker(false);
+    if (event.target.closest("#chat-client")) {
+      toggleChatClientPicker($("#chat-client-menu").hidden);
+      return;
+    }
+    const clientOption = event.target.closest("[data-chat-client]");
+    if (clientOption) {
+      syncChatContext(clientOption.dataset.chatClient);
+      $("#chat-client").focus();
+      return;
+    }
     const chatInteraction = event.target.closest("#chat-panel, #chat-launcher, #chat-delete-dialog");
     if (!$("#chat-panel").hidden && !chatInteraction) toggleChat(false);
     if (event.target.closest("#chat-launcher")) toggleChat();
     if (event.target.closest("#chat-close")) toggleChat(false);
+    if (event.target.closest("#chat-expand")) toggleChatExpanded();
     if (event.target.closest("#chat-delete")) return deleteChatConversation();
     if (event.target.closest("#chat-delete-cancel, [data-chat-delete-cancel]")) return cancelChatDeletion();
     if (event.target.closest("#chat-delete-confirm")) return confirmChatDeletion();
@@ -1346,7 +1500,13 @@ function bindEvents() {
     }
     if (event.target.closest("#chat-mic")) startDictation();
     const speak = event.target.closest("[data-speak-message]");
-    if (speak) speakAnswer(speak.closest(".chat-message").querySelector("[data-chat-answer]").innerText);
+    if (speak) {
+      const message = chatConversation().messages[Number(speak.dataset.speakMessage)];
+      if (message?.role === "assistant") {
+        if (message === state.chatSpeechMessage) toggleChatAudio();
+        else speakAnswer(message);
+      }
+    }
     const citation = event.target.closest("[data-chat-citation]");
     if (citation) {
       const article = citation.closest(".chat-message");
@@ -1471,9 +1631,6 @@ function bindEvents() {
   });
 
   document.addEventListener("change", (event) => {
-    if (event.target.matches("#chat-client")) {
-      syncChatContext(event.target.value);
-    }
     if (event.target.matches("[data-studio-client]")) {
       state.studioClient = event.target.value;
       state.studioScenario = 0;
@@ -1504,6 +1661,7 @@ function bindEvents() {
   });
 
   document.addEventListener("input", (event) => {
+    if (event.target.matches("#chat-client-search")) renderChatClientOptions();
     if (event.target.matches("[data-client-search]")) {
       state.clientSearch = event.target.value;
       renderClientSearchResults();
@@ -1515,11 +1673,17 @@ function bindEvents() {
   });
 
   document.addEventListener("focusin", (event) => {
+    if (!event.target.closest("#chat-client-picker")) toggleChatClientPicker(false);
     const chartPoint = event.target.closest("[data-chart-point]");
     if (chartPoint) showChartPoint(chartPoint);
   });
 
   document.addEventListener("keydown", (event) => {
+    if (event.target.matches("#chat-client-search")) handleChatClientKeydown(event);
+    if (event.target.matches("#chat-client") && ["ArrowDown", "ArrowUp"].includes(event.key)) {
+      event.preventDefault();
+      toggleChatClientPicker(true);
+    }
     if (event.target.matches("#chat-input") && event.key === "Enter" && !event.shiftKey && !event.isComposing) {
       event.preventDefault();
       event.target.form?.requestSubmit();
@@ -1599,7 +1763,12 @@ function bindEvents() {
 
   $("#method-button").addEventListener("click", showMethod);
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
+    if (event.key === "Escape" && !event.defaultPrevented) {
+      if (!$("#chat-client-menu").hidden) {
+        event.preventDefault();
+        toggleChatClientPicker(false, true);
+        return;
+      }
       if ($("#chat-delete-dialog").open) return;
       if (!$("#modal").hidden) closeModal();
       else if (!$("#chat-panel").hidden) toggleChat(false);

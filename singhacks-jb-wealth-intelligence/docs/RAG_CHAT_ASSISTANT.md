@@ -126,7 +126,12 @@ uses browser speech synthesis, preferring a recognised female English voice at
 1.25× speed. Available voices depend on the browser and operating system; when
 no recognised female English voice is available, playback uses an available
 English voice or the browser default. Voice loading is cancelled when switching
-clients or closing the panel. TESSERA does not upload or persist raw audio.
+clients or closing the panel. Each answer's **Listen** button changes to **Pause**
+during playback, then **Resume** when paused. Select **Resume** to continue the
+same answer. This also applies to automatic read-aloud. Listening to a different
+answer stops the previous one and resets its button to **Listen**. Closing chat,
+switching clients or deleting the conversation stops playback and resets the
+control. TESSERA does not upload or persist raw audio.
 Browser/platform speech services may process audio according to their own
 policies, so a production bank rollout should replace this with an approved
 private transcription and text-to-speech service where required.
