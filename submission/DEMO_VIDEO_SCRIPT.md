@@ -1,12 +1,11 @@
 # TESSERA demo video: script and shot list
 
-Target length: about 4:00 at a calm 130 words a minute. Narration is about 520 words.
+Target length: 4:00 (the form sets no limit; keep to 4:00) at a calm 130 words a minute. Narration is about 520 words.
 Slides come from the site deck. Each slide link opens on that slide: `https://alicia112233.github.io/SingHacks2026/slides.html#N`. Press F for full screen.
 App: `https://singhacks-jb-wealth-intelligence.vercel.app` (use this short URL; the long `-facah2d66` one asks for a Vercel login).
 
 ## Before you record
 
-- [ ] Check the Airtable form for a length limit and file format. Trim the "Optional" rows below if the limit is under 4 minutes.
 - [ ] Browser at 100% zoom, window 1920×1080, bookmarks bar and extensions hidden, notifications off (Focus assist on).
 - [ ] Open the app once and wait for "Loading current portfolio records" to finish before you start recording. The first load takes 5 to 10 seconds.
 - [ ] Record the narration separately (phone or headset mic in a quiet room), then lay the screen takes under it. Redo single lines instead of whole takes.
@@ -33,7 +32,7 @@ App: `https://singhacks-jb-wealth-intelligence.vercel.app` (use this short URL; 
 | 7 | 1:52 | Scroll to **Client vector**. Hover the drift line, Dec 2025 to Aug 2026. | This is new since SingHacks. We describe every client with 24 named measures, calculated inside the bank and never sent to a model. In what Abdullah asked to move away from, he has drifted from 29% to 42% in eight months. Below, it shows what sets him apart from the rest of the book. |
 | 8 | 2:15 | Scroll to **Test the portfolio**. Click **Strait reopens**, then **Blockade worsens**. | If the Strait reopens, this illustrative scenario takes about 2 million dollars off the portfolio. It is a scenario, not a forecast, and it shows which holdings drive it. |
 | 9 | 2:30 | Scroll to **Actions worth considering**. Open **Why this action** on action 1. Point at "Medium priority", then the Evidence 65 chip. | Actions come in order of what is at stake. Ring-fencing the family office money comes first: 5 million dollars due in four months. Separately, TESSERA scores how well each action is supported, and tells the RM to verify this one first. |
-| 10 | 2:50 | *Optional.* Open **Ask TESSERA**, type: `Can Abdullah fund the USD 5m family office from cash?` Show the answer and its numbered sources. | The RM can ask questions. The answer only uses this client's records, and every line cites its source. |
+| 10 | 2:50 | Open **Ask TESSERA**, type: `Can Abdullah fund the USD 5m family office from cash?` Show the answer and its numbered sources. | The RM can ask questions. The answer only uses this client's records, and every line cites its source. |
 | 11 | 3:02 | Click **Approve** on action 1. | And the RM decides. Approve, edit or dismiss, and the decision is recorded with its evidence. |
 | 12 | 3:10 | Slide 20 (how it works) | Under the hood: code calculates, AI reads, the RM decides. Client records never leave the bank. Outside models only read public headlines. The bank's own model reviews each action, and it can only lower confidence, never raise it. |
 | 13 | 3:28 | Slide 17, then slide 18 | Since SingHacks we made six shifts: client data stays in the bank, we screen instead of predict, detection works for any client, every figure says what it is, customer vectors, and actions in order of what is at stake. |
