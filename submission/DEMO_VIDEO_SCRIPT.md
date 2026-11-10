@@ -12,6 +12,15 @@ App: `https://singhacks-jb-wealth-intelligence.vercel.app` (use this short URL; 
 - [ ] Record every screen take with the mouse moving slowly. Pause 1 second on each thing you point at.
 - [ ] Recorder: Xbox Game Bar (`Win+Alt+R`) or OBS. Editor: Clipchamp (built into Windows 11).
 
+## What to record (Claude does the edit)
+
+The slides are already rendered, so you only record two things.
+
+1. **Your voice, one file per shot.** Use Windows Sound Recorder or your phone. Name the files by shot number, `01` to `15` (any audio format). Read the Narration column for that row, leave a second of silence before and after, and redo any file you stumble in.
+2. **The app, as one continuous screen recording** covering shots 5 to 11 in order. Pause about 2 seconds on each shot, and don't worry about pace or mistakes; the cutting fixes both. You can split it into several files if that's easier. The take's own sound is not used.
+
+Put everything in `video-edit/narration/` and `video-edit/takes/` (or anywhere, and say where). Claude then trims each take to its line, speeds up slow scrolling, cuts the chat wait, holds each slide for its line, cleans and levels the voice, and exports `video-edit/out/TESSERA_demo.mp4` at 1080p.
+
 ## Things that can change between takes
 
 - **The review queue uses live news.** The clients under "May be exposed" change when headlines change. The script below does not name them, so it stays true. Record the queue take and the Abdullah takes on the same day.
