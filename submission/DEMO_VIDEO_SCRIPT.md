@@ -1,6 +1,6 @@
 # TESSERA demo video: script and shot list
 
-Target length: 4:00 (the form sets no limit; keep to 4:00) at a calm 130 words a minute. Narration is about 520 words.
+Length: about 4:15 at a calm pace. There is no limit, so the edit keeps every line in full.
 Slides come from the site deck. Each slide link opens on that slide: `https://alicia112233.github.io/SingHacks2026/slides.html#N`. Press F for full screen.
 App: `https://singhacks-jb-wealth-intelligence.vercel.app` (use this short URL; the long `-facah2d66` one asks for a Vercel login).
 
