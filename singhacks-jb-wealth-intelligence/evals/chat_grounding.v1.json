@@ -39,6 +39,7 @@
     {"id": "credit", "category": "numerical", "question": "What are the LTV and trigger?", "sources": ["credit"], "contains": ["LTV 42.5%", "60.0% trigger", "17.5 percentage points"]},
     {"id": "headroom", "category": "numerical", "question": "What is the credit headroom?", "sources": ["credit"], "contains": ["USD 3.5m"]},
     {"id": "cash-deadline", "category": "numerical", "question": "When is the Singapore property cash need due?", "sources": ["cash:0"], "contains": ["2027-03-01", "2027-04-01", "SGD 9,000,000"]},
+    {"id": "liquidity-summary", "category": "numerical", "question": "Summarise the client's liquidity and upcoming cash needs.", "mode": "grounded_summary", "sources": ["liquidity", "cash:0"], "contains": ["approximately USD 8.00m", "SGD 9,000,000", "1 Mar 2027", "1 Apr 2027", "approximately USD 1.30m"], "excludes": ["999", "Source extracts:", "Recorded evidence:"]},
     {"id": "mandate", "category": "recorded", "question": "What is the equity concentration limit?", "sources": ["mandate:0"], "contains": ["65%"]},
     {"id": "profile", "category": "recorded", "question": "What is the risk profile?", "sources": ["profile", "scenario:0"], "contains": ["Balanced"]},
     {"id": "scenario", "category": "derived", "question": "What is the risk-off scenario sensitivity?", "sources": ["scenario:0", "profile"], "contains": ["-4.0%", "not a forecast or probability"]},

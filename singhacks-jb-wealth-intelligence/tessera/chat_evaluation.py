@@ -13,7 +13,7 @@ from decimal import Decimal
 from pathlib import Path
 from unittest import mock
 
-from tessera.chat import INSUFFICIENT_ANSWER, _model_answer, answer_chat, retrieve_chat_evidence
+from tessera.chat import INSUFFICIENT_ANSWER, _model_answer, answer_chat, build_client_documents, retrieve_chat_evidence
 from tessera.source_policy import content_hash
 
 
@@ -96,6 +96,7 @@ def evaluate_chat(fixture_path: Path, data_dir: Path | None = None) -> dict:
                 checks["abstention"] = check("unanswerable_refusal", actual_abstention and not answer["citations"])
             else:
                 expected_sources = set(case["sources"])
+                originals = {document.id: document.text[:700] for document in build_client_documents(client)}
                 checks["retrieval"] = check("primary_source_recall_at_6", case["sources"][0] in {item["id"] for item in evidence})
                 checks["answer_key"] = check("answer_key_match", all(value in answer["answer"] for value in case.get("contains", [])))
                 if case["category"] == "numerical":
@@ -103,10 +104,22 @@ def evaluate_chat(fixture_path: Path, data_dir: Path | None = None) -> dict:
                 checks["citations"] = bool(answer["citations"])
                 for citation in answer["citations"]:
                     checks["citations"] &= check("citation_source_precision", citation["source_id"] in expected_sources)
-                    checks["extract_fidelity"] = check("extract_fidelity", (
-                        f"{citation['excerpt']} [{citation['number']}]" in answer["answer"]
+                    checks["source_integrity"] = check("citation_excerpt_integrity", (
+                        citation["excerpt"] == originals.get(citation["source_id"])
                         and citation["content_sha256"] == content_hash(citation["excerpt"])
-                    )) and checks.get("extract_fidelity", True)
+                    )) and checks.get("source_integrity", True)
+                    if answer["mode"] != "grounded_summary":
+                        checks["extract_fidelity"] = check("extract_fidelity", (
+                            f"{citation['excerpt']} [{citation['number']}]" in answer["answer"]
+                        )) and checks.get("extract_fidelity", True)
+                if case.get("mode"):
+                    checks["mode"] = check("summary_mode", answer["mode"] == case["mode"])
+                if answer["mode"] == "grounded_summary":
+                    available = {item["number"] for item in answer["citations"]}
+                    checks["summary_citations"] = check("summary_citation_coverage", all(
+                        bool(numbers := set(map(int, re.findall(r"\[(\d+)\]", paragraph))))
+                        and numbers.issubset(available) for paragraph in answer["answer"].split("\n\n")
+                    ))
                 if case.get("publisher"):
                     checks["news_provenance"] = check("news_provenance", any(
                         citation["publisher"] == case["publisher"]
@@ -181,7 +194,7 @@ def evaluate_chat(fixture_path: Path, data_dir: Path | None = None) -> dict:
 def evaluation_markdown(report: dict) -> str:
     rows = ["# Chatbot evaluation results", "", f"Suite: `{report['suite_version']}`",
             f"Generated: {report['generated_at']}", f"Overall: {'PASS' if report['passed'] else 'FAIL'}", "",
-            "Offline source extracts and simulated gateway response contracts. No live model or live news was evaluated; source truth was not independently verified.", "",
+            "Offline structured summaries, source extracts and simulated gateway response contracts. No live model or live news was evaluated; source truth was not independently verified.", "",
             "| Check | Passed | Total | Rate |", "| --- | ---: | ---: | ---: |"]
     rows += [f"| {name} | {value['passed']} | {value['total']} | {value['rate']:.1%} |"
              for name, value in report["metrics"].items()]
@@ -194,6 +207,6 @@ def evaluation_markdown(report: dict) -> str:
     rows += ["", "## Reproducibility", "", f"Fixture SHA-256: `{report['fixture_sha256']}`",
              f"Implementation SHA-256: `{report['implementation_sha256']}`", "",
              "Run `python scripts/evaluate_chat.py --report docs/CHAT_EVALUATION_RESULTS.md` from the application directory.", "",
-             "Recall checks the manually labelled primary source in the first six passages. Citation precision checks source IDs against the answer key. Extract fidelity measures verbatim passage reproduction and hashes, not independent factual correctness. Numerical checks use explicit expected amounts, units and dates. The small synthetic suite is a regression gate, not a production error-rate estimate.", ""]
+             "Recall checks the manually labelled primary source in the first six passages. Citation precision checks source IDs against the answer key. Citation integrity checks original excerpts and hashes. Extract fidelity checks verbatim reproduction for extract answers; structured summaries instead check explicit expected amounts, dates and paragraph citations. These checks do not independently establish source truth. The small synthetic suite is a regression gate, not a production error-rate estimate.", ""]
     rows += ["Source file fingerprints are included in the JSON companion report.", ""]
     return "\n".join(rows)

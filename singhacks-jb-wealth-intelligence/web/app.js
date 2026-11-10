@@ -11,8 +11,16 @@ const state = {
   chartRange: "YTD",
   dismissedListOpen: false,
   chatClient: null,
-  chatMessages: [],
+  chatClientResults: [],
+  chatClientActiveIndex: -1,
+  chatConversations: new Map(),
+  chatStorageWarningShown: false,
   chatRecognition: null,
+  chatSpeechRequest: null,
+  chatSpeechMessage: null,
+  chatPlayback: "idle",
+  chatMessageSequence: 0,
+  chatDeleteClient: null,
   eventFilters: { from: "", to: "", sort: "newest", severity: "all", source: "all" },
   clientSearch: "",
 };
@@ -60,32 +68,266 @@ function showToast(message, tone = "default") {
 function syncChatContext(clientId = state.currentClient) {
   if (!state.data) return;
   const allProfiles = profiles();
-  const select = $("#chat-client");
-  if (!select.options.length) {
-    select.innerHTML = Object.values(allProfiles).map((client) => (
-      `<option value="${esc(client.client_id)}">${esc(client.name)} · ${esc(client.client_id)}</option>`
-    )).join("");
+  const nextClient = allProfiles[clientId] ? clientId : state.chatClient || Object.keys(allProfiles)[0];
+  if (nextClient !== state.chatClient) {
+    cancelChatDeletion();
+    if (state.chatClient) stopChatAudio();
+    state.chatClient = nextClient;
+    $("#chat-input").value = "";
+    renderChatTranscript();
   }
-  if (allProfiles[clientId]) state.chatClient = clientId;
-  state.chatClient ||= Object.keys(allProfiles)[0];
-  select.value = state.chatClient;
+  const client = allProfiles[state.chatClient];
+  $("#chat-client").value = state.chatClient;
+  $("#chat-client").title = `${client.name} · ${client.client_id}`;
+  $("#chat-client-name").textContent = client.name;
+  $("#chat-client-id").textContent = client.client_id;
+  toggleChatClientPicker(false);
 }
 
-function resetChatTranscript(message = "Ready for a new client-scoped question.") {
-  state.chatMessages = [];
-  $("#chat-messages").innerHTML = `<article class="chat-message assistant"><div><b>TESSERA</b><span>Context changed</span></div><p>${esc(message)}</p></article>`;
+function toggleChatClientPicker(open, restoreFocus = false) {
+  const menu = $("#chat-client-menu");
+  menu.hidden = !open;
+  $("#chat-client").setAttribute("aria-expanded", String(open));
+  const search = $("#chat-client-search");
+  search.setAttribute("aria-expanded", String(open));
+  if (open) {
+    search.value = "";
+    renderChatClientOptions();
+    search.focus();
+  } else {
+    search.removeAttribute("aria-activedescendant");
+    if (restoreFocus) $("#chat-client").focus();
+  }
+}
+
+function renderChatClientOptions() {
+  const normalize = (value) => String(value).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase();
+  const terms = normalize($("#chat-client-search").value).trim().split(/\s+/).filter(Boolean);
+  const clients = Object.values(profiles());
+  state.chatClientResults = clients.filter((client) => {
+    const label = normalize(`${client.name} ${client.client_id}`);
+    return terms.every((term) => label.includes(term));
+  });
+  const matches = state.chatClientResults;
+  $("#chat-client-count").textContent = terms.length
+    ? `${matches.length} of ${clients.length} clients`
+    : `${clients.length} client${clients.length === 1 ? "" : "s"}`;
+  $("#chat-client-list").innerHTML = matches.length ? matches.map((client, index) => `
+    <div id="chat-client-option-${index}" class="chat-client-option" role="option" aria-selected="${client.client_id === state.chatClient}" data-chat-client="${esc(client.client_id)}">
+      <span class="chat-client-option-avatar" aria-hidden="true">${esc(initials(client.name))}</span>
+      <span class="chat-client-option-copy"><strong>${esc(client.name)}</strong><small>${esc(client.client_id)}</small></span>
+      ${client.client_id === state.chatClient ? '<svg class="chat-client-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 4 4L19 6" /></svg>' : ""}
+    </div>`).join("") : '<div class="chat-client-empty"><strong>No clients found</strong><p>Try another name or client ID.</p></div>';
+  const selectedIndex = matches.findIndex((client) => client.client_id === state.chatClient);
+  setChatClientActiveOption(matches.length ? Math.max(0, selectedIndex) : -1);
+}
+
+function setChatClientActiveOption(index) {
+  state.chatClientActiveIndex = index;
+  $$("[data-chat-client]").forEach((option, optionIndex) => option.classList.toggle("is-active", optionIndex === index));
+  const search = $("#chat-client-search");
+  if (index < 0) {
+    search.removeAttribute("aria-activedescendant");
+    return;
+  }
+  const id = `chat-client-option-${index}`;
+  search.setAttribute("aria-activedescendant", id);
+  $(`#${id}`).scrollIntoView({ block: "nearest" });
+}
+
+function handleChatClientKeydown(event) {
+  if (event.isComposing) return;
+  if (event.key === "Escape") {
+    event.preventDefault();
+    event.stopPropagation();
+    toggleChatClientPicker(false, true);
+  } else if (event.key === "Tab") {
+    // Return to the trigger before letting the browser advance focus normally.
+    toggleChatClientPicker(false, true);
+  } else if (["ArrowDown", "ArrowUp"].includes(event.key)) {
+    event.preventDefault();
+    const count = state.chatClientResults.length;
+    if (count) setChatClientActiveOption((state.chatClientActiveIndex + (event.key === "ArrowDown" ? 1 : -1) + count) % count);
+  } else if (event.key === "Enter") {
+    event.preventDefault();
+    const client = state.chatClientResults[state.chatClientActiveIndex];
+    if (client) {
+      syncChatContext(client.client_id);
+      $("#chat-client").focus();
+    }
+  }
+}
+
+function chatStorageKey(clientId) {
+  return `tessera.chat.v1:${encodeURIComponent(state.data.meta.rm)}:${encodeURIComponent(clientId)}`;
+}
+
+function chatConversation(clientId = state.chatClient) {
+  if (!state.chatConversations.has(clientId)) {
+    const conversation = { messages: [], request: null, storageAvailable: true, status: "No audio is stored by TESSERA" };
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(chatStorageKey(clientId)) || "null");
+      if (saved?.version === 1 && saved.clientId === clientId && Array.isArray(saved.messages)) {
+        conversation.messages = saved.messages.filter((item) => (
+          item && ["user", "assistant"].includes(item.role) && typeof item.content === "string"
+        )).map((item) => ({
+          role: item.role,
+          content: item.content,
+          mode: typeof item.mode === "string" ? item.mode : "grounded_extract",
+          citations: Array.isArray(item.citations) ? item.citations.filter((citation) => citation && typeof citation === "object") : [],
+        }));
+      }
+    } catch {
+      conversation.storageAvailable = false;
+    }
+    state.chatConversations.set(clientId, conversation);
+  }
+  return state.chatConversations.get(clientId);
+}
+
+function saveChatConversation(clientId) {
+  const conversation = chatConversation(clientId);
+  try {
+    window.localStorage.setItem(chatStorageKey(clientId), JSON.stringify({
+      version: 1, clientId, messages: conversation.messages,
+    }));
+    conversation.storageAvailable = true;
+  } catch {
+    conversation.storageAvailable = false;
+    if (!state.chatStorageWarningShown) {
+      showToast("Browser storage is unavailable. Chat history will only last for this session.", "error");
+      state.chatStorageWarningShown = true;
+    }
+  }
+}
+
+function updateChatControls() {
+  const conversation = chatConversation();
+  const submit = $(".chat-send", $("#chat-form"));
+  submit.disabled = Boolean(conversation.request);
+  submit.textContent = conversation.request ? "Thinking…" : "Send";
+  $("#chat-delete").disabled = !conversation.messages.length;
+  $("#chat-storage-status").textContent = conversation.storageAvailable ? "History saved in this browser" : "History available for this session only";
+  $("#chat-status").textContent = conversation.status;
+  updateChatAudioControls();
+}
+
+function renderChatTranscript() {
+  const messages = $("#chat-messages");
+  const conversation = chatConversation();
+  messages.innerHTML = "";
+  if (conversation.messages.length) {
+    conversation.messages.forEach((message, index) => messages.append(chatMessageElement(message, index)));
+  } else {
+    messages.innerHTML = `<article class="chat-message assistant"><div><b>TESSERA</b><span>Client conversation</span></div><p>Ask about ${esc(profiles()[state.chatClient].name)}'s portfolio, liquidity, credit, scenarios, actions, or source evidence.</p></article>`;
+  }
+  updateChatControls();
+  messages.scrollTop = messages.scrollHeight;
+}
+
+function deleteChatConversation() {
+  const clientId = state.chatClient;
+  const conversation = chatConversation(clientId);
+  const dialog = $("#chat-delete-dialog");
+  if (!conversation.messages.length || dialog.open) return;
+  state.chatDeleteClient = clientId;
+  $("#chat-delete-client-name").textContent = `${profiles()[clientId].name} (${clientId})`;
+  stopChatAudio();
+  dialog.showModal();
+  $("#chat-delete-cancel").focus();
+}
+
+function cancelChatDeletion() {
+  state.chatDeleteClient = null;
+  const dialog = $("#chat-delete-dialog");
+  if (dialog.open) dialog.close();
+}
+
+function confirmChatDeletion() {
+  const clientId = state.chatDeleteClient;
+  if (!clientId || clientId !== state.chatClient || !$("#chat-delete-dialog").open) return;
+  const conversation = chatConversation(clientId);
+  cancelChatDeletion();
+  let deleted = true;
+  try {
+    window.localStorage.removeItem(chatStorageKey(clientId));
+  } catch {
+    deleted = false;
+    conversation.storageAvailable = false;
+  }
+  conversation.request?.abort();
+  conversation.request = null;
+  conversation.messages = [];
+  conversation.status = "No audio is stored by TESSERA";
+  $("#chat-input").value = "";
+  stopChatAudio();
+  renderChatTranscript();
+  $("#chat-input").focus();
+  showToast(deleted ? "Conversation deleted for this client." : "Conversation cleared for this session. Saved browser history could not be deleted.", deleted ? "default" : "error");
+}
+
+function updateChatAudioControls() {
+  const messages = $("#chat-messages");
+  chatConversation().messages.forEach((message, index) => {
+    if (message.role !== "assistant") return;
+    const button = $(`[data-speak-message="${index}"]`, messages);
+    if (!button) return;
+    const playback = message === state.chatSpeechMessage ? state.chatPlayback : "idle";
+    const labels = {
+      loading: ["Loading…", "Loading voice for this answer"],
+      speaking: ["Pause", "Pause this answer"],
+      paused: ["Resume", "Resume this answer"],
+      idle: ["Listen", "Read this answer aloud"],
+    }[playback];
+    button.textContent = labels[0];
+    button.setAttribute("aria-label", labels[1]);
+    button.dataset.playback = playback;
+    button.disabled = playback === "loading";
+  });
+  const status = {
+    loading: "Loading voice…",
+    speaking: "Reading answer aloud…",
+    paused: "Audio paused",
+  }[state.chatPlayback];
+  if (status) $("#chat-status").textContent = status;
+}
+
+function toggleChatAudio() {
+  if (!state.chatSpeechRequest || !["speaking", "paused"].includes(state.chatPlayback)) return;
+  const pause = state.chatPlayback === "speaking";
+  if (pause) window.speechSynthesis.pause();
+  else window.speechSynthesis.resume();
+  state.chatPlayback = pause ? "paused" : "speaking";
+  updateChatAudioControls();
 }
 
 function stopChatAudio(status = "No audio is stored by TESSERA") {
+  state.chatSpeechRequest?.abort();
+  state.chatSpeechRequest = null;
+  state.chatSpeechMessage = null;
+  state.chatPlayback = "idle";
+  updateChatAudioControls();
   if (state.chatRecognition) {
     state.chatRecognition.abort?.();
     state.chatRecognition = null;
   }
   window.speechSynthesis?.cancel();
+  if (window.speechSynthesis?.paused) window.speechSynthesis.resume();
   const microphone = $("#chat-mic");
   microphone.classList.remove("listening");
   microphone.textContent = "Mic";
   $("#chat-status").textContent = status;
+}
+
+function toggleChatExpanded(force) {
+  const panel = $("#chat-panel");
+  const expanded = typeof force === "boolean" ? force : !panel.classList.contains("is-expanded");
+  panel.classList.toggle("is-expanded", expanded);
+  const button = $("#chat-expand");
+  const label = expanded ? "Collapse chat" : "Expand chat";
+  button.setAttribute("aria-expanded", String(expanded));
+  button.setAttribute("aria-label", label);
+  button.setAttribute("title", label);
 }
 
 function toggleChat(force) {
@@ -97,11 +339,13 @@ function toggleChat(force) {
     syncChatContext(state.currentView === "client" ? state.currentClient : state.chatClient);
     window.setTimeout(() => $("#chat-input").focus(), 0);
   } else {
+    toggleChatClientPicker(false);
+    cancelChatDeletion();
     stopChatAudio();
   }
 }
 
-function chatCitationsHTML(citations = []) {
+function chatCitationsHTML(citations = [], sourcePrefix = "chat-source") {
   if (!citations.length) return "";
   return `<details class="chat-sources"><summary>${citations.length} source${citations.length === 1 ? "" : "s"}</summary>${citations.map((item) => {
     let sourceLink = "";
@@ -110,37 +354,110 @@ function chatCitationsHTML(citations = []) {
       if (url.protocol === "https:" && !url.username && !url.password) sourceLink = ` · <a href="${esc(url.href)}" target="_blank" rel="noopener noreferrer">Open source ↗</a>`;
     } catch { /* Recorded evidence may have no external URL. */ }
     const label = item.evidence_kind === "external_report" ? "External report · not independently verified" : item.evidence_kind === "derived_assessment" ? "Calculated assessment" : "Recorded evidence";
-    return `<div><b>[${item.number}] ${esc(item.source)}</b><span>${esc(label)}${item.source_date ? ` · ${esc(item.source_date)}` : ""}${sourceLink}</span>${item.retrieved_at ? `<small>Retrieved ${esc(item.retrieved_at)}</small>` : ""}<p>${esc(item.excerpt)}</p></div>`;
+    return `<div class="chat-source" id="${esc(sourcePrefix)}-${esc(item.number)}" tabindex="-1"><b>[${esc(item.number)}] ${esc(item.source)}</b><span>${esc(label)}${item.source_date ? ` · ${esc(item.source_date)}` : ""}${sourceLink}</span>${item.retrieved_at ? `<small>Retrieved ${esc(item.retrieved_at)}</small>` : ""}<p>${esc(item.excerpt)}</p></div>`;
   }).join("")}</details>`;
 }
 
-function addChatMessage(role, content, payload = {}) {
-  const message = { role, content };
-  state.chatMessages.push(message);
-  state.chatMessages = state.chatMessages.slice(-12);
+function chatAnswerHTML(content, citations, sourcePrefix) {
+  const known = new Set(citations.map((item) => item.number).filter((number) => Number.isInteger(number) && number > 0));
+  return String(content).split(/\n\s*\n/).filter((paragraph) => paragraph.trim()).map((paragraph) => {
+    const text = esc(paragraph).replace(/\[(\d+)\]/g, (original, number) => known.has(Number(number))
+      ? `<button type="button" class="chat-citation" data-chat-citation="${sourcePrefix}-${number}" aria-label="View source ${number}">[${number}]</button>`
+      : original);
+    return `<p>${text.replaceAll("\n", "<br>")}</p>`;
+  }).join("");
+}
+
+function chatMessageElement({ role, content, mode, citations }, index) {
   const article = document.createElement("article");
   article.className = `chat-message ${role}`;
   const label = role === "user" ? "You" : "TESSERA";
-  const mode = payload.mode === "insufficient_evidence" ? "Insufficient evidence" : payload.mode === "grounded_model" ? "AI-selected source extracts" : "Source extracts";
-  article.innerHTML = `<div><b>${label}</b>${role === "assistant" ? `<span>${esc(mode)}</span><button type="button" data-speak-message aria-label="Read this answer aloud">Listen</button>` : ""}</div><p>${esc(content)}</p>${chatCitationsHTML(payload.citations)}`;
-  $("#chat-messages").append(article);
-  $("#chat-messages").scrollTop = $("#chat-messages").scrollHeight;
+  const modeLabel = mode === "error" ? "Assistant unavailable" : mode === "insufficient_evidence" ? "Insufficient evidence" : mode === "grounded_summary" ? "Summary" : "From client records";
+  const sources = citations || [];
+  const sourcePrefix = `chat-source-${++state.chatMessageSequence}`;
+  article.innerHTML = `<header class="chat-message-header"><b>${label}</b>${role === "assistant" ? `<span>${esc(modeLabel)}</span><button type="button" data-speak-message="${index}" aria-label="Read this answer aloud">Listen</button>` : ""}</header><div class="chat-answer" data-chat-answer>${chatAnswerHTML(content, sources, sourcePrefix)}</div>${chatCitationsHTML(sources, sourcePrefix)}`;
   return article;
 }
 
-function speakAnswer(text) {
+function addChatMessage(clientId, role, content, payload = {}) {
+  const message = { role, content, mode: payload.mode, citations: payload.citations || [] };
+  chatConversation(clientId).messages.push(message);
+  saveChatConversation(clientId);
+  if (state.chatClient === clientId) renderChatTranscript();
+  return message;
+}
+
+function preferredChatVoice(voices) {
+  // The Web Speech API provides names and languages, but no gender field.
+  const femaleName = /\b(female|zira|hazel|susan|heera|samantha|karen|victoria|moira|tessa|serena|aria|jenny|sonia|libby|natasha|clara|ava|emma|ana|joanna)\b/i;
+  const english = voices.filter((voice) => /^en(?:[-_]|$)/i.test(voice.lang));
+  const female = english.filter((voice) => femaleName.test(voice.name));
+  return female.find((voice) => /^en[-_]SG$/i.test(voice.lang))
+    || female[0]
+    || english.find((voice) => voice.default)
+    || english[0];
+}
+
+function speakAnswer(message) {
   if (!("speechSynthesis" in window)) {
     showToast("Audio playback is not supported in this browser.", "error");
     return;
   }
-  window.speechSynthesis.cancel();
-  const utterance = new SpeechSynthesisUtterance(text.replace(/\[\d+\]/g, ""));
-  utterance.lang = "en-SG";
-  utterance.rate = 0.98;
-  utterance.onstart = () => { $("#chat-status").textContent = "Reading answer aloud…"; };
-  utterance.onend = () => { $("#chat-status").textContent = "No audio is stored by TESSERA"; };
-  utterance.onerror = () => { $("#chat-status").textContent = "Audio playback stopped"; };
-  window.speechSynthesis.speak(utterance);
+  state.chatSpeechRequest?.abort();
+  const request = new AbortController();
+  state.chatSpeechRequest = request;
+  state.chatSpeechMessage = message;
+  state.chatPlayback = "loading";
+  updateChatAudioControls();
+  const synthesis = window.speechSynthesis;
+  synthesis.cancel();
+  if (synthesis.paused) synthesis.resume();
+  const utterance = new SpeechSynthesisUtterance(message.content.replace(/\[\d+\]/g, ""));
+  utterance.rate = 1.25;
+  const syncPlayback = () => {
+    if (state.chatSpeechRequest !== request) return;
+    state.chatPlayback = synthesis.paused ? "paused" : "speaking";
+    updateChatAudioControls();
+  };
+  utterance.onstart = syncPlayback;
+  utterance.onpause = syncPlayback;
+  utterance.onresume = syncPlayback;
+  const finish = (status) => {
+    if (state.chatSpeechRequest !== request) return;
+    $("#chat-status").textContent = status;
+    request.abort();
+    state.chatSpeechRequest = null;
+    state.chatSpeechMessage = null;
+    state.chatPlayback = "idle";
+    updateChatAudioControls();
+  };
+  utterance.onend = () => finish("No audio is stored by TESSERA");
+  utterance.onerror = () => finish("Audio playback stopped");
+  let timer;
+  let started = false;
+  const cleanup = () => {
+    window.clearTimeout(timer);
+    synthesis.removeEventListener("voiceschanged", voicesChanged);
+  };
+  const speak = () => {
+    if (request.signal.aborted || started) return;
+    started = true;
+    cleanup();
+    const voice = preferredChatVoice(synthesis.getVoices());
+    if (voice) utterance.voice = voice;
+    utterance.lang = voice?.lang || "en-SG";
+    synthesis.speak(utterance);
+  };
+  const voicesChanged = () => {
+    if (synthesis.getVoices().length) speak();
+  };
+  request.signal.addEventListener("abort", cleanup, { once: true });
+  if (synthesis.getVoices().length) {
+    speak();
+  } else {
+    synthesis.addEventListener("voiceschanged", voicesChanged);
+    timer = window.setTimeout(speak, 1000);
+  }
 }
 
 function startDictation() {
@@ -163,6 +480,7 @@ function startDictation() {
   button.textContent = "Stop";
   $("#chat-status").textContent = "Listening… audio is handled by your browser";
   recognition.onresult = (event) => {
+    if (state.chatRecognition !== recognition) return;
     $("#chat-input").value = [...event.results].map((result) => result[0].transcript).join("");
   };
   recognition.onerror = (event) => {
@@ -179,34 +497,40 @@ function startDictation() {
 }
 
 async function sendChatQuestion(question) {
-  const history = state.chatMessages.slice(-6).map((item) => ({
+  const clientId = state.chatClient;
+  const conversation = chatConversation(clientId);
+  if (conversation.request) return;
+  const request = new AbortController();
+  conversation.request = request;
+  const history = conversation.messages.slice(-6).map((item) => ({
     role: item.role,
     content: item.content.slice(0, item.role === "assistant" ? 800 : 600),
   }));
-  addChatMessage("user", question);
-  const form = $("#chat-form");
-  const submit = $(".chat-send", form);
-  submit.disabled = true;
-  submit.textContent = "Thinking…";
-  $("#chat-status").textContent = "Retrieving controlled evidence…";
+  conversation.status = "Retrieving controlled evidence…";
+  addChatMessage(clientId, "user", question);
   try {
     const response = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ client_id: state.chatClient, question, history }),
+      body: JSON.stringify({ client_id: clientId, question, history }),
+      signal: request.signal,
     });
     const payload = await response.json().catch(() => ({ error: `Assistant returned ${response.status}` }));
     if (response.status === 404) throw new Error("Chat API unavailable. Start the app with python app.py.");
     if (!response.ok) throw new Error(payload.error || `Request failed (${response.status})`);
-    addChatMessage("assistant", payload.answer, payload);
-    $("#chat-status").textContent = payload.mode === "insufficient_evidence" ? "Insufficient evidence for this question" : `${payload.citations.length} source${payload.citations.length === 1 ? "" : "s"} · Source extracts`;
-    if ($("#chat-auto-speak").checked) speakAnswer(payload.answer);
+    if (conversation.request !== request) return;
+    conversation.status = payload.mode === "insufficient_evidence" ? "Insufficient evidence for this question" : `Answer with ${payload.citations.length} source${payload.citations.length === 1 ? "" : "s"}`;
+    const answer = addChatMessage(clientId, "assistant", payload.answer, payload);
+    if (state.chatClient === clientId && !$("#chat-panel").hidden && $("#chat-auto-speak").checked) speakAnswer(answer);
   } catch (error) {
-    addChatMessage("assistant", `I could not answer that request: ${error.message}`);
-    $("#chat-status").textContent = "Assistant unavailable";
+    if (conversation.request !== request) return;
+    conversation.status = "Assistant unavailable";
+    addChatMessage(clientId, "assistant", `I could not answer that request: ${error.message}`, { mode: "error" });
   } finally {
-    submit.disabled = false;
-    submit.textContent = "Send";
+    if (conversation.request === request) {
+      conversation.request = null;
+      if (state.chatClient === clientId) updateChatControls();
+    }
   }
 }
 
@@ -230,12 +554,8 @@ function showView(name, clientId, updateHistory = true) {
   $$(".nav-item").forEach((item) => item.classList.toggle("active", item.dataset.view === nextView));
 
   if (nextView === "client") {
-    const contextChanged = state.chatClient && state.chatClient !== clientId;
-    if (contextChanged) stopChatAudio("Audio stopped because the client context changed");
     state.currentClient = profiles()[clientId] ? clientId : state.currentClient;
-    state.chatClient = state.currentClient;
-    syncChatContext(state.chatClient);
-    if (contextChanged) resetChatTranscript(`Ready to answer from ${profiles()[state.chatClient].name}'s controlled records.`);
+    syncChatContext(state.currentClient);
     state.currentScenario = 0;
     renderClient(state.currentClient);
     $("#client-view").hidden = false;
@@ -1154,10 +1474,25 @@ function showChartPoint(point) {
 
 function bindEvents() {
   document.addEventListener("click", async (event) => {
-    const chatInteraction = event.target.closest("#chat-panel, #chat-launcher");
+    if (!event.target.closest("#chat-client-picker")) toggleChatClientPicker(false);
+    if (event.target.closest("#chat-client")) {
+      toggleChatClientPicker($("#chat-client-menu").hidden);
+      return;
+    }
+    const clientOption = event.target.closest("[data-chat-client]");
+    if (clientOption) {
+      syncChatContext(clientOption.dataset.chatClient);
+      $("#chat-client").focus();
+      return;
+    }
+    const chatInteraction = event.target.closest("#chat-panel, #chat-launcher, #chat-delete-dialog");
     if (!$("#chat-panel").hidden && !chatInteraction) toggleChat(false);
     if (event.target.closest("#chat-launcher")) toggleChat();
     if (event.target.closest("#chat-close")) toggleChat(false);
+    if (event.target.closest("#chat-expand")) toggleChatExpanded();
+    if (event.target.closest("#chat-delete")) return deleteChatConversation();
+    if (event.target.closest("#chat-delete-cancel, [data-chat-delete-cancel]")) return cancelChatDeletion();
+    if (event.target.closest("#chat-delete-confirm")) return confirmChatDeletion();
     const prompt = event.target.closest("[data-chat-prompt]");
     if (prompt) {
       $("#chat-input").value = prompt.dataset.chatPrompt;
@@ -1165,7 +1500,23 @@ function bindEvents() {
     }
     if (event.target.closest("#chat-mic")) startDictation();
     const speak = event.target.closest("[data-speak-message]");
-    if (speak) speakAnswer(speak.closest(".chat-message").querySelector("p").textContent);
+    if (speak) {
+      const message = chatConversation().messages[Number(speak.dataset.speakMessage)];
+      if (message?.role === "assistant") {
+        if (message === state.chatSpeechMessage) toggleChatAudio();
+        else speakAnswer(message);
+      }
+    }
+    const citation = event.target.closest("[data-chat-citation]");
+    if (citation) {
+      const article = citation.closest(".chat-message");
+      const source = article.querySelector(`#${citation.dataset.chatCitation}`);
+      if (source) {
+        article.querySelector(".chat-sources").open = true;
+        source.scrollIntoView({ block: "nearest", behavior: "smooth" });
+        source.focus({ preventScroll: true });
+      }
+    }
     const breachReview = event.target.closest("[data-escalation-review]");
     if (breachReview) {
       event.preventDefault();
@@ -1280,12 +1631,6 @@ function bindEvents() {
   });
 
   document.addEventListener("change", (event) => {
-    if (event.target.matches("#chat-client")) {
-      const contextChanged = state.chatClient !== event.target.value;
-      if (contextChanged) stopChatAudio("Audio stopped because the client context changed");
-      state.chatClient = event.target.value;
-      if (contextChanged) resetChatTranscript(`Ready to answer from ${profiles()[state.chatClient].name}'s controlled records.`);
-    }
     if (event.target.matches("[data-studio-client]")) {
       state.studioClient = event.target.value;
       state.studioScenario = 0;
@@ -1316,6 +1661,7 @@ function bindEvents() {
   });
 
   document.addEventListener("input", (event) => {
+    if (event.target.matches("#chat-client-search")) renderChatClientOptions();
     if (event.target.matches("[data-client-search]")) {
       state.clientSearch = event.target.value;
       renderClientSearchResults();
@@ -1327,11 +1673,17 @@ function bindEvents() {
   });
 
   document.addEventListener("focusin", (event) => {
+    if (!event.target.closest("#chat-client-picker")) toggleChatClientPicker(false);
     const chartPoint = event.target.closest("[data-chart-point]");
     if (chartPoint) showChartPoint(chartPoint);
   });
 
   document.addEventListener("keydown", (event) => {
+    if (event.target.matches("#chat-client-search")) handleChatClientKeydown(event);
+    if (event.target.matches("#chat-client") && ["ArrowDown", "ArrowUp"].includes(event.key)) {
+      event.preventDefault();
+      toggleChatClientPicker(true);
+    }
     if (event.target.matches("#chat-input") && event.key === "Enter" && !event.shiftKey && !event.isComposing) {
       event.preventDefault();
       event.target.form?.requestSubmit();
@@ -1348,7 +1700,7 @@ function bindEvents() {
       event.preventDefault();
       const input = $("#chat-input");
       const question = input.value.trim();
-      if (!question) return;
+      if (!question || chatConversation().request) return;
       input.value = "";
       await sendChatQuestion(question);
       return;
@@ -1411,10 +1763,20 @@ function bindEvents() {
 
   $("#method-button").addEventListener("click", showMethod);
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") {
+    if (event.key === "Escape" && !event.defaultPrevented) {
+      if (!$("#chat-client-menu").hidden) {
+        event.preventDefault();
+        toggleChatClientPicker(false, true);
+        return;
+      }
+      if ($("#chat-delete-dialog").open) return;
       if (!$("#modal").hidden) closeModal();
       else if (!$("#chat-panel").hidden) toggleChat(false);
     }
+  });
+  $("#chat-delete-dialog").addEventListener("cancel", (event) => {
+    event.preventDefault();
+    cancelChatDeletion();
   });
   window.addEventListener("popstate", applyRoute);
 }
@@ -1473,7 +1835,6 @@ async function init() {
     const focusClients = Object.keys(state.data.featured_clients);
     state.currentClient = focusClients[0] || Object.keys(profiles())[0];
     state.studioClient = focusClients.at(-1) || state.currentClient;
-    state.chatClient = state.currentClient;
     syncChatContext();
     $("#as-of").textContent = fullDate(state.data.meta.as_of);
     $("#rm-context").textContent = `${state.data.meta.rm} · ${state.data.meta.desk}`.toUpperCase();

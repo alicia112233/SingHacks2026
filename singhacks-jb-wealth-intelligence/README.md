@@ -36,11 +36,16 @@ Exact portfolio and suitability calculations remain deterministic. See
 The global **Ask TESSERA** assistant supports client-scoped questions with
 numbered source citations, microphone dictation and browser read-aloud. It works
 without cloud credentials using local factual retrieval, and can optionally
-combine Chroma semantic results with model-selected source extracts. See
+combine Chroma semantic results with model-selected source extracts. Each client's
+conversation is saved in the current browser and restored when switching back;
+**Delete conversation** removes the selected client's browser history. See
 [`docs/RAG_CHAT_ASSISTANT.md`](docs/RAG_CHAT_ASSISTANT.md). Its API endpoint is
 `POST /api/chat`.
 
-Chat answers use server-rendered source extracts. The optional model selects
+Chat answers use readable paragraphs and expandable source citations. Liquidity
+summaries compare recorded cash with dated needs in complete sentences and
+distinguish daily-liquid investments from cash. Other questions use server-rendered
+source passages. The optional model selects
 citations rather than writing factual claims. Missing evidence produces an
 explicit refusal; external reports retain publisher links and are labelled as
 unverified. Run `python scripts/evaluate_chat.py` for the offline source and
@@ -78,6 +83,7 @@ for hosted scheduling. Configuring credentials enables real message delivery.
 ```bash
 python -m unittest discover -s tests -v
 node --check web/app.js
+node --test tests/test_chat_history.js
 ```
 
 See [`README_SOLUTION.md`](README_SOLUTION.md) for the product workflow, architecture, API behavior, control model and production integration path.
