@@ -14,7 +14,7 @@ App: `https://singhacks-jb-wealth-intelligence.vercel.app` (use this short URL; 
 
 ## What to record (Claude does the edit)
 
-The slides are already rendered, so you only record two things.
+The slides and the explainer walkthrough (shot 12) are already recorded, so you only record the following.
 
 1. **Your voice, one file per shot.** Use Windows Sound Recorder or your phone. Name the files by shot number, `01` to `15`, plus `05b` for the Telegram shot (any audio format). Read the Narration column for that row, leave a second of silence before and after, and redo any file you stumble in.
 2. **The app, as one continuous screen recording** covering shots 5 to 11 in order. Pause about 2 seconds on each shot, and don't worry about pace or mistakes; the cutting fixes both. Or record one file per shot, named by shot number (`05.mp4`, `06.mp4` … `11.mp4`; retakes `06-2.mp4`, and the latest take is used). The take's own sound is not used.
@@ -58,10 +58,10 @@ Film the "may be exposed" alert, not the urgency alert. Urgency alerts need a sc
 | 9 | 2:30 | Scroll to **Actions worth considering**. Open **Why this action** on action 1. Point at "Medium priority", then the Evidence 65 chip. | Actions come in order of what is at stake. Ring-fencing the family office money comes first: 5 million dollars due in four months. Separately, TESSERA scores how well each action is supported, and tells the RM to verify this one first. |
 | 10 | 2:50 | Open **Ask TESSERA**, type: `Can Abdullah fund the USD 5m family office from cash?` Show the answer and its numbered sources. | The RM can ask questions. The answer only uses this client's records, and every line cites its source. |
 | 11 | 3:02 | Click **Approve** on action 1. | And the RM decides. Approve, edit or dismiss, and the decision is recorded with its evidence. |
-| 12 | 3:10 | Slide 20 (how it works) | Under the hood: code calculates, AI reads, the RM decides. Client records never leave the bank. Outside models only read public headlines. The bank's own model reviews each action, and it can only lower confidence, never raise it. |
+| 12 | 3:10 | **Explainer walkthrough** (`walkthrough.html`, Abdullah case): the headline travels from public feeds through the three outside models, into the bank, the score moves 50 to 55, and the RM's approval lands in the ledger. Plays to the end after the line. Claude records this. | Under the hood: code calculates, AI reads, the RM decides. Client records never leave the bank. Outside models only read public headlines. The bank's own model reviews each action, and it can only lower confidence, never raise it. |
 | 13 | 3:28 | Slide 17, then slide 18 | Since SingHacks we made six shifts: client data stays in the bank, we screen instead of predict, detection works for any client, every figure says what it is, customer vectors, and actions in order of what is at stake. |
 | 14 | 3:42 | Slide 24 (integration) | It plugs into what Julius Bär already runs: your research as a news feed, your portfolio data, your in-house model and your own database. |
-| 15 | 3:52 | Slide 25 (ask), hold 3 seconds | Our next step is a 30-day trial with one desk. Everything you've seen is on our explainer site. Thank you. |
+| 15 | 3:52 | Slide 25 (ask), then 5 silent seconds on the explainer home page | Our next step is a 30-day trial with one desk. Everything you've seen is on our explainer site. Thank you. |
 
 ## Numbers in the script, checked against the live app on 9 Nov 2026
 
