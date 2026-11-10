@@ -17,7 +17,7 @@ App: `https://singhacks-jb-wealth-intelligence.vercel.app` (use this short URL; 
 The slides are already rendered, so you only record two things.
 
 1. **Your voice, one file per shot.** Use Windows Sound Recorder or your phone. Name the files by shot number, `01` to `15`, plus `05b` for the Telegram shot (any audio format). Read the Narration column for that row, leave a second of silence before and after, and redo any file you stumble in.
-2. **The app, as one continuous screen recording** covering shots 5 to 11 in order. Pause about 2 seconds on each shot, and don't worry about pace or mistakes; the cutting fixes both. You can split it into several files if that's easier. The take's own sound is not used.
+2. **The app, as one continuous screen recording** covering shots 5 to 11 in order. Pause about 2 seconds on each shot, and don't worry about pace or mistakes; the cutting fixes both. Or record one file per shot, named by shot number (`05.mp4`, `06.mp4` … `11.mp4`; retakes `06-2.mp4`, and the latest take is used). The take's own sound is not used.
 3. **Your phone, for shot 5b.** Use the phone's own screen recorder while the Telegram alert arrives and you open it. Setting up the bot is in the next section.
 
 Put everything in `video-edit/narration/` and `video-edit/takes/` (or anywhere, and say where). Claude then trims each take to its line, speeds up slow scrolling, cuts the chat wait, holds each slide for its line, cleans and levels the voice, and exports `video-edit/out/TESSERA_demo.mp4` at 1080p.
