@@ -3,6 +3,7 @@
 </p>
 
 <p align="center">
+  <a href="https://youtu.be/go4-mfhRsj4"><img alt="Demo video" src="https://img.shields.io/badge/Demo%20video-Watch%20on%20YouTube-B9232D?style=for-the-badge&logo=youtube&logoColor=white"></a>
   <a href="https://singhacks-jb-wealth-intelligence.vercel.app"><img alt="Live app" src="https://img.shields.io/badge/Live%20app-Open%20TESSERA-2D5C56?style=for-the-badge"></a>
   <a href="https://alicia112233.github.io/SingHacks2026/"><img alt="Explainer site" src="https://img.shields.io/badge/Explainer-Walkthrough%20%26%20maps-B78F50?style=for-the-badge"></a>
   <a href="https://alicia112233.github.io/SingHacks2026/slides.html"><img alt="Slides" src="https://img.shields.io/badge/Slides-25%20slides-18201C?style=for-the-badge"></a>

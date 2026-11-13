@@ -2,7 +2,7 @@
 
 TESSERA turns portfolio, client, mandate, credit and market-event records into a prioritised Relationship Manager workflow. It is built to support an accountable human decision, not to place trades or obscure the source of a recommendation.
 
-For the feature overview and repository layout, see the [project README](../README.md). Try the [live app](https://singhacks-jb-wealth-intelligence.vercel.app) or the [explainer site](https://alicia112233.github.io/SingHacks2026/).
+For the feature overview and repository layout, see the [project README](../README.md). Watch the [demo video](https://youtu.be/go4-mfhRsj4), try the [live app](https://singhacks-jb-wealth-intelligence.vercel.app) or open the [explainer site](https://alicia112233.github.io/SingHacks2026/).
 
 ## Quick start
 
